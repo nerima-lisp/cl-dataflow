@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `state-machine-complete-p` (`state-machine-builders.lisp`) called `state-machine-event-types` -- which rescans every transition and dedups/sorts the result -- once per state inside its outer loop, turning O(S + T + E log E) into O(S * (T + E log E)). Hoisted the call outside the loop so it runs once.
 - `stream-distinct-by` (`stream-ops.lisp`) deduped keys with a linear `member` scan against a list that grows with every distinct key, O(n^2) in the number of distinct keys (a limitation its own docstring disclosed). Its sibling `stream-distinct` (`streams.lisp`) already solved the identical problem for raw values with a persistent hash-table fast path for standard `eq`/`eql`/`equal`/`equalp` tests, shared with `subject-distinct`; `stream-distinct-by` never got the same treatment despite the helpers (`%standard-distinct-test`, `%distinct-hashable-value-p`, `%distinct-hash-levels-member-p`, `%distinct-hash-levels-add`) already being reusable, value-shaped utilities. Rewired `stream-distinct-by` onto the same hash-levels structure, keyed by `(funcall function element)` instead of the raw element; the `member`-based path now only runs for keys a standard test can't safely hash (or a custom test predicate). No public API change.
 
+### Changed
+
+- Bumped `cl-weave`, `cl-process-kit`, and `paredit-cli` flake inputs to their latest upstream revisions (`cl-prolog` was already current). Verified `cl-process-kit`'s newer revision didn't change its own ASDF dependency graph (still just `cl-boundary-kit`/`cl-log-kit` for the base system) before accepting the bump, and re-ran the full test/coverage/paredit-lint checks against it.
+
 ## [0.4.0] - 2026-07-25
 
 A quality and correctness release building on 0.3.0. The public API is
