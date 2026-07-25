@@ -75,9 +75,10 @@
                     (context-effects-in-order context))))
 
 (defun %last-raw-item (items copier)
-  ;; ITEMS is the raw, newest-first storage list (see EMIT-EVENT/PERFORM-EFFECT),
-  ;; so the most recent item is the head -- no need to copy/reverse/walk the
-  ;; whole history just to read one entry.
+  ;; ITEMS is a raw, newest-first storage list (see EMIT-EVENT/PERFORM-EFFECT
+  ;; for events and effects, %RECORD-TRANSITION-HISTORY for state-machine
+  ;; history), so the most recent item is the head -- no need to copy/reverse/
+  ;; walk the whole history just to read one entry.
   (let ((item (first items)))
     (when item
       (funcall copier item))))

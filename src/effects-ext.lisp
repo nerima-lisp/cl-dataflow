@@ -1,14 +1,13 @@
 (in-package #:cl-dataflow)
 
 ;;;; Ergonomics for the effect boundary. The context's effect-handler table is
-;;;; only reachable through copying accessors (CONTEXT-EFFECT-HANDLERS returns a
-;;;; snapshot), so registering a single handler previously meant rebuilding the
-;;;; whole table. These helpers register, look up, and scope handlers directly,
-;;;; all keyed through %NORMALIZE-HANDLER-KEY so ":Log", 'LOG, and "log" collide
+;;;; only reachable publicly through copying accessors (CONTEXT-EFFECT-HANDLERS
+;;;; returns a snapshot), so registering a single handler previously meant
+;;;; rebuilding the whole table. These helpers register, look up, and scope
+;;;; handlers through the live table (%CONTEXT-EFFECT-HANDLER-TABLE, in
+;;;; core-slot-accessors.lisp alongside the other internal live readers), all
+;;;; keyed through %NORMALIZE-HANDLER-KEY so ":Log", 'LOG, and "log" collide
 ;;;; exactly as PERFORM-EFFECT resolves them.
-
-(defun %context-effect-handler-table (context)
-  (slot-value context 'effect-handlers))
 
 (defun register-effect-handler (context type handler)
   "Register HANDLER for effect TYPE on CONTEXT (mutating it) and return HANDLER. A

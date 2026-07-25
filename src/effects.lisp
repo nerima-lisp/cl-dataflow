@@ -29,7 +29,10 @@
           :trace-index
           (%context-trace-count context)))
         (handler
-        (gethash (%normalize-handler-key type) (context-effect-handlers context))))
+        ;; The live table, not CONTEXT-EFFECT-HANDLERS: that reader snapshots
+        ;; the whole table, and copying every registered handler to resolve one
+        ;; key would put an O(handlers) allocation on every performed effect.
+        (gethash (%normalize-handler-key type) (%context-effect-handler-table context))))
     (unless handler
       (error
         'effect-handler-missing-error

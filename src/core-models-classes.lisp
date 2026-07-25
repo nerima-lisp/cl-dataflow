@@ -152,15 +152,15 @@ expands to a PRINT-OBJECT method rendering VAR via PRINT-UNREADABLE-OBJECT with
     (hash-table-count (%graph-nodes-table graph))
     (length (%graph-edges-list graph)))
   (context (context stream) "events=~D effects=~D"
-    (length (context-events context))
-    (length (context-effects context)))
+    (length (%context-events-list context))
+    (length (%context-effects-list context)))
   (state-transition (transition stream) "~A --~A--> ~A"
     (%escaped-display-string (transition-from transition))
     (%escaped-display-string (transition-event-type transition))
     (%escaped-display-string (transition-to transition)))
   (state-machine (machine stream) "~A transitions=~D"
     (%escaped-display-string (state-machine-state machine))
-    (length (state-machine-transitions machine))))
+    (length (%state-machine-transitions-list machine))))
 
 (define-type-predicates
   (node-p node)

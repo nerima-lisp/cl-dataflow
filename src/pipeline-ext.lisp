@@ -12,7 +12,7 @@ Node handlers are runtime closures and are not serialised (see GRAPH-TO-PLIST), 
 the round trip preserves topology, ports, metadata, and stage order."
   (list :metadata (pipeline-metadata pipeline)
         :graph (graph-to-plist (pipeline-graph pipeline))
-        :stages (mapcar #'node-name (pipeline-stages pipeline))))
+        :stages (mapcar #'node-name (%pipeline-stages-list pipeline))))
 
 (defun plist-to-pipeline (plist)
   "Rebuild a pipeline from a plist produced by PIPELINE-TO-PLIST. Reconstructed
@@ -31,7 +31,7 @@ Signals the same conditions as VALIDATE-GRAPH on a malformed or cyclic graph."
 
 (defun pipeline-stage-count (pipeline)
   "Return the number of stages in PIPELINE."
-  (length (pipeline-stages pipeline)))
+  (length (%pipeline-stages-list pipeline)))
 
 (defun map-pipeline (pipeline inputs &key context)
   "Run PIPELINE once for each element of INPUTS and return the list of results in

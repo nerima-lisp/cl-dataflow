@@ -117,14 +117,15 @@ index, keeping the two slots in lock-step."
   (mapcar #'%copy-state-transition
           (slot-value machine 'transitions)))
 
-(defun %state-machine-transitions-list (machine)
-  (slot-value machine 'transitions))
-
 (defun copy-state-machine (machine)
   (make-state-machine :state (state-machine-state machine)
                       :initial-state (state-machine-initial-state machine)
                       :transitions (%state-machine-transitions-list machine)
-                      :history (%copy-transition-history (state-machine-history machine))
+                      ;; Live list, like :TRANSITIONS above -- MAKE-STATE-MACHINE
+                      ;; already runs %COPY-TRANSITION-HISTORY over whatever it is
+                      ;; given, so reading through the copying STATE-MACHINE-HISTORY
+                      ;; and copying that again made three copies to produce one.
+                      :history (%state-machine-history-list machine)
                       :history-limit (state-machine-history-limit machine)
                       :metadata (%normalize-metadata (state-machine-metadata machine))))
 
@@ -134,9 +135,7 @@ index, keeping the two slots in lock-step."
   machine)
 
 (defun state-machine-last-transition (machine)
-  (let ((transition (first (state-machine-history machine))))
-    (when transition
-      (%copy-transition-record transition))))
+  (%last-raw-item (%state-machine-history-list machine) #'%copy-transition-record))
 
 (defun %event-type-designator (event)
   (typecase event

@@ -38,6 +38,9 @@
 (defun %context-values-table (context)
   (%read-slot context 'values))
 
+(defun %context-effect-handler-table (context)
+  (%read-slot context 'effect-handlers))
+
 (defun %context-events-list (context)
   (%read-slot context 'events))
 
@@ -61,6 +64,9 @@
 
 (defun %context-trace-count (context)
   (slot-value context 'trace-count))
+
+(defun %state-machine-transitions-list (machine)
+  (%read-slot machine 'transitions))
 
 (defun %state-machine-history-list (machine)
   (%read-slot machine 'history))

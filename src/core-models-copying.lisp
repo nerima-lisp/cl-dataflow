@@ -100,12 +100,21 @@
   (%copy-graph-snapshot graph))
 
 (defun copy-context (context)
-  (make-context :values (context-values context)
-                :events (context-events context)
-                :effects (context-effects context)
-                :trace (context-trace context)
+  ;; The collections are read live: MAKE-CONTEXT assigns each through its
+  ;; public setter, and every one of those setters already copies (see
+  ;; DEFINE-SLOT-APIS' :COPY/:MAPCAR-COPY setter forms and the hand-written
+  ;; (SETF CONTEXT-TRACE)/(SETF CONTEXT-EFFECT-HANDLERS)). Reading through the
+  ;; copying readers as well made two copies of each collection -- three of the
+  ;; handler table -- to build one independent context. METADATA and RESULT keep
+  ;; their public readers only because no %-prefixed live reader exists for
+  ;; those two slots; their setters copy as well, so the extra copy is a single
+  ;; scalar/plist rather than a whole collection.
+  (make-context :values (%context-values-table context)
+                :events (%context-events-list context)
+                :effects (%context-effects-list context)
+                :trace (%context-trace-list context)
                 :metadata (context-metadata context)
-                :effect-handlers (context-effect-handlers context)
+                :effect-handlers (%context-effect-handler-table context)
                 :result (context-result context)
                 :state (context-state context)))
 

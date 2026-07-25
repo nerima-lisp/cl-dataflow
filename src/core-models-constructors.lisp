@@ -40,6 +40,7 @@
     (when trace
       (setf (context-trace context) trace))
     (when effect-handlers
-      (setf (context-effect-handlers context)
-            (%copy-effect-handlers effect-handlers)))
+      ;; (SETF CONTEXT-EFFECT-HANDLERS) copies the table itself, like every
+      ;; other setter used here, so no second %COPY-EFFECT-HANDLERS is needed.
+      (setf (context-effect-handlers context) effect-handlers))
     context))

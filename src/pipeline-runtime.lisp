@@ -227,7 +227,9 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
     :graph
     (pipeline-graph pipeline)
     :stages
-    (pipeline-stages pipeline)
+    ;; MAKE-PIPELINE runs %REMAP-PIPELINE-STAGES over this, which already builds
+    ;; a fresh list, so PIPELINE-STAGES' defensive COPY-LIST would be discarded.
+    (%pipeline-stages-list pipeline)
     :metadata
     (pipeline-metadata pipeline)))
 
