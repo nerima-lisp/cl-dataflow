@@ -116,6 +116,7 @@ helpers, all behind a single public package."
                 (:file "pipeline-dsl-test")
                 (:file "pipeline-runtime-contract-test")
                 (:file "pipeline-runtime-structure-test")
+                (:file "pipeline-runtime-plan-cache-test")
                 (:file "pipeline-runtime-execution-test")
                 (:file "pipeline-runtime-branching-test")
                 (:file "cl-weave-advanced-test")
