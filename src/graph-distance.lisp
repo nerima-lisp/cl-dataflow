@@ -1,52 +1,12 @@
 (in-package #:cl-dataflow)
 
-;;;; Whole-graph connectivity predicates, the strongly-connected-component
-;;;; condensation, and single-source distance metrics. These build on the
-;;;; component and adjacency machinery and stay iterative; the condensation is
-;;;; always a DAG (a cycle would contradict the components being maximal).
-
-(defun graph-connected-p (graph)
-  "Return true when GRAPH is weakly connected -- all nodes lie in one component
-(edge direction ignored). The empty graph and a single node are connected."
-  (<= (length (graph-connected-components graph)) 1))
-
-(defun graph-strongly-connected-p (graph)
-  "Return true when GRAPH is strongly connected -- every node reaches every other,
-i.e. it has at most one strongly connected component. The empty graph and a single
-node qualify."
-  (<= (length (graph-strongly-connected-components graph)) 1))
-
-(defun graph-self-loop-nodes (graph)
-  "Return the names of nodes carrying a self-loop edge, ordered lexicographically."
-  (sort (remove-duplicates
-         (loop for edge in (%graph-edges-list graph)
-               when (equal (edge-from edge) (edge-to edge))
-               collect (edge-from edge))
-         :test #'equal)
-        #'string<))
-
-(defun graph-condensation (graph)
-  "Return the condensation of GRAPH: a new DAG with one node per strongly connected
-component (named by the component's smallest member, with the full member list in
-its `:members` metadata) and an edge between components wherever an original edge
-crosses between them. GRAPH is not modified."
-  (let ((representative (make-hash-table :test #'equal))
-        (result (make-graph :metadata (graph-metadata graph))))
-    (dolist (component (graph-strongly-connected-components graph))
-      (let ((rep (first component)))
-        (dolist (member component)
-          (setf (gethash member representative) rep))
-        (add-node result (make-node rep :metadata (list :members component)))))
-    (let ((seen (make-hash-table :test #'equal)))
-      (dolist (edge (%graph-edges-list graph))
-        (let ((from-rep (gethash (edge-from edge) representative))
-              (to-rep (gethash (edge-to edge) representative)))
-          (unless (equal from-rep to-rep)
-            (let ((key (cons from-rep to-rep)))
-              (unless (gethash key seen)
-                (setf (gethash key seen) t)
-                (add-edge result from-rep to-rep)))))))
-    result))
+;;;; Single-source unweighted-hop-distance family: BFS/DFS visit order,
+;;;; eccentricity, diameter/radius/center/periphery (schema-driven from
+;;;; %GRAPH-ECCENTRICITIES), closeness and Brandes' betweenness centrality,
+;;;; the Wiener index and average path length, and GRAPH-DISTANCE itself.
+;;;; %BFS-HOP-DISTANCES is the one shared breadth-first walk both
+;;;; GRAPH-DISTANCE (which stops early once its target is settled) and
+;;;; GRAPH-DISTANCES-FROM (which runs to exhaustion) drive.
 
 (defun graph-distances-from (graph from)
   "Return an alist (NAME . HOP-DISTANCE) of every node reachable from FROM through
@@ -54,26 +14,10 @@ one or more edges, via breadth-first search. FROM itself appears only when a cyc
 returns to it. Ordered by name."
   (let ((from-name (%node-designator-name from)))
     (%ensure-graph-node graph from-name)
-    (let ((successors (%graph-adjacency graph (%graph-rulebase graph)))
-          (distance (make-hash-table :test #'equal))
-          (frontier '())
-          (depth 1))
-      ;; FROM's successors are distinct and DISTANCE starts empty, so no seed
-      ;; needs a presence guard (see GRAPH-DISTANCE).
-      (dolist (successor (gethash from-name successors))
-        (setf (gethash successor distance) depth)
-        (push successor frontier))
-      (setf frontier (nreverse frontier))
-      (loop while frontier do
-        (incf depth)
-        (let ((next '()))
-          (dolist (name frontier)
-            (dolist (successor (gethash name successors))
-              (unless (gethash successor distance)
-                (setf (gethash successor distance) depth)
-                (push successor next))))
-          (setf frontier (nreverse next))))
-      (sort (loop for name being the hash-keys of distance using (hash-value d)
+    (let ((distances (%bfs-hop-distances
+                       (%graph-adjacency graph (%graph-rulebase graph))
+                       from-name)))
+      (sort (loop for name being the hash-keys of distances using (hash-value d)
                   collect (cons name d))
             #'string< :key #'car))))
 
@@ -286,3 +230,41 @@ number of reachable ordered pairs of distinct nodes. 0 when no node reaches anot
     (if (zerop count)
         0
         (/ sum count))))
+
+(defun %bfs-hop-distances (successors from-name &optional target-name)
+  "Breadth-first hop distances from FROM-NAME over SUCCESSORS, as a hash table
+mapping each reached name to its distance (FROM-NAME itself only reappears
+through a cycle). When TARGET-NAME is given, the search stops as soon as its
+distance is settled, since GRAPH-DISTANCE only ever needs that one value."
+  (let ((distance (make-hash-table :test #'equal))
+        (frontier '())
+        (depth 1))
+    (dolist (successor (gethash from-name successors))
+      (setf (gethash successor distance) depth)
+      (push successor frontier))
+    (setf frontier (nreverse frontier))
+    (loop
+      (when (and target-name (gethash target-name distance))
+        (return distance))
+      (unless frontier (return distance))
+      (incf depth)
+      (let ((next '()))
+        (dolist (name frontier)
+          (dolist (successor (gethash name successors))
+            (unless (gethash successor distance)
+              (setf (gethash successor distance) depth)
+              (push successor next))))
+        (setf frontier (nreverse next))))))
+
+(defun graph-distance (graph from to)
+  "Return the number of edges on a shortest path from FROM to TO (traversing at
+least one edge), or NIL when TO is unreachable from FROM. FROM = TO resolves only
+through a cycle, matching GRAPH-PATH / GRAPH-REACHABLE-P."
+  (let ((from-name (%node-designator-name from))
+        (to-name (%node-designator-name to)))
+    (%ensure-graph-node graph from-name)
+    (%ensure-graph-node graph to-name)
+    (when (%graph-edges-list graph)
+      (gethash to-name
+               (%bfs-hop-distances (%graph-adjacency graph (%graph-rulebase graph))
+                                   from-name to-name)))))
