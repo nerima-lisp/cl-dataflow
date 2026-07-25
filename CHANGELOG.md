@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `examples/bootstrap.lisp` hand-maintained a duplicate of `cl-dataflow.asd`'s source-file list instead of calling `(asdf:load-system "cl-dataflow")`. It had drifted out of sync with the `graph-algorithms.lisp`/`graph-connectivity.lisp` -> `graph-structure.lisp`/`graph-components.lisp`/`graph-distance.lisp` split earlier in this changelog, silently breaking every one of the 12 examples (all of them load `bootstrap.lisp` first). Replaced the hand-listed files with a plain `asdf:load-system` call, so this class of drift can't recur; verified all 12 examples run to completion again.
+- `tests/test-support-assertions.lisp`'s `is` macro accepted an optional diagnostic `message` argument but `(declare (ignore message))`'d it unconditionally, silently discarding whatever was passed. A `paredit inspect calls` sweep across every one of the suite's 1411 `(is ...)` call sites found exactly one that actually supplied a message (`core-runtime-example-test.lisp`'s example-script timeout check, with a real, non-redundant diagnostic identifying which script and timeout), so this wasn't the widespread problem it first looked like -- but it was a real one at that site. `is` now forwards a supplied message to `cl-weave:fail` on failure instead of discarding it; the other 1410 call sites (which never pass one) are unaffected and keep going through `cl-weave:expect`'s own smart-assertion reporting exactly as before.
 
 ### Changed
 

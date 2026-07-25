@@ -1,8 +1,20 @@
 (in-package #:cl-dataflow.test)
 
-(defmacro is (form &optional (message "Assertion failed"))
-  (declare (ignore message))
-  `(cl-weave:expect ,form :to-be-truthy))
+(defmacro is (form &optional message)
+  "Assert FORM is truthy. Without MESSAGE, delegates entirely to CL-WEAVE:EXPECT's
+own smart-assertion reporting (sub-expression values on failure). With MESSAGE,
+FORM is evaluated once; a truthy result still reports through EXPECT as usual,
+but a failure reports MESSAGE via CL-WEAVE:FAIL instead of EXPECT's generic
+truthiness report -- for the rare assertion where surrounding context (which of
+several checked things failed, what input produced it) isn't visible in FORM's
+own sub-expression values."
+  (if message
+      (let ((result (gensym "RESULT")))
+        `(let ((,result ,form))
+           (if ,result
+               (cl-weave:expect ,result :to-be-truthy)
+               (fail ,message))))
+      `(cl-weave:expect ,form :to-be-truthy)))
 
 (defmatcher :to-have-valid-topological-order (actual expected)
   "Assert that a graph's topological order contains every node and respects every edge."

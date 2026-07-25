@@ -5,6 +5,7 @@
                 #:benchmark-result-samples
                 #:defmatcher
                 #:expect
+                #:fail
                 #:gen-integer
                 #:gen-list
                 #:gen-member
