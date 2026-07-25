@@ -62,11 +62,11 @@
 (defclass state-machine ()
   ((state :initarg :state)
     (initial-state :initarg :initial-state)
-    (transitions :initarg :transitions :initform (quote ()))
+    (transitions :initarg :transitions :initform '())
     (transition-index :initform nil)
-    (history :initarg :history :initform (quote ()))
+    (history :initarg :history :initform '())
     (history-limit :initarg :history-limit :initform nil)
-    (metadata :initarg :metadata :initform (quote ()))))
+    (metadata :initarg :metadata :initform '())))
 
 (progn
   (defclass pipeline-stage-signature ()

@@ -86,7 +86,7 @@ or NIL when none matches. The result is an independent copy."
 MACHINE. Because guard selection picks the first matching transition, appended
 transitions act as lower-priority fallbacks relative to existing ones."
   (setf (state-machine-transitions machine) (append
-      (slot-value machine (quote transitions))
+      (slot-value machine 'transitions)
       (list
         (make-transition
           from
@@ -119,7 +119,7 @@ return MACHINE."
               (transition-from transition)
               (transition-event-type transition)
               (transition-to transition))))
-        (slot-value machine (quote transitions))))
+        (slot-value machine 'transitions)))
     machine))
 
 (defun state-machine->graph (machine)

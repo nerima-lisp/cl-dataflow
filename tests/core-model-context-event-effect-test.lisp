@@ -107,7 +107,7 @@
     (is (equal (event-payload event) '(:id 1)))
     (is (equal (event-metadata event) '((:kind :event))))))
 
-(define-copy-rejects-non-value-test copy-event-rejects-non-event-values (copy-event (quote not-an-event)) (quote event) (quote not-an-event))
+(define-copy-rejects-non-value-test copy-event-rejects-non-event-values (copy-event 'not-an-event) 'event 'not-an-event)
 
 (deftest copy-effect-produces-independent-effect
   (let* ((effect (make-effect "audit"
@@ -144,4 +144,4 @@
     (is (equal (effect-metadata effect) '((:kind :effect))))
     (is (equal (effect-result effect) '(:handled (:message "ok"))))))
 
-(define-copy-rejects-non-value-test copy-effect-rejects-non-effect-values (copy-effect (quote not-an-effect)) (quote effect) (quote not-an-effect))
+(define-copy-rejects-non-value-test copy-effect-rejects-non-effect-values (copy-effect 'not-an-effect) 'effect 'not-an-effect)

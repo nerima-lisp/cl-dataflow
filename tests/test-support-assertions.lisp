@@ -39,19 +39,18 @@
       (is ,var)
       ,@assertions))
 
-(progn
-  (defmacro %assert-plist-pairs (entry-name &rest expected-pairs)
-    `(progn
-        ,@(mapcar (lambda (expected-pair)
-                    (destructuring-bind (key expected-value) expected-pair
-                      `(is (equal (getf ,entry-name ,key) ,expected-value))))
-                  expected-pairs)
-        t))
+(defmacro %assert-plist-pairs (entry-name &rest expected-pairs)
+  `(progn
+      ,@(mapcar (lambda (expected-pair)
+                  (destructuring-bind (key expected-value) expected-pair
+                    `(is (equal (getf ,entry-name ,key) ,expected-value))))
+                expected-pairs)
+      t))
 
-  (defmacro assert-plist-entry (entry &rest expected-pairs)
-    (let ((entry-name (gensym "ENTRY-")))
-      `(let ((,entry-name ,entry))
-          (%assert-plist-pairs ,entry-name ,@expected-pairs)))))
+(defmacro assert-plist-entry (entry &rest expected-pairs)
+  (let ((entry-name (gensym "ENTRY-")))
+    `(let ((,entry-name ,entry))
+        (%assert-plist-pairs ,entry-name ,@expected-pairs))))
 
 (defmacro assert-plist-entries (entries &rest expected-pairs)
   (let ((entry-name (gensym "ENTRY-")))
@@ -64,20 +63,19 @@
 (defmacro assert-transition-records (records &rest expected-pairs)
   `(assert-plist-entries ,records ,@expected-pairs))
 
-(progn
-  (defmacro assert-context-trace-entry (context index &rest expected-pairs)
-    `(assert-plist-entry (nth ,index (context-trace ,context)) ,@expected-pairs))
+(defmacro assert-context-trace-entry (context index &rest expected-pairs)
+  `(assert-plist-entry (nth ,index (context-trace ,context)) ,@expected-pairs))
 
-  (defmacro assert-context-trace-entries (context &rest clauses)
-    `(progn
-        ,@(mapcar (lambda (clause)
-                    (destructuring-bind (index &rest expected-pairs) clause
-                      `(assert-context-trace-entry ,context ,index ,@expected-pairs)))
-                  clauses)
-        t))
+(defmacro assert-context-trace-entries (context &rest clauses)
+  `(progn
+      ,@(mapcar (lambda (clause)
+                  (destructuring-bind (index &rest expected-pairs) clause
+                    `(assert-context-trace-entry ,context ,index ,@expected-pairs)))
+                clauses)
+      t))
 
-  (defmacro assert-context-first-trace-entry (context &rest expected-pairs)
-    `(assert-context-trace-entry ,context 0 ,@expected-pairs)))
+(defmacro assert-context-first-trace-entry (context &rest expected-pairs)
+  `(assert-context-trace-entry ,context 0 ,@expected-pairs))
 
 (defmacro set-plist-entry (place key value)
   `(setf (getf ,place ,key) ,value))

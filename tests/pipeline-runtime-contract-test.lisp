@@ -219,69 +219,12 @@
         (assert-context-first-trace-entry context (:input expected))
         (assert-pipeline-result context :ok)))))
 
-(progn
-  (deftest
-    pipeline-normalizes-structured-node-outputs
-    (let ((expected '(("left" . 11) ("right" . 22))))
-      (do-structured-value-variants
-        (output expected)
-        (let ((stage
-              (make-node
-                "stage"
-                :outputs
-                '("left" "right")
-                :handler
-                (lambda (input context)
-                  (declare (ignore input context))
-                  output))))
-          (let ((context
-                (run-pipeline-with-test-context (make-pipeline :stages (list stage)) :input nil)))
-            (is (equal (context-result context) expected))
-            (is
-              (equal
-                (context-value context "stage" "left")
-                (cdr (assoc "left" expected :test #'equal))))
-            (is
-              (equal
-                (context-value context "stage" "right")
-                (cdr (assoc "right" expected :test #'equal)))))))))
-  (deftest
-    pipeline-run-uses-run-start-key-snapshot
-    (let (source
-          sink)
-      (setf source (make-node
-          "source"
-          :outputs
-          (quote ("value"))
-          :handler
-          (lambda (input context)
-            (declare (ignore input context))
-            (setf (node-name source) "renamed-source"
-                  (node-outputs source) (quote ("renamed-value")))
-            41))
-            sink (make-node
-          "sink"
-          :inputs
-          (quote ("value"))
-          :outputs
-          (quote ("result"))
-          :handler
-          (lambda (input context)
-            (declare (ignore context))
-            (setf (node-name sink) "renamed-sink"
-                  (node-outputs sink) (quote ("renamed-result")))
-            (1+ input))))
-      (let ((context
-            (run-pipeline-with-test-context
-              (make-pipeline :stages (list source sink))
-              :input
-              nil)))
-        (is (= (context-result context) 42))
-        (is (= (context-value context "source" "value") 41))
-        (is (= (context-value context "sink" "result") 42)))))
-  (deftest
-    pipeline-maps-reversed-plist-outputs-by-port-name
-    (let* ((stage
+(deftest
+  pipeline-normalizes-structured-node-outputs
+  (let ((expected '(("left" . 11) ("right" . 22))))
+    (do-structured-value-variants
+      (output expected)
+      (let ((stage
             (make-node
               "stage"
               :outputs
@@ -289,31 +232,90 @@
               :handler
               (lambda (input context)
                 (declare (ignore input context))
-                '(:right 22 :left 11))))
-            (context
-            (run-pipeline-with-test-context
-              (make-pipeline :stages (list stage))
-              :input
-              nil)))
-      (is (= (context-value context "stage" "left") 11))
-      (is (= (context-value context "stage" "right") 22))))
-  (deftest
-    context-values-keys-do-not-share-pipeline-plan-strings
-    (let* ((stage
-            (make-node
-              "stage"
-              :handler
-              (lambda (input context)
-                (declare (ignore input context))
-                41)))
-            (pipeline (make-pipeline :stages (list stage)))
-            (first-context (run-pipeline-with-test-context pipeline :input nil))
-            (public-values (context-values first-context))
-            (public-key
-            (loop for key being the hash-keys of public-values
-                  return key)))
-      (setf (char (first public-key) 0) #\X)
-      (is (= (context-value first-context "stage" "value") 41))
-      (let ((second-context (run-pipeline-with-test-context pipeline :input nil)))
-        (is (= (context-result second-context) 41))
-        (is (= (context-value second-context "stage" "value") 41))))))
+                output))))
+        (let ((context
+              (run-pipeline-with-test-context (make-pipeline :stages (list stage)) :input nil)))
+          (is (equal (context-result context) expected))
+          (is
+            (equal
+              (context-value context "stage" "left")
+              (cdr (assoc "left" expected :test #'equal))))
+          (is
+            (equal
+              (context-value context "stage" "right")
+              (cdr (assoc "right" expected :test #'equal)))))))))
+
+(deftest
+  pipeline-run-uses-run-start-key-snapshot
+  (let (source
+        sink)
+    (setf source (make-node
+        "source"
+        :outputs
+        '("value")
+        :handler
+        (lambda (input context)
+          (declare (ignore input context))
+          (setf (node-name source) "renamed-source"
+                (node-outputs source) '("renamed-value"))
+          41))
+          sink (make-node
+        "sink"
+        :inputs
+        '("value")
+        :outputs
+        '("result")
+        :handler
+        (lambda (input context)
+          (declare (ignore context))
+          (setf (node-name sink) "renamed-sink"
+                (node-outputs sink) '("renamed-result"))
+          (1+ input))))
+    (let ((context
+          (run-pipeline-with-test-context
+            (make-pipeline :stages (list source sink))
+            :input
+            nil)))
+      (is (= (context-result context) 42))
+      (is (= (context-value context "source" "value") 41))
+      (is (= (context-value context "sink" "result") 42)))))
+
+(deftest
+  pipeline-maps-reversed-plist-outputs-by-port-name
+  (let* ((stage
+          (make-node
+            "stage"
+            :outputs
+            '("left" "right")
+            :handler
+            (lambda (input context)
+              (declare (ignore input context))
+              '(:right 22 :left 11))))
+          (context
+          (run-pipeline-with-test-context
+            (make-pipeline :stages (list stage))
+            :input
+            nil)))
+    (is (= (context-value context "stage" "left") 11))
+    (is (= (context-value context "stage" "right") 22))))
+
+(deftest
+  context-values-keys-do-not-share-pipeline-plan-strings
+  (let* ((stage
+          (make-node
+            "stage"
+            :handler
+            (lambda (input context)
+              (declare (ignore input context))
+              41)))
+          (pipeline (make-pipeline :stages (list stage)))
+          (first-context (run-pipeline-with-test-context pipeline :input nil))
+          (public-values (context-values first-context))
+          (public-key
+          (loop for key being the hash-keys of public-values
+                return key)))
+    (setf (char (first public-key) 0) #\X)
+    (is (= (context-value first-context "stage" "value") 41))
+    (let ((second-context (run-pipeline-with-test-context pipeline :input nil)))
+      (is (= (context-result second-context) 41))
+      (is (= (context-value second-context "stage" "value") 41)))))

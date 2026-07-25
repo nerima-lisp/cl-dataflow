@@ -137,8 +137,8 @@
         (let ((trace (context-trace-in-order context)))
           (is
             (equal
-              (mapcar (function cl-dataflow::%trace-entry-kind) trace)
-              (quote (:node :event :effect :node))))
+              (mapcar #'cl-dataflow::%trace-entry-kind trace)
+              '(:node :event :effect :node)))
           (is (= (event-trace-index emitted) 1))
           (is (= (effect-trace-index performed) 2))
           (is (= (getf (second trace) :trace-index) 1))
@@ -200,7 +200,7 @@
             (push :later seen))))
           (pipeline (make-pipeline :stages (list first failing later))))
     (signals simple-error (run-pipeline pipeline :context context))
-    (is (equal (nreverse seen) (quote (:first :failing))))
+    (is (equal (nreverse seen) '(:first :failing)))
     (is (eq (context-result context) :not-finalized))
     (is (= (length (context-trace-in-order context)) 1))))
 

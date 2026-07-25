@@ -204,16 +204,16 @@
 
 (deftest
   stream-distinct-accepts-standard-function-designators
-  (dolist (test (list (quote eql) (function eql) (quote equalp) (function equalp)))
+  (dolist (test (list 'eql #'eql 'equalp #'equalp))
     (is
       (equal
         (stream-collect (stream-distinct (stream-of 1 1.0 2 2.0) :test test))
-        (if (member test (list (quote equalp) (function equalp)) :test (function eq)) (list 1 2)
+        (if (member test (list 'equalp #'equalp) :test #'eq) (list 1 2)
           (list 1 1.0 2 2.0))))))
 
 (deftest
   stream-distinct-preserves-custom-test-exploration
-  (let ((calls (quote ())))
+  (let ((calls '()))
     (is
       (equal
         (stream-collect
@@ -223,13 +223,13 @@
             (lambda (candidate existing)
               (push (list candidate existing) calls)
               (eql candidate existing))))
-        (quote (1 2))))
-    (is (equal (nreverse calls) (quote ((2 1) (1 2) (1 1)))))))
+        '(1 2)))
+    (is (equal (nreverse calls) '((2 1) (1 2) (1 1))))))
 
 (deftest
   stream-distinct-retains-mutable-equal-semantics
   (let* ((value (copy-seq "a"))
-          (distinct (stream-distinct (stream-of value "a" "b") :test (quote equal)))
+          (distinct (stream-distinct (stream-of value "a" "b") :test 'equal))
           (first-step (cl-dataflow::%stream-step distinct)))
     (is (eq (car first-step) value))
     (setf (char value 0) #\b)
@@ -241,18 +241,18 @@
   (is
     (equal
       (stream-collect (stream-distinct (stream-of 1 1 2 2) :max-distinct 2))
-      (quote (1 2))))
+      '(1 2)))
   (handler-case (progn
       (stream-collect (stream-distinct (stream-of 1) :max-distinct 0))
       (is nil))
     (invalid-input-error (condition)
-      (is (equal (invalid-input-expected condition) (quote (:at-most 0))))
+      (is (equal (invalid-input-expected condition) '(:at-most 0)))
       (is (eql (invalid-input-value condition) 0))
       (is
         (string= (invalid-input-detail condition) "STREAM-DISTINCT exceeded limit 0.")))))
 
 (deftest
   stream-distinct-can-recollect-the-same-derived-stream
-  (let ((distinct (stream-distinct (stream-of 1 2 1 3 2) :test (function eql))))
-    (is (equal (stream-collect distinct) (quote (1 2 3))))
-    (is (equal (stream-collect distinct) (quote (1 2 3))))))
+  (let ((distinct (stream-distinct (stream-of 1 2 1 3 2) :test #'eql)))
+    (is (equal (stream-collect distinct) '(1 2 3)))
+    (is (equal (stream-collect distinct) '(1 2 3)))))
