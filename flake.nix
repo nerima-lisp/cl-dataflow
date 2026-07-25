@@ -49,6 +49,35 @@
               || pkgs.lib.hasSuffix ".core" (builtins.baseNameOf path)
             );
         };
+
+      mkDocs =
+        pkgs:
+        pkgs.stdenvNoCC.mkDerivation {
+          pname = "cl-dataflow-docs";
+          version = "0.3.0";
+          src = pkgs.lib.fileset.toSource {
+            root = ./docs;
+            fileset = pkgs.lib.fileset.unions [
+              ./docs/mkdocs.yml
+              ./docs/src
+            ];
+          };
+          nativeBuildInputs = [ pkgs.python3Packages.mkdocs-material ];
+          # Build fully offline: Material for MkDocs bundles all of its assets,
+          # so no network access is required inside the Nix sandbox. --strict
+          # promotes broken links and unlisted pages to build failures.
+          buildPhase = ''
+            runHook preBuild
+            mkdocs build --strict --config-file mkdocs.yml --site-dir "$out"
+            runHook postBuild
+          '';
+          dontInstall = true;
+          meta = {
+            description = "Rendered MkDocs (Material) documentation for cl-dataflow";
+            homepage = "https://github.com/nerima-lisp/cl-dataflow";
+            license = pkgs.lib.licenses.mit;
+          };
+        };
     in
     {
       formatter = forAllSystems (pkgs: pkgs.nixfmt);
@@ -64,6 +93,8 @@
             cp -R . "$out/share/common-lisp/source/cl-dataflow"
           '';
         };
+
+        docs = mkDocs pkgs;
       });
 
       checks = forAllSystems (

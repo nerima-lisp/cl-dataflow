@@ -19,7 +19,7 @@ security fixes. Upgrade to the newest tag before reporting an issue.
 Please report vulnerabilities privately using GitHub's private vulnerability
 reporting:
 
-1. Open <https://github.com/takeokunn/cl-dataflow/security/advisories/new>.
+1. Open <https://github.com/nerima-lisp/cl-dataflow/security/advisories/new>.
 2. Or go to the repository's **Security** tab and choose **Report a vulnerability**.
 
 Do not open a public issue for a suspected vulnerability.

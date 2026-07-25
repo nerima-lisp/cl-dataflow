@@ -9,9 +9,9 @@ helpers, all behind a single public package."
   :maintainer "takeokunn"
   :license "MIT"
   :version "0.3.0"
-  :homepage "https://github.com/takeokunn/cl-dataflow"
-  :source-control (:git "https://github.com/takeokunn/cl-dataflow.git")
-  :bug-tracker "https://github.com/takeokunn/cl-dataflow/issues"
+  :homepage "https://github.com/nerima-lisp/cl-dataflow"
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
+  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
   :depends-on (#:cl-prolog)
   :serial t
   :pathname "src/"
@@ -81,7 +81,7 @@ helpers, all behind a single public package."
   :maintainer "takeokunn"
   :license "MIT"
   :version "0.3.0"
-  :homepage "https://github.com/takeokunn/cl-dataflow"
+  :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :depends-on (#:cl-dataflow
                 #:cl-weave
                 #:cl-process-kit)

@@ -1,6 +1,6 @@
 # cl-dataflow
 
-[![CI](https://github.com/takeokunn/cl-dataflow/actions/workflows/ci.yml/badge.svg)](https://github.com/takeokunn/cl-dataflow/actions/workflows/ci.yml)
+[![CI](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml/badge.svg)](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-brightgreen.svg)](CHANGELOG.md)
 [![SBCL](https://img.shields.io/badge/SBCL-supported-red.svg)](http://www.sbcl.org/)

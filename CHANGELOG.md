@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- No changes yet.
+### Added
+
+- Published a MkDocs (Material) documentation site under `docs/`, built with `nix build .#docs` and deployed by `.github/workflows/docs.yml`.
+
+### Changed
+
+- Fixed stray `github.com/takeokunn/cl-dataflow` URLs left over from the `nerima-lisp` org migration across `README.md`, `CHANGELOG.md`, `SECURITY.md`, `cl-dataflow.asd`, `.github/ISSUE_TEMPLATE/config.yml`, and the MkDocs documentation site.
 
 ## [0.3.0] - 2026-07-24
 
@@ -121,7 +127,7 @@ public package.
 - Fixed guarded state-machine transition selection: when several transitions share a `(state, event)` pair, a rejecting guard now falls through to the next candidate, and `guard-failed-error` is signalled only when every matching guard rejects. `state-machine-can-step-p` uses the same guard-aware selection.
 - Fixed `define-pipeline` and `define-workflow` to evaluate a `:metadata`/`:pipeline-metadata` form once instead of twice, and to gensym their internal `graph`, `edge`, and `machine` bindings so user handler/guard/action forms can no longer capture them.
 
-[Unreleased]: https://github.com/takeokunn/cl-dataflow/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/takeokunn/cl-dataflow/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/takeokunn/cl-dataflow/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/takeokunn/cl-dataflow/releases/tag/v0.1.0
+[Unreleased]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/nerima-lisp/cl-dataflow/releases/tag/v0.1.0
