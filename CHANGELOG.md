@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- No changes yet.
+
+## [0.4.0] - 2026-07-25
+
+A quality and correctness release building on 0.3.0. The public API is
+unchanged; documentation and test coverage grew, dozens of small internal
+duplication/readability fixes landed, and two families of whole-graph metric
+functions that had silently regressed from O(V+E) to O(V*(V+E)) were fixed.
+The suite is at 514 tests with the 100% branch coverage gate held throughout.
+
 ### Added
 
 - Published a MkDocs (Material) documentation site under `docs/`, built with `nix build .#docs` and deployed by `.github/workflows/docs.yml`.
@@ -54,6 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `graph-max-flow` and `graph-min-cut` (`graph-flow.lisp`) each independently resolved and validated their SOURCE/SINK arguments and defaulted CAPACITY-KEY/DEFAULT-CAPACITY with an identical 5-line preamble before diverging into Edmonds-Karp's max-flow value versus the residual-graph cut extraction. Extracted the shared preamble into `%resolve-flow-endpoints`; each caller's own trivial-case return value (`0` vs `'()`) and post-search logic are untouched.
 - `graph-topological-rank` (`graph-closure.lisp`) hand-wrote its own longest-path dynamic program, computing exactly the same per-node distance table `%longest-path-dp` (used by `graph-longest-path`) already produces -- RANK and longest-path distance are the same quantity by definition. Reordered `%longest-path-dp` before `graph-topological-rank` in the file and had the latter call it directly, discarding the path-reconstruction table it doesn't need. One dynamic-program implementation instead of two that could silently drift apart under a future edit.
 - `subject-zip` (`reactive-ops.lisp`) hand-rolled two independent tail-pointer FIFO queues (one per source subject) with the exact enqueue logic `with-fifo-queue` (`graph-structure.lisp`, already used by every BFS in the graph layer) already implements. Switched to nesting `with-fifo-queue` once per source; the hand-written manual tail-pointer reset on dequeue was already redundant even in the original code (the macro's own enqueue closure decides whether to reset by checking the queue itself, not a possibly-stale tail pointer), so nothing needed to be preserved beyond it. `subject-combine-latest`, which tracks only a single latest value per source rather than a queue, correctly does not use this pattern.
+
+### Performance
+
+- `graph-average-clustering`, the diameter/radius/center/periphery family, and the Wiener-index/average-path-length family (`graph-metrics.lisp`, `graph-distance.lisp`) each looped a per-node public function that rebuilt the whole graph's adjacency (or Prolog rulebase and bulk query) from scratch per node, turning an O(V+E) traversal into O(V*(V+E)). Extracted the shared per-node computation (`%clustering-coefficient-for-sets`, `%hop-distances-alist-from-successors`, `%eccentricity-from-successors`) so each whole-graph caller builds adjacency once and reuses it across every node; `graph->mermaid` and `write-state-machine-mermaid`'s `id-for` lookup switched from an O(V) `assoc` scan over a growing alist to an O(1) hash table for the same reason. Measured on an 800-node/~3200-edge graph: `graph-average-clustering` ~850x faster (9.35s -> 0.011s), the diameter family ~44x (4.64s -> 0.105s), the Wiener-index family ~23x (4.63s -> 0.20s); behavior, including deterministic ordering, is unchanged (514/514 tests pass).
+
+## [0.3.0] - 2026-07-24
 
 A structural and performance release. The public API is unchanged; the internals
 were reorganized for readability and the hot paths were optimized, with the
@@ -165,7 +181,8 @@ public package.
 - Fixed guarded state-machine transition selection: when several transitions share a `(state, event)` pair, a rejecting guard now falls through to the next candidate, and `guard-failed-error` is signalled only when every matching guard rejects. `state-machine-can-step-p` uses the same guard-aware selection.
 - Fixed `define-pipeline` and `define-workflow` to evaluate a `:metadata`/`:pipeline-metadata` form once instead of twice, and to gensym their internal `graph`, `edge`, and `machine` bindings so user handler/guard/action forms can no longer capture them.
 
-[Unreleased]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/nerima-lisp/cl-dataflow/releases/tag/v0.1.0

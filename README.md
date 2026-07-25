@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml/badge.svg)](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-brightgreen.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-brightgreen.svg)](CHANGELOG.md)
 [![SBCL](https://img.shields.io/badge/SBCL-supported-red.svg)](http://www.sbcl.org/)
 
 `cl-dataflow` is a small Common Lisp library for composable computation graphs, pipelines, event-driven workflows, state machines, and effect boundaries.

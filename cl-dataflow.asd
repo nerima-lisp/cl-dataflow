@@ -8,7 +8,7 @@ helpers, all behind a single public package."
   :author "takeokunn"
   :maintainer "takeokunn"
   :license "MIT"
-  :version "0.3.0"
+  :version "0.4.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
@@ -81,7 +81,7 @@ helpers, all behind a single public package."
   :author "takeokunn"
   :maintainer "takeokunn"
   :license "MIT"
-  :version "0.3.0"
+  :version "0.4.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :depends-on (#:cl-dataflow
                 #:cl-weave
