@@ -124,6 +124,49 @@ Usage: (expect graph :to-reach from to)."
         (is (equal expected-descendants actual-descendants))
         (is (equal expected-ancestors actual-ancestors))))))
 
+;;; ---------------------------------------------------------------------------
+;;; Cross-checking against cl-weave's logic-programming engine
+;;;
+;;; The BFS reference above and GRAPH-DESCENDANTS/-ANCESTORS themselves (which
+;;; materialize into a CL-PROLOG rulebase; see GRAPH-RUNTIME-PROLOG.LISP) both
+;;; compute a transitive closure, but neither is independent of the other's
+;;; general shape. cl-weave ships its own small unification/backtracking logic
+;;; engine (LOGIC-QUERY); querying a recursive REACHABLE rule over it is a
+;;; third, structurally unrelated implementation of the same relation, so it
+;;; makes a stronger oracle than one more hand-rolled traversal would.
+;;; ---------------------------------------------------------------------------
+
+(defun %edge-facts (edge-pairs)
+  (mapcar (lambda (pair) (list :edge (car pair) (cdr pair))) edge-pairs))
+
+(defparameter +reachable-rules+
+  (list '(:- (:reachable ?a ?b) (:edge ?a ?b))
+        '(:- (:reachable ?a ?b) (:edge ?a ?m) (:reachable ?m ?b)))
+  "REACHABLE/2 defined the standard Datalog way: a base case over direct edges,
+and a recursive case that walks one edge and defers back to itself.")
+
+(defun %logic-descendant-indices (edge-pairs from-index)
+  (let ((solutions
+          (logic-query (append (%edge-facts edge-pairs) +reachable-rules+)
+                       (list (list :reachable from-index '?to)))))
+    (remove-duplicates (mapcar (lambda (solution) (cdr (assoc '?to solution))) solutions))))
+
+(it-property "graph-descendants agrees with a cl-weave logic-program transitive closure"
+    ((node-count (gen-integer :min 2 :max 8))
+     (raw-pairs (gen-list (gen-tuple (gen-integer :min 0 :max 20)
+                                     (gen-integer :min 0 :max 20))
+                          :min-length 0 :max-length 20)))
+  (let* ((edge-pairs (%forward-edge-pairs node-count raw-pairs))
+         (graph (%build-dag node-count edge-pairs)))
+    (dotimes (v node-count)
+      (let ((expected
+              (sort (mapcar #'%node-label (%logic-descendant-indices edge-pairs v))
+                    #'string<))
+            (actual
+              (sort (mapcar #'node-name (graph-descendants graph (%node-label v)))
+                    #'string<)))
+        (is (equal expected actual))))))
+
 (defun %label-index (label)
   (parse-integer (subseq label 1)))
 

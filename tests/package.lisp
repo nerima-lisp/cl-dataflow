@@ -11,6 +11,7 @@
                 #:gen-state-machine
                 #:gen-tuple
                 #:it-property
+                #:logic-query
                 #:mean-ms
                 #:mutation-summary
                 #:run-mutations

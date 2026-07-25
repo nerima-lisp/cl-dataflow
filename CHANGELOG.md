@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Published a MkDocs (Material) documentation site under `docs/`, built with `nix build .#docs` and deployed by `.github/workflows/docs.yml`.
+- A property test (`graph-advanced-property-test.lisp`) cross-checks `graph-descendants` against `cl-weave:logic-query`, a small unification/backtracking Datalog-style engine the codebase hadn't used before. A recursive `REACHABLE/2` rule over `:edge` facts derived from the same random DAG is queried directly (the program is generated per test case, so it's built with the `logic-query` function rather than the `logic-program`/`logic-run` macros, which require literal syntax). This is a genuinely independent third implementation of graph transitive closure -- distinct from both the hand-rolled BFS reference already in this file and from `graph-descendants` itself, which materializes into a `cl-prolog` rulebase (`graph-runtime-prolog.lisp`) -- so it catches a class of bug neither existing oracle could (one specific to the traversal *shape* both share).
 
 ### Fixed
 
