@@ -5,27 +5,30 @@
 ;;;; list, so a sequence of occurrences can be described declaratively and emitted
 ;;;; in order.
 
+(defun %emit-specs (context specs emit-one)
+  "Call EMIT-ONE -- a function of the same (CONTEXT TYPE &KEY PAYLOAD METADATA)
+signature as EMIT-EVENT/PERFORM-EFFECT -- once per element of SPECS on CONTEXT, in
+order, returning the results. Each spec is either a type designator or a
+(TYPE &KEY PAYLOAD METADATA) list; EMIT-EVENTS and PERFORM-EFFECTS both drive this
+same batch shape over their own single-item function."
+  (mapcar (lambda (spec)
+            (if (consp spec)
+                (destructuring-bind (type &key payload metadata) spec
+                  (funcall emit-one context type :payload payload :metadata metadata))
+                (funcall emit-one context spec)))
+          specs))
+
 (defun emit-events (context specs)
   "Emit one event per element of SPECS on CONTEXT, in order, returning the list of
 events. Each spec is either a type designator or a (TYPE &KEY PAYLOAD METADATA)
 list."
-  (mapcar (lambda (spec)
-            (if (consp spec)
-                (destructuring-bind (type &key payload metadata) spec
-                  (emit-event context type :payload payload :metadata metadata))
-                (emit-event context spec)))
-          specs))
+  (%emit-specs context specs #'emit-event))
 
 (defun perform-effects (context specs)
   "Perform one effect per element of SPECS on CONTEXT, in order, returning the list
 of effects. Each spec is either a type designator or a (TYPE &KEY PAYLOAD METADATA)
 list. Every effect type must have a registered handler."
-  (mapcar (lambda (spec)
-            (if (consp spec)
-                (destructuring-bind (type &key payload metadata) spec
-                  (perform-effect context type :payload payload :metadata metadata))
-                (perform-effect context spec)))
-          specs))
+  (%emit-specs context specs #'perform-effect))
 
 (defun context-effect-results (context)
   "Return the results of every effect performed on CONTEXT, in chronological order."
