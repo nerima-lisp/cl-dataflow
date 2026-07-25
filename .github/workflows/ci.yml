@@ -1,73 +1,51 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Supersede in-flight runs for the same PR; never cancel a push to the default
+# branch.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  nix:
-    name: nix (${{ matrix.system }})
-    runs-on: ${{ matrix.os }}
+  # One job on purpose. Granularity belongs in the flake's `checks.*`
+  # attributes, which `nix flake check` evaluates in parallel with build
+  # caching. Splitting these into separate GitHub jobs would duplicate that
+  # scheduling and lose cache sharing between them.
+  #
+  # Add a second job ONLY for work the Nix sandbox cannot do: network access,
+  # a real PTY/TTY, artifact upload, or a different runner OS.
+  check:
+    name: nix flake check
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            system: x86_64-linux
-          - os: macos-latest
-            system: aarch64-darwin
-    env:
-      CACHIX_CACHE: ${{ vars.CACHIX_CACHE }}
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
+      # persist-credentials: false — this job runs untrusted PR code via
+      # `nix flake check`, and never needs the token, so don't leave it in
+      # .git/config for that code to read.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          extra_nix_config: |
-            experimental-features = nix-command flakes
+          persist-credentials: false
 
-      - name: Configure Cachix (pull-only)
-        if: ${{ env.CACHIX_CACHE != '' && env.CACHIX_AUTH_TOKEN == '' }}
-        uses: cachix/cachix-action@v17
+      - uses: ./.github/actions/nix-setup
         with:
-          name: ${{ env.CACHIX_CACHE }}
-          extraPullNames: nix-community
-          skipPush: true
+          cachix-cache: ${{ vars.CACHIX_CACHE }}
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-      - name: Configure Cachix (push-enabled)
-        if: ${{ env.CACHIX_CACHE != '' && env.CACHIX_AUTH_TOKEN != '' }}
-        uses: cachix/cachix-action@v17
-        with:
-          name: ${{ env.CACHIX_CACHE }}
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
-          extraPullNames: nix-community
+      # Runs the SBCL test suite (checks.default), the treefmt formatting gate
+      # (checks.formatting), and the mkdocs --strict build (checks.docs).
+      # Add `--all-systems` only when the flake declares more than one system.
+      - name: Check flake
+        run: nix flake check --print-build-logs
 
-      - name: Run flake checks
-        run: perl -e 'alarm 1500; exec @ARGV' -- nix flake check --print-build-logs
-
-      - name: Build coverage artifact
-        run: nix build .#checks.${{ matrix.system }}.coverage --print-build-logs
-
-      - name: Export coverage artifact
-        run: cp -R result/ coverage-artifact/
-
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: cl-dataflow-coverage-${{ matrix.system }}
-          path: coverage-artifact/
-          if-no-files-found: error
+      # Catches stray conflict markers and whitespace errors that compile fine.
+      - name: Check diff hygiene
+        run: git diff --check
