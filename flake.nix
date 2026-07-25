@@ -72,7 +72,7 @@
         pkgs:
         pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-dataflow-docs";
-          version = "0.4.0";
+          version = "1.0.0";
           src = pkgs.lib.fileset.toSource {
             root = ./docs;
             fileset = pkgs.lib.fileset.unions [
@@ -103,7 +103,7 @@
       packages = forAllSystems (pkgs: {
         default = pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-dataflow";
-          version = "0.4.0";
+          version = "1.0.0";
           src = sourceFor pkgs;
           dontBuild = true;
           installPhase = ''

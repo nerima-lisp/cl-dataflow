@@ -2,13 +2,19 @@
 
 [![CI](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml/badge.svg)](https://github.com/nerima-lisp/cl-dataflow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-brightgreen.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
 [![SBCL](https://img.shields.io/badge/SBCL-supported-red.svg)](http://www.sbcl.org/)
 
 `cl-dataflow` is a small Common Lisp library for composable computation graphs, pipelines, event-driven workflows, state machines, and effect boundaries.
 
+Full documentation, including guides for every subsystem, lives at
+<https://nerima-lisp.github.io/cl-dataflow/> (sources under `docs/`).
+
 ## Status
 
+- Released as **1.0.0**: every symbol exported from the `cl-dataflow` package is
+  covered by [Semantic Versioning](https://semver.org/spec/v2.0.0.html), so a
+  breaking change to any of them requires a major-version bump.
 - Core graph, pipeline, event, effect, and state-machine primitives are implemented.
 - Runnable examples live under `examples/`.
 - The canonical test system is `cl-dataflow/test`, and `asdf:test-system :cl-dataflow` dispatches to it.
@@ -50,7 +56,7 @@
 | Effect ergonomics | Done | `register-effect-handler`, `context-effect-handler`, `effect-handled-p`, `context-effect-handler-types`, and the `with-effect-handler-scope` macro for scoped handler registration. |
 | Protocols | Done | `flow-name`, `flow-metadata`, and `flow-kind` provide consistent introspection across flow objects. |
 | Testing helpers | Done | Dedicated helpers assert emitted events, effects, final state, state-machine state, and pipeline results. |
-| Runnable examples | Done | Scripts cover a simple pipeline, event workflow, state machine, graph analysis, the graph toolkit, state-machine visualization, resilient pipelines, and streams. |
+| Runnable examples | Done | Scripts cover a simple pipeline, event workflow, state machine, graph analysis (basic and advanced), the graph toolkit, state-machine visualization, resilient pipelines, streams, stream analytics, and an end-to-end integration scenario. |
 | Public API | Stable | `cl-dataflow` is the single exported package. |
 
 ## Install
@@ -165,10 +171,11 @@ Collection-oriented readers such as `graph-nodes`, `graph-edges`, `graph-source-
 `graph-sink-nodes`, `context-values`, `context-events`, `context-effects`,
 `context-trace`, `event-payload`, `event-metadata`, `effect-payload`,
 `effect-metadata`, `effect-result`, `transition-metadata`,
-`state-machine-transitions`, and `pipeline-stages` return independent snapshots.
-Their setters replace the entire live collection.
-`context-effect-handlers` is intentionally mutable and returns the live handler
-table so callers can register handlers directly.
+`state-machine-transitions`, `context-effect-handlers`, and `pipeline-stages`
+return independent snapshots. Their setters replace the entire live collection.
+Because `context-effect-handlers` copies like every other collection reader,
+mutating the table it returns registers nothing; use `register-effect-handler`
+(or the scoped `with-effect-handler-scope`) to register a handler on a context.
 `pipeline-graph` returns the live, validated graph owned by the pipeline, so
 mutating it intentionally affects the pipeline. Use `copy-pipeline` when you
 need an isolated graph clone.
@@ -346,8 +353,8 @@ See [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for discussion expectations and p
 
 - The repository is verified with SBCL and the commands above. Other Common Lisp implementations may work, but they are not currently part of the documented verification surface.
 - Collection readers return snapshots for safe inspection. Use the documented setters when you want to replace the live collection.
-- `context-effect-handlers` is the one intentionally mutable collection reader because it is the registration surface for effect handlers.
-- `copy-context` copies the handler table, so you can fork a context and mutate handler registration independently from the original.
+- `context-effect-handlers` is a snapshot reader like the rest, so mutating what it returns does not register anything. `register-effect-handler` and `with-effect-handler-scope` are the registration surface; `(setf context-effect-handlers)` replaces the whole table.
+- `copy-context` copies the handler table, so you can fork a context and register handlers on it independently from the original.
 - `run-pipeline-with-test-context` seeds `state`, `metadata`, and effect handlers onto a fresh context and returns that live context after execution.
 - `assert-emitted-events` and `assert-performed-effects` accept either a single expected type or a list of expected types.
 - `topological-sort` is deterministic for independent nodes, which keeps graph execution order stable across implementations.
@@ -378,6 +385,8 @@ cl-dataflow/
   src/
   tests/
   examples/
+  docs/
+  scripts/
 ```
 
 ## License

@@ -6,13 +6,13 @@ be treated seriously.
 
 ## Supported versions
 
-The library is pre-1.0, so only the latest released version and `main`
-receive security fixes. Upgrade to the newest tag before reporting an issue.
+The current stable line and `main` receive security fixes. Pre-1.0 releases
+are no longer maintained. Upgrade to the newest tag before reporting an issue.
 
 | Version | Supported |
 | --- | --- |
-| 0.2.x   | Yes |
-| < 0.2.0 | No  |
+| 1.0.x   | Yes |
+| < 1.0.0 | No  |
 
 ## Reporting a vulnerability
 
