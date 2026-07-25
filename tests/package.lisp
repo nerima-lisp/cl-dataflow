@@ -8,8 +8,10 @@
                 #:gen-integer
                 #:gen-list
                 #:gen-member
+                #:gen-sexp
                 #:gen-state-machine
                 #:gen-tuple
+                #:it-fuzz
                 #:it-property
                 #:logic-query
                 #:mean-ms

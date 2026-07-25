@@ -153,6 +153,16 @@
     ;; is even-length and so never reaches.
     (is (not (cl-dataflow::%structured-value-p '(:odd-length))))))
 
+(it-fuzz "%normalize-name never errors and always returns a string on arbitrary input"
+    ((value (gen-sexp :max-depth 4 :max-list-length 6)))
+    ()
+  ;; The example test above hand-picks a keyword, a number, and a circular
+  ;; list -- %NORMALIZE-NAME's TYPECASE catch-all is built to handle any Lisp
+  ;; value (see its own comment on binding *PRINT-CIRCLE*), so this fuzzes
+  ;; broader, unanticipated shapes GEN-SEXP produces rather than re-checking
+  ;; those three known cases.
+  (is (stringp (cl-dataflow::%normalize-name value))))
+
 (deftest
   internal-copy-structured-value-preserves-circular-structures
   (dolist (value (list 42 #\x :keyword #'car))
