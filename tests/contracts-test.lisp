@@ -34,8 +34,6 @@
 
 (deftest node-with-contract-enforces-in-a-pipeline
   (let* ((base (%identity-node "checked"))
-         (graph (make-graph)))
-    (add-node graph (node-with-contract base :before #'plusp))
-    (let ((pipeline (make-pipeline :graph graph)))
-      (is (= (run-pipeline pipeline :input 7) 7))
-      (signals invalid-input-error (run-pipeline pipeline :input -1)))))
+         (pipeline (single-node-pipeline (node-with-contract base :before #'plusp))))
+    (is (= (run-pipeline pipeline :input 7) 7))
+    (signals invalid-input-error (run-pipeline pipeline :input -1))))

@@ -111,6 +111,14 @@
 
 
 
+(defun single-node-pipeline (node)
+  "Return a fresh pipeline whose only stage is NODE -- the scaffold every
+NODE-WITH-* wrapper test needs to see its wrapper actually run through
+RUN-PIPELINE, not just via a direct FUNCALL."
+  (let ((graph (make-graph)))
+    (add-node graph node)
+    (make-pipeline :graph graph)))
+
 (defmacro %branching-test-split-handler ()
   `(lambda (input context)
      (declare (ignore context))
