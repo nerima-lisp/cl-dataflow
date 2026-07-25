@@ -1,18 +1,26 @@
-(asdf:defsystem #:cl-dataflow
+(in-package #:asdf-user)
+
+;;; System names are written as STRINGS rather than #:symbols or :keywords, so
+;;; that reading this file never depends on the reader's current package state.
+(defsystem "cl-dataflow"
   :description "Composable computation graphs, pipelines, events, state machines, and effect boundaries."
   :long-description "cl-dataflow is a small, dependency-light Common Lisp library for
 building composable pipelines, event-driven workflows, and stateful computation
 graphs. It provides graphs and nodes, sequential and branching pipelines,
 event and effect boundaries, guarded state machines, and deterministic testing
 helpers, all behind a single public package."
-  :author "takeokunn"
-  :maintainer "takeokunn"
+  :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
+  ;; Single source of truth for the version: flake.nix reads this form and
+  ;; release.yml refuses to publish a tag that disagrees with it.
   :version "1.0.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
-  :depends-on (#:cl-prolog)
+  ;; cl-prolog backs the graph edge relation (src/graph-runtime-prolog.lisp).
+  ;; It is the only runtime dependency; see DEPENDENCY_POLICY.md (L3, depth 1).
+  :depends-on ("cl-prolog")
   :serial t
   :pathname "src/"
   :components ((:file "package")
@@ -76,18 +84,28 @@ helpers, all behind a single public package."
                 (:file "testing"))
   :in-order-to ((test-op (test-op "cl-dataflow/test"))))
 
-(asdf:defsystem #:cl-dataflow/test
+;;; The test system is `cl-dataflow/test` (singular, slash-separated) with
+;;; :pathname "t". It is NOT `cl-dataflow-test` and NOT `cl-dataflow/tests`.
+(defsystem "cl-dataflow/test"
   :description "Test system for cl-dataflow."
-  :author "takeokunn"
-  :maintainer "takeokunn"
+  :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
   :version "1.0.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
-  :depends-on (#:cl-dataflow
-                #:cl-weave
-                #:cl-process-kit)
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
+  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
+  :depends-on ("cl-dataflow"
+                ;; cl-weave is the org's test framework everywhere.
+                "cl-weave"
+                ;; Test-only: t/core-runtime-example-test.lisp runs each
+                ;; examples/*.lisp script as a subprocess under a timeout and
+                ;; asserts on its exit code and captured output, which needs
+                ;; real process control. The shipped cl-dataflow system stays
+                ;; at its single cl-prolog dependency.
+                "cl-process-kit")
   :serial t
-  :pathname "tests/"
+  :pathname "t/"
   :components ((:file "package")
                 (:file "test-support-assertions")
                 (:file "test-support-fixtures")
