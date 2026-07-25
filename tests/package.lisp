@@ -1,6 +1,8 @@
 (defpackage #:cl-dataflow.test
   (:use #:cl #:cl-dataflow)
   (:import-from #:cl-weave
+                #:benchmark
+                #:benchmark-result-samples
                 #:defmatcher
                 #:expect
                 #:gen-integer
@@ -9,6 +11,7 @@
                 #:gen-state-machine
                 #:gen-tuple
                 #:it-property
+                #:mean-ms
                 #:mutation-summary
                 #:run-mutations
                 #:signals

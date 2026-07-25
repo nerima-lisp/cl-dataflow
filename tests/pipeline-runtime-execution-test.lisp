@@ -281,3 +281,16 @@
     (is (not (cl-dataflow::%pipeline-stage-signatures-current-p graph (list node) '())))
     (is (cl-dataflow::%pipeline-edge-signatures-current-p '() '()))
     (is (not (cl-dataflow::%pipeline-edge-signatures-current-p (list :edge) '())))))
+
+(deftest pipeline-run-cost-is-measurable-with-benchmark
+  ;; cl-weave:benchmark measures wall-clock directly; per its own docstring
+  ;; the result is "observational only" (unlike the hard-gating
+  ;; :TO-RUN-UNDER-MS matcher used elsewhere in this suite), so this only
+  ;; asserts the mechanism itself produces real samples, not a specific
+  ;; millisecond threshold that would vary by machine.
+  (with-linear-test-pipeline (graph pipeline source sink)
+    (let ((result (benchmark (:warmup 5 :samples 20)
+                    (run-pipeline pipeline))))
+      (is (= (length (benchmark-result-samples result)) 20))
+      (is (every (lambda (sample) (>= sample 0)) (benchmark-result-samples result)))
+      (format t "~&  pipeline-run mean: ~,4Fms~%" (mean-ms result)))))

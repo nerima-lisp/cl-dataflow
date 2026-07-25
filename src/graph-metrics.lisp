@@ -42,23 +42,28 @@ Edge direction is ignored; a self-loop makes the graph non-bipartite."
   (let ((adjacency (%undirected-adjacency graph))
         (color (make-hash-table :test #'equal)))
     (block done
-      (dolist (start (%graph-node-name-set graph) t)
-        (unless (gethash start color)
-          (setf (gethash start color) 0)
-          (let ((frontier (list start)))
-            (loop while frontier do
-              (let ((next '()))
-                (dolist (name frontier)
-                  (let ((name-color (gethash name color)))
-                    (dolist (neighbor (gethash name adjacency))
-                      (let ((neighbor-color (gethash neighbor color)))
-                        (cond
-                          ((null neighbor-color)
-                           (setf (gethash neighbor color) (- 1 name-color))
-                           (push neighbor next))
-                          ((= neighbor-color name-color)
-                           (return-from done nil)))))))
-                (setf frontier next)))))))))
+      (labels ((expand-frontier (frontier)
+                 "Colour every uncoloured neighbour of a name in FRONTIER
+opposite its own name's colour, and return the next frontier -- or return
+NIL from DONE the moment two adjacent names already share a colour."
+                 (let ((next '()))
+                   (dolist (name frontier)
+                     (let ((name-color (gethash name color)))
+                       (dolist (neighbor (gethash name adjacency))
+                         (let ((neighbor-color (gethash neighbor color)))
+                           (cond
+                             ((null neighbor-color)
+                              (setf (gethash neighbor color) (- 1 name-color))
+                              (push neighbor next))
+                             ((= neighbor-color name-color)
+                              (return-from done nil)))))))
+                   next)))
+        (dolist (start (%graph-node-name-set graph) t)
+          (unless (gethash start color)
+            (setf (gethash start color) 0)
+            (let ((frontier (list start)))
+              (loop while frontier do
+                (setf frontier (expand-frontier frontier))))))))))
 
 (defun graph-greedy-coloring (graph)
   "Return an alist (NAME . COLOR) assigning each node a non-negative integer color so
