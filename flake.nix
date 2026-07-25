@@ -1,44 +1,86 @@
 {
   description = "Composable Common Lisp dataflow runtime";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.cl-prolog = {
-    url = "github:nerima-lisp/cl-prolog";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-  inputs.cl-weave = {
-    url = "github:nerima-lisp/cl-weave";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-  inputs.paredit-cli = {
-    url = "github:nerima-lisp/paredit-cli";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-  inputs.cl-process-kit = {
-    url = "github:nerima-lisp/cl-process-kit";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-  # cl-process-kit's own base ASDF system (:depends-on (:asdf :cl-boundary-kit
-  # :cl-log-kit)) needs these two; they are never loaded or called directly by
-  # cl-dataflow (no API usage, no adapter) -- only their source trees need to
-  # be on CL_SOURCE_REGISTRY so ASDF can resolve cl-process-kit's :depends-on.
-  # cl-tty-kit is NOT a dependency here: it's only required by the optional
-  # cl-process-kit/pty subsystem, which cl-dataflow never loads. Neither ships
-  # a flake.nix (like cl-prolog below), so their source tree is referenced
-  # directly via .outPath rather than a packages.<system>.default output.
-  inputs.cl-boundary-kit = {
-    url = "github:nerima-lisp/cl-boundary-kit";
-    flake = false;
-  };
-  inputs.cl-log-kit = {
-    url = "github:nerima-lisp/cl-log-kit";
-    flake = false;
+  # Every sibling input is pinned to a release tag. A bare
+  # `github:nerima-lisp/<name>` follows that repo's default branch, so an
+  # upstream push to main breaks this repo's CI without warning.
+  #
+  # Siblings are pulled with `flake = false` wherever only their source tree is
+  # needed, per DEPENDENCY_POLICY.md. A `flake = true` sibling drags its entire
+  # transitive input graph into flake.lock: this file used to declare 6 siblings
+  # and produce a 78-node lock, holding 16 copies of cl-weave and 13 each of
+  # paredit-cli, rust-overlay and treefmt-nix. `inputs.nixpkgs.follows` does not
+  # help there -- it was already set on every flake input, which is why there
+  # was only ever one nixpkgs node.
+  inputs = {
+    # nixos-unstable, not nixpkgs-unstable: it advances only after the NixOS
+    # release tests pass, so it is less likely to land a broken build.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    # treefmt drives `nix fmt` and the `checks.<system>.formatting` gate.
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # cl-prolog backs the graph edge relation. Only its source tree is used
+    # (CL_SOURCE_REGISTRY): it is architecture-independent Lisp with its .asd
+    # at the repository root, and upstream ships Linux-only per-system
+    # packages, so there is nothing to gain from evaluating its flake.
+    cl-prolog = {
+      url = "github:nerima-lisp/cl-prolog/v1.0.1";
+      flake = false;
+    };
+
+    # cl-weave stays `flake = true`: checks.default and checks.coverage invoke
+    # its `cl-weave` executable, which only its packages output provides.
+    cl-weave = {
+      url = "github:nerima-lisp/cl-weave/v1.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # cl-weave declares `github:takeokunn/paredit-cli` with no tag, so
+      # without this override our lock would carry an untagged reference to a
+      # personal fork's default branch (plus a second rust-overlay and
+      # treefmt-nix). Nothing we build out of cl-weave uses paredit-cli.
+      inputs.paredit-cli.follows = "paredit-cli";
+    };
+
+    # paredit-cli stays `flake = true`: checks.paredit-lint calls its
+    # `lib.<system>.mkLintCheck`, which is a flake output.
+    paredit-cli = {
+      url = "github:nerima-lisp/paredit-cli/v1.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.treefmt-nix.follows = "treefmt-nix";
+    };
+
+    # Test-only, and source-only: t/core-runtime-example-test.lisp runs the
+    # example scripts as subprocesses through cl-process-kit. Its .asd sits at
+    # the repository root, so the source tree is directly usable.
+    cl-process-kit = {
+      url = "github:nerima-lisp/cl-process-kit/v1.0.0";
+      flake = false;
+    };
+
+    # cl-process-kit's own base ASDF system (:depends-on (:asdf :cl-boundary-kit
+    # :cl-log-kit)) needs these two; they are never loaded or called directly by
+    # cl-dataflow (no API usage, no adapter) -- only their source trees need to
+    # be on CL_SOURCE_REGISTRY so ASDF can resolve cl-process-kit's :depends-on.
+    # cl-tty-kit is NOT a dependency here: it's only required by the optional
+    # cl-process-kit/pty subsystem, which cl-dataflow never loads.
+    cl-boundary-kit = {
+      url = "github:nerima-lisp/cl-boundary-kit/v0.6.0";
+      flake = false;
+    };
+    cl-log-kit = {
+      url = "github:nerima-lisp/cl-log-kit/v1.0.0";
+      flake = false;
+    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      treefmt-nix,
       cl-prolog,
       cl-weave,
       paredit-cli,
@@ -55,6 +97,32 @@
       ];
       forAllSystems =
         function: nixpkgs.lib.genAttrs systems (system: function (import nixpkgs { inherit system; }));
+
+      # Single source of truth for the package version: the `:version` form in
+      # cl-dataflow.asd. A release edits that one line and every Nix package
+      # (default + docs) follows. Nix regexes are whole-string anchored and `.`
+      # never spans newlines, so the version is extracted line-by-line rather
+      # than with one multi-line match.
+      version =
+        let
+          lines = nixpkgs.lib.splitString "\n" (builtins.readFile ./cl-dataflow.asd);
+          versionLine = builtins.head (
+            builtins.filter (line: builtins.match "[[:space:]]*:version \"[^\"]*\"" line != null) lines
+          );
+        in
+        builtins.head (builtins.match "[[:space:]]*:version \"([^\"]*)\"" versionLine);
+
+      # Scope is Nix only: nixfmt (RFC-style) is a zero-footgun, low-diff
+      # formatter, whereas YAML formatters mangle the GitHub Actions `on:` key
+      # and Markdown reformatting would churn the whole docs tree.
+      treefmtEval = forAllSystems (
+        pkgs:
+        treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+        }
+      );
+
       sourceFor =
         pkgs:
         pkgs.lib.cleanSourceWith {
@@ -72,12 +140,19 @@
         pkgs:
         pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-dataflow-docs";
-          version = "1.0.0";
+          inherit version;
+          # Rooted at the repository, not at ./docs, because
+          # docs/src/changelog.md is a single `--8<-- "CHANGELOG.md"` include
+          # and pymdownx.snippets resolves that relative to mkdocs' working
+          # directory. Keeping the changelog in one file is the point: a
+          # hand-maintained site copy drifts from the root one, which is how
+          # every other repo in the org ended up with two different histories.
           src = pkgs.lib.fileset.toSource {
-            root = ./docs;
+            root = ./.;
             fileset = pkgs.lib.fileset.unions [
               ./docs/mkdocs.yml
               ./docs/src
+              ./CHANGELOG.md
             ];
           };
           nativeBuildInputs = [ pkgs.python3Packages.mkdocs-material ];
@@ -86,7 +161,7 @@
           # promotes broken links and unlisted pages to build failures.
           buildPhase = ''
             runHook preBuild
-            mkdocs build --strict --config-file mkdocs.yml --site-dir "$out"
+            mkdocs build --strict --config-file docs/mkdocs.yml --site-dir "$out"
             runHook postBuild
           '';
           dontInstall = true;
@@ -98,12 +173,16 @@
         };
     in
     {
-      formatter = forAllSystems (pkgs: pkgs.nixfmt);
+      # `nix fmt` entry point, sharing its configuration with checks.formatting
+      # so the two can never disagree about what "formatted" means.
+      formatter = forAllSystems (
+        pkgs: treefmtEval.${pkgs.stdenv.hostPlatform.system}.config.build.wrapper
+      );
 
       packages = forAllSystems (pkgs: {
         default = pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-dataflow";
-          version = "1.0.0";
+          inherit version;
           src = sourceFor pkgs;
           dontBuild = true;
           installPhase = ''
@@ -120,18 +199,15 @@
         let
           system = pkgs.stdenv.hostPlatform.system;
           src = sourceFor pkgs;
-          # cl-prolog is architecture-independent Lisp source, and upstream now
-          # ships Linux-only per-system packages, so reference the flake source
-          # tree directly. Its cl-prolog.asd sits at the root, which the trailing
-          # "//" recursive marker in CL_SOURCE_REGISTRY discovers on every system.
+          # The source-only siblings all keep their .asd at the repository root,
+          # which the trailing "//" recursive marker in CL_SOURCE_REGISTRY
+          # discovers on every system.
           prologSource = "${cl-prolog.outPath}//";
           weave = cl-weave.packages.${system}.default;
-          # cl-process-kit's own package output has its .asd at the root (like
-          # cl-prolog's source tree), not nested under share/common-lisp/source.
-          # Its base system's :depends-on is cl-boundary-kit and cl-log-kit, so
-          # their source trees need to be discoverable too -- cl-dataflow
-          # itself never loads or calls either.
-          processKit = cl-process-kit.packages.${system}.default;
+          # cl-process-kit's base system :depends-on cl-boundary-kit and
+          # cl-log-kit, so their source trees need to be discoverable too --
+          # cl-dataflow itself never loads or calls either.
+          processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
           sourceRegistry = "${prologSource}:${weave}/share/common-lisp/source//:${processKit}//:${processKitTransitiveSources}:$PWD//:";
           mkWeaveCheck =
@@ -197,6 +273,18 @@
             inherit src;
             name = "cl-dataflow-paredit-lint";
           };
+
+          # Fails `nix flake check` when any tracked Nix file is unformatted,
+          # turning the formatter into an enforced CI gate rather than a
+          # convention someone has to remember to run.
+          formatting = treefmtEval.${system}.config.build.check self;
+
+          # packages.docs runs `mkdocs build --strict`, so a broken link or a
+          # page missing from the nav fails here. Without this the docs are
+          # only ever built by docs.yml, which runs after the merge to main,
+          # so such a break surfaces as a failed deploy rather than a failed
+          # pull request.
+          docs = self.packages.${system}.docs;
         }
       );
 
@@ -205,7 +293,7 @@
         let
           system = pkgs.stdenv.hostPlatform.system;
           weave = cl-weave.packages.${system}.default;
-          processKit = cl-process-kit.packages.${system}.default;
+          processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
           test = pkgs.writeShellApplication {
             name = "cl-dataflow-test";
@@ -221,6 +309,13 @@
             type = "app";
             program = "${test}/bin/cl-dataflow-test";
           };
+          # `nix run .#test` is the name the org standard uses; `nix run .`
+          # keeps working for existing muscle memory. Both drive the same
+          # suite that run-tests.lisp and checks.default run.
+          test = {
+            type = "app";
+            program = "${test}/bin/cl-dataflow-test";
+          };
         }
       );
 
@@ -232,7 +327,7 @@
         {
           default = pkgs.mkShell {
             packages = [
-              pkgs.nixfmt
+              treefmtEval.${system}.config.build.wrapper
               pkgs.sbcl
               cl-weave.packages.${system}.default
               paredit-cli.packages.${system}.default
@@ -240,7 +335,7 @@
             shellHook = ''
               export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${
                 cl-weave.packages.${system}.default
-              }/share/common-lisp/source//:${cl-process-kit.packages.${system}.default}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
+              }/share/common-lisp/source//:${cl-process-kit.outPath}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
             '';
           };
         }
