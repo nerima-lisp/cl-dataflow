@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrote `stream-map`, `stream-flat-map`, and `stream-tap`'s lambda lists from the obscure `#'stream` reader-shorthand spelling (which happens to read-equal the intended two-parameter list) to the explicit `(function stream)`.
 - Unabbreviated leftover `(quote x)`/`(function x)` forms (from an earlier branch merge) back to `'x`/`#'x` in `core-models-classes.lisp`, `state-machine-builders.lisp`, and six test files.
 - Split several `deftest` forms out of stray `progn` wrappers left over from the same merge, in `test-support-assertions.lisp`, `state-machine-guard-selection-test.lisp`, `pipeline-runtime-contract-test.lisp`, and `pipeline-runtime-structure-test.lisp`. One case had a `deftest` nested inside another `deftest`'s body rather than sitting beside it, which silently kept it out of the discovered test plan; splitting it out recovers that test (511 tests, up from 510, all passing; 100% branch coverage held).
+- Bumped `cl-weave` and `cl-prolog` to their latest `nerima-lisp` revisions (2026-07-25). Held `cl-process-kit` back at its current pin: its newest revision adds a hard `cl-boundary-kit` dependency (transitively pulling in `cl-log-kit`/`cl-tty-kit` too) that this repo's `CL_SOURCE_REGISTRY` isn't wired for, and none of it is needed by the one call site that uses `cl-process-kit:run`'s existing simple API.
 
 ## [0.3.0] - 2026-07-24
 
