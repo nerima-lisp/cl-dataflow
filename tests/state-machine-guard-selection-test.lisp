@@ -9,66 +9,45 @@
     (declare (ignore machine event context))
     value))
 
+(defun %guarded-pair-machine (guard-a guard-b)
+  "An 'idle' state machine with two candidate transitions on event 'go', to
+state 'a' guarded by GUARD-A and to state 'b' guarded by GUARD-B (NIL means
+unguarded, matching TRANSITION's own :GUARD default) -- the shared fixture
+every guard-selection test below builds, varying only which guards reject,
+pass, or are absent."
+  (make-state-machine
+    :state
+    "idle"
+    :transitions
+    (list
+      (make-transition "idle" "go" "a" :guard guard-a)
+      (make-transition "idle" "go" "b" :guard guard-b))))
+
 (deftest
   guarded-transition-selection-falls-through-to-passing-guard
-  (let ((machine
-        (make-state-machine
-          :state
-          "idle"
-          :transitions
-          (list
-            (make-transition "idle" "go" "a" :guard (%always nil))
-            (make-transition "idle" "go" "b")))))
+  (let ((machine (%guarded-pair-machine (%always nil) nil)))
     (step-state-machine machine "go")
     (is (equal (state-machine-state machine) "b"))))
 
 (deftest
   guarded-transition-selection-prefers-first-passing-guard
-  (let ((machine
-        (make-state-machine
-          :state
-          "idle"
-          :transitions
-          (list
-            (make-transition "idle" "go" "a" :guard (%always t))
-            (make-transition "idle" "go" "b")))))
+  (let ((machine (%guarded-pair-machine (%always t) nil)))
     (step-state-machine machine "go")
     (is (equal (state-machine-state machine) "a"))))
 
 (deftest
   guarded-transition-selection-signals-when-all-guards-reject
-  (let ((machine
-        (make-state-machine
-          :state
-          "idle"
-          :transitions
-          (list
-            (make-transition "idle" "go" "a" :guard (%always nil))
-            (make-transition "idle" "go" "b" :guard (%always nil))))))
+  (let ((machine (%guarded-pair-machine (%always nil) (%always nil))))
     (signals guard-failed-error (step-state-machine machine "go"))))
 
 (deftest
   can-step-p-true-when-any-matching-guard-passes
-  (let ((machine
-        (make-state-machine
-          :state
-          "idle"
-          :transitions
-          (list
-            (make-transition "idle" "go" "a" :guard (%always nil))
-            (make-transition "idle" "go" "b")))))
+  (let ((machine (%guarded-pair-machine (%always nil) nil)))
     (is (state-machine-can-step-p machine "go"))))
 
 (deftest
   can-step-p-false-when-all-matching-guards-reject
-  (let ((machine
-        (make-state-machine
-          :state
-          "idle"
-          :transitions
-          (list
-            (make-transition "idle" "go" "a" :guard (%always nil))
-            (make-transition "idle" "go" "b" :guard (%always nil))))))
+  (let ((machine (%guarded-pair-machine (%always nil) (%always nil))))
     (is (not (state-machine-can-step-p machine "go")))))
 
 (deftest guarded-transition-selection-uses-context
