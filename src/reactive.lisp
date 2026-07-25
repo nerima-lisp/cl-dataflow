@@ -138,13 +138,12 @@ LIMIT bounds retained values. ON-LIMIT is :ERROR (signal from SUBJECT-EMIT) or
     (subject-subscribe
       subject
       (lambda (value)
-        (cond
-          ((and limit (= count limit))
+        (if (and limit (= count limit))
             (ecase on-limit
               (:error (%signal-stream-limit-exceeded "SUBJECT-COLLECT" limit))
-              (:drop-newest nil)))
-          (t
-            (push value collected)
-            (incf count)))))
+              (:drop-newest nil))
+            (progn
+              (push value collected)
+              (incf count)))))
     (lambda ()
       (reverse collected))))
