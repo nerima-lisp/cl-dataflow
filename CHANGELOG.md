@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bumped `cl-weave`, `cl-process-kit`, and `paredit-cli` flake inputs to their latest upstream revisions (`cl-prolog` was already current). Verified `cl-process-kit`'s newer revision didn't change its own ASDF dependency graph (still just `cl-boundary-kit`/`cl-log-kit` for the base system) before accepting the bump, and re-ran the full test/coverage/paredit-lint checks against it.
+- Collapsed the 6 hand-written `PRINT-OBJECT` methods (node, edge, graph, context, state-transition, state-machine -- `core-models-classes.lisp`) into a `DEFINE-PRINT-OBJECT` macro plus one declarative invocation, matching the codebase's existing schema-table-next-to-macro convention. All 6 shared the identical `PRINT-UNREADABLE-OBJECT` + `FORMAT` scaffold and differed only in the class, format string, and accessor calls. No output change.
 
 ## [0.4.0] - 2026-07-25
 

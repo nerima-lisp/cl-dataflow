@@ -127,56 +127,40 @@
     (execution-plan :initarg :execution-plan :initform nil)
     (metadata :initarg :metadata :initform '())))
 
-(defmethod print-object ((node node) stream)
-  (print-unreadable-object
-    (node stream :type t)
-    (format stream "~A" (%escaped-display-string (node-name node)))))
+(defmacro define-print-object (&body clauses)
+  "Each CLAUSE is (CLASS-NAME (VAR STREAM-VAR) FORMAT-STRING &rest ARG-FORMS) and
+expands to a PRINT-OBJECT method rendering VAR via PRINT-UNREADABLE-OBJECT with
+:TYPE T and (FORMAT STREAM-VAR FORMAT-STRING . ARG-FORMS)."
+  `(progn
+    ,@(mapcar
+      (lambda (clause)
+        (destructuring-bind (class-name (var stream-var) format-string &rest arg-forms) clause
+          `(defmethod print-object ((,var ,class-name) ,stream-var)
+            (print-unreadable-object
+              (,var ,stream-var :type t)
+              (format ,stream-var ,format-string ,@arg-forms)))))
+      clauses)))
 
-(defmethod print-object ((edge edge) stream)
-  (print-unreadable-object
-    (edge stream :type t)
-    (format
-      stream
-      "~A:~A -> ~A:~A"
-      (%escaped-display-string (edge-from edge))
-      (%escaped-display-string (edge-from-port edge))
-      (%escaped-display-string (edge-to edge))
-      (%escaped-display-string (edge-to-port edge)))))
-
-(defmethod print-object ((graph graph) stream)
-  (let ((node-count (hash-table-count (%graph-nodes-table graph)))
-        (edge-count (length (%graph-edges-list graph))))
-    (print-unreadable-object
-      (graph stream :type t)
-      (format stream "~D nodes ~D edges" node-count edge-count))))
-
-(defmethod print-object ((context context) stream)
-  (print-unreadable-object
-    (context stream :type t)
-    (format
-      stream
-      "events=~D effects=~D"
-      (length (context-events context))
-      (length (context-effects context)))))
-
-(defmethod print-object ((transition state-transition) stream)
-  (print-unreadable-object
-    (transition stream :type t)
-    (format
-      stream
-      "~A --~A--> ~A"
-      (%escaped-display-string (transition-from transition))
-      (%escaped-display-string (transition-event-type transition))
-      (%escaped-display-string (transition-to transition)))))
-
-(defmethod print-object ((machine state-machine) stream)
-  (print-unreadable-object
-    (machine stream :type t)
-    (format
-      stream
-      "~A transitions=~D"
-      (%escaped-display-string (state-machine-state machine))
-      (length (state-machine-transitions machine)))))
+(define-print-object
+  (node (node stream) "~A" (%escaped-display-string (node-name node)))
+  (edge (edge stream) "~A:~A -> ~A:~A"
+    (%escaped-display-string (edge-from edge))
+    (%escaped-display-string (edge-from-port edge))
+    (%escaped-display-string (edge-to edge))
+    (%escaped-display-string (edge-to-port edge)))
+  (graph (graph stream) "~D nodes ~D edges"
+    (hash-table-count (%graph-nodes-table graph))
+    (length (%graph-edges-list graph)))
+  (context (context stream) "events=~D effects=~D"
+    (length (context-events context))
+    (length (context-effects context)))
+  (state-transition (transition stream) "~A --~A--> ~A"
+    (%escaped-display-string (transition-from transition))
+    (%escaped-display-string (transition-event-type transition))
+    (%escaped-display-string (transition-to transition)))
+  (state-machine (machine stream) "~A transitions=~D"
+    (%escaped-display-string (state-machine-state machine))
+    (length (state-machine-transitions machine))))
 
 (define-type-predicates
   (node-p node)
