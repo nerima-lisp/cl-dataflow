@@ -1,9 +1,10 @@
 (in-package #:cl-dataflow)
 
-;;;; Whole-graph metrics and comparisons: edge density, degree distribution,
-;;;; bipartiteness, structural equality, and weak (undirected) reachability.
-;;;; Structural predicates reuse the deterministic GRAPH-TO-PLIST snapshot and the
-;;;; connected-component / adjacency machinery rather than re-deriving structure.
+;;;; Whole-graph metrics: edge density, degree distribution, bipartiteness,
+;;;; clustering, reciprocity, and weak (undirected) reachability. GRAPH-EQUAL-P
+;;;; lives in equality-predicates.lisp alongside the other structural-equality
+;;;; predicates it shares a plist-comparison contract with. Predicates here reuse
+;;;; the connected-component / adjacency machinery rather than re-deriving structure.
 
 (defun %distinct-edge-count (graph)
   "Number of distinct (from . to) pairs in GRAPH; parallel edges count once."
@@ -79,13 +80,6 @@ tests for a valid 2-colouring). Ordered by name."
     (sort (loop for name being the hash-keys of color using (hash-value assigned)
                 collect (cons name assigned))
           #'string< :key #'car)))
-
-(defun graph-equal-p (graph-a graph-b)
-  "Return true when GRAPH-A and GRAPH-B are structurally identical: the same nodes
-(names, ports, metadata) and the same edges (endpoints, ports, metadata),
-independent of insertion order. Node handlers are runtime closures and are not
-compared (see GRAPH-TO-PLIST)."
-  (equal (graph-to-plist graph-a) (graph-to-plist graph-b)))
 
 (defun graph-undirected-reachable-p (graph from to)
   "Return true when FROM and TO lie in the same weakly connected component of GRAPH

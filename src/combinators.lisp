@@ -93,31 +93,38 @@ The result is not attached to any graph."
              :metadata (node-metadata node)
              :handler (funcall wrapper (node-handler node))))
 
-(defun node-with-retry (node &key (attempts 3) (condition-type 'error))
-  "Return a copy of NODE whose handler retries on CONDITION-TYPE (see
-RETRYING-HANDLER)."
-  (wrap-node node (lambda (handler)
-                    (retrying-handler handler
-                                      :attempts attempts
-                                      :condition-type condition-type))))
+(defmacro define-node-wrapper (&body specs)
+  "For each (NAME LAMBDA-LIST HANDLER-CALL DOCSTRING) in SPECS, define NAME as
+(NAME NODE . LAMBDA-LIST) returning a copy of NODE whose handler is rebuilt by
+HANDLER-CALL -- a form that calls the underlying handler-wrapper function
+(RETRYING-HANDLER, FALLBACK-HANDLER, ...) with the anaphoric `handler` (bound
+by WRAP-NODE) and LAMBDA-LIST's parameters in scope. Every member of this
+family only differs in which wrapper function it forwards to and with what
+arguments."
+  `(progn
+     ,@(mapcar (lambda (spec)
+                 (destructuring-bind (name lambda-list handler-call docstring) spec
+                   `(defun ,name (node ,@lambda-list)
+                      ,docstring
+                      (wrap-node node (lambda (handler) ,handler-call)))))
+               specs)))
 
-(defun node-with-fallback (node fallback &key (condition-type 'error))
-  "Return a copy of NODE whose handler falls back on CONDITION-TYPE (see
-FALLBACK-HANDLER)."
-  (wrap-node node (lambda (handler)
-                    (fallback-handler handler fallback
-                                      :condition-type condition-type))))
-
-(defun node-with-memoization (node &key (test 'equal) (key #'identity))
-  "Return a copy of NODE whose handler memoises results (see MEMOIZING-HANDLER)."
-  (wrap-node node (lambda (handler)
-                    (memoizing-handler handler :test test :key key))))
-
-(defun node-with-tap (node side-effect)
-  "Return a copy of NODE whose handler taps its output through SIDE-EFFECT (see
-TAPPING-HANDLER)."
-  (wrap-node node (lambda (handler)
-                    (tapping-handler handler side-effect))))
+(define-node-wrapper
+  (node-with-retry (&key (attempts 3) (condition-type 'error))
+   (retrying-handler handler :attempts attempts :condition-type condition-type)
+   "Return a copy of NODE whose handler retries on CONDITION-TYPE (see
+RETRYING-HANDLER).")
+  (node-with-fallback (fallback &key (condition-type 'error))
+   (fallback-handler handler fallback :condition-type condition-type)
+   "Return a copy of NODE whose handler falls back on CONDITION-TYPE (see
+FALLBACK-HANDLER).")
+  (node-with-memoization (&key (test 'equal) (key #'identity))
+   (memoizing-handler handler :test test :key key)
+   "Return a copy of NODE whose handler memoises results (see MEMOIZING-HANDLER).")
+  (node-with-tap (side-effect)
+   (tapping-handler handler side-effect)
+   "Return a copy of NODE whose handler taps its output through SIDE-EFFECT (see
+TAPPING-HANDLER)."))
 
 ;;; --- Pipeline composition ------------------------------------------------
 

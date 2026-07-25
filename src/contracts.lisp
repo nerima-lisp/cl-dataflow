@@ -24,8 +24,8 @@ unchanged when both contracts hold."
                :detail "Node output violated its contract."))
       output)))
 
-(defun node-with-contract (node &key before after)
-  "Return a copy of NODE whose handler enforces the input/output contract BEFORE and
-AFTER (see CONTRACT-HANDLER)."
-  (wrap-node node (lambda (handler)
-                    (contract-handler handler :before before :after after))))
+(define-node-wrapper
+  (node-with-contract (&key before after)
+   (contract-handler handler :before before :after after)
+   "Return a copy of NODE whose handler enforces the input/output contract BEFORE and
+AFTER (see CONTRACT-HANDLER)."))

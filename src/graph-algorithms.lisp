@@ -1,5 +1,22 @@
 (in-package #:cl-dataflow)
 
+(defmacro with-fifo-queue ((queue-var enqueue-name &rest initial-values) &body body)
+  "Bind QUEUE-VAR to a FIFO work queue seeded with INITIAL-VALUES and ENQUEUE-NAME
+to a local function that appends one value to it in O(1) via a hidden tail
+pointer, then evaluate BODY. Every breadth-first search in this codebase shares
+this enqueue bookkeeping but differs in its own visited/relaxation guard, so
+only the queue mechanics are factored out here; BODY still drives the
+traversal itself, typically `(loop while QUEUE-VAR do (pop QUEUE-VAR) ...)`."
+  (let ((tail (gensym "TAIL")))
+    `(let* ((,queue-var (list ,@initial-values))
+            (,tail ,queue-var))
+       (labels ((,enqueue-name (value)
+                  (let ((cell (list value)))
+                    (if ,queue-var
+                        (setf (cdr ,tail) cell ,tail cell)
+                        (setf ,queue-var cell ,tail cell)))))
+         ,@body))))
+
 ;;;; Graph analysis built on the same one-shot Prolog adjacency snapshot the rest
 ;;;; of the graph runtime uses (see %GRAPH-ADJACENCY / %GRAPH-DIRECTIONAL-ADJACENCY).
 ;;;; Every traversal here materialises adjacency once and walks it with an explicit

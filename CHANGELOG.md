@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixed stray `github.com/takeokunn/cl-dataflow` URLs left over from the `nerima-lisp` org migration across `README.md`, `CHANGELOG.md`, `SECURITY.md`, `cl-dataflow.asd`, `.github/ISSUE_TEMPLATE/config.yml`, and the MkDocs documentation site.
+- Consolidated three more repeated scaffolds into macros: `with-fifo-queue` (`graph-algorithms.lisp`) replaces the ad hoc tail-pointer FIFO queue duplicated across Brandes' betweenness BFS and both Edmonds-Karp searches in `graph-flow.lisp`; `define-plist-equal-p` (`equality-predicates.lisp`) generates `graph-equal-p`, `pipeline-equal-p`, `state-machine-equal-p`, and `context-equal-p` from one plist-comparison contract; `define-node-wrapper` (`combinators.lisp`) generates `node-with-retry`, `node-with-fallback`, `node-with-memoization`, `node-with-tap`, and `node-with-contract` from their shared `wrap-node`-plus-handler-wrapper shape.
 
 ## [0.3.0] - 2026-07-24
 

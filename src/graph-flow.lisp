@@ -30,26 +30,18 @@ a saturated forward edge."
 (defun %augmenting-path (residual neighbors source sink)
   "Breadth-first search for a shortest augmenting path in the residual graph.
 Return the predecessor map when SINK is reached, otherwise NIL."
-  (let* ((parent (%make-result-table))
-         (queue (list source))
-         (tail queue))
-    (labels ((enqueue (value)
-               (let ((cell (list value)))
-                 (if queue
-                     (setf (cdr tail) cell
-                           tail cell)
-                     (setf queue cell
-                           tail cell)))))
-      (setf (gethash source parent) source)
+  (let ((parent (%make-result-table)))
+    (setf (gethash source parent) source)
+    (with-fifo-queue (queue enqueue source)
       (loop while queue
             do (let ((node (pop queue)))
                  (dolist (next (gethash node neighbors))
                    (when (and (not (nth-value 1 (gethash next parent)))
                               (> (gethash (cons node next) residual 0) 0))
                      (setf (gethash next parent) node)
-                     (enqueue next)))))
-      (when (nth-value 1 (gethash sink parent))
-        parent))))
+                     (enqueue next))))))
+    (when (nth-value 1 (gethash sink parent))
+      parent)))
 
 (defun %augment-bottleneck (residual parent source sink)
   "The minimum residual capacity along the SOURCE->SINK path recorded in PARENT."
@@ -93,25 +85,17 @@ cut inspect after the search converges."
 (defun %residual-reachable (residual neighbors source)
   "The hash set of nodes reachable from SOURCE along positive-residual edges --
 the source side of the minimum cut once Edmonds-Karp has saturated the network."
-  (let* ((seen (%make-result-table))
-         (queue (list source))
-         (tail queue))
-    (labels ((enqueue (value)
-               (let ((cell (list value)))
-                 (if queue
-                     (setf (cdr tail) cell
-                           tail cell)
-                     (setf queue cell
-                           tail cell)))))
-      (setf (gethash source seen) t)
+  (let ((seen (%make-result-table)))
+    (setf (gethash source seen) t)
+    (with-fifo-queue (queue enqueue source)
       (loop while queue
             do (let ((node (pop queue)))
                  (dolist (next (gethash node neighbors))
                    (when (and (not (nth-value 1 (gethash next seen)))
                               (> (gethash (cons node next) residual 0) 0))
                      (setf (gethash next seen) t)
-                     (enqueue next)))))
-      seen)))
+                     (enqueue next))))))
+    seen))
 
 (defun graph-max-flow (graph source sink &key capacity-key default-capacity)
   "The maximum flow value from SOURCE to SINK over edge-metadata capacities

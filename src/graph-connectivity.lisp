@@ -148,25 +148,17 @@ PREDECESSORS SIGMA): STACK holds every reached node in farthest-last visit
 order (so the accumulation phase can walk it farthest-first), PREDECESSORS
 maps each node to its shortest-path predecessors from SOURCE, and SIGMA counts
 the number of distinct shortest paths from SOURCE to each node."
-  (let* ((stack '())
-         (predecessors (%make-result-table))
-         (sigma (%make-result-table))
-         (distance (%make-result-table))
-         (queue (list source))
-         (tail queue))
+  (let ((stack '())
+        (predecessors (%make-result-table))
+        (sigma (%make-result-table))
+        (distance (%make-result-table)))
     (dolist (name names)
       (setf (gethash name predecessors) '()
             (gethash name sigma) 0
             (gethash name distance) -1))
     (setf (gethash source sigma) 1
           (gethash source distance) 0)
-    (labels ((enqueue (value)
-               (let ((cell (list value)))
-                 (if queue
-                     (setf (cdr tail) cell
-                           tail cell)
-                     (setf queue cell
-                           tail cell)))))
+    (with-fifo-queue (queue enqueue source)
       (loop while queue do
         (let ((v (pop queue)))
           (push v stack)
