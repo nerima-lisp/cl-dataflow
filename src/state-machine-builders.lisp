@@ -55,14 +55,15 @@ Reconstructed transitions have no guard or action."
   "Return true when MACHINE defines a transition for every (state, event-type)
 pair -- i.e. its transition relation is total over its states and events. A machine
 with no events is vacuously complete."
-  (let ((defined (make-hash-table :test #'equal)))
+  (let ((defined (make-hash-table :test #'equal))
+        (events (state-machine-event-types machine)))
     (dolist (transition (%state-machine-transitions-list machine))
       (setf (gethash
           (cons (transition-from transition) (transition-event-type transition))
           defined) t))
     (block done
       (dolist (state (state-machine-states machine) t)
-        (dolist (event (state-machine-event-types machine))
+        (dolist (event events)
           (unless (gethash (cons state event) defined)
             (return-from done nil)))))))
 
