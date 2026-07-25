@@ -60,7 +60,7 @@ STEP. STEP may be negative for a descending range but must not be zero."
     (generate start)))
 
 ;;; --- Operators (stream -> stream) ----------------------------------------
-(defun stream-map #'stream
+(defun stream-map (function stream)
   "Return a stream of (FUNCALL FUNCTION ELEMENT) for each element of STREAM."
   (%make-flow-stream
     (lambda ()
@@ -275,7 +275,7 @@ INVALID-INPUT-ERROR when the next new value is pulled. NIL means unbounded."
                   (car inner-step)
                   (%stream-flat-map-cont function (cdr inner-step) outer-stream))))))))))
 
-(defun stream-flat-map #'stream
+(defun stream-flat-map (function stream)
   "Return the concatenation of the streams produced by applying FUNCTION to each
 element of STREAM. FUNCTION must return a stream for every element."
   (%stream-flat-map-cont function (empty-stream) stream))
@@ -304,7 +304,7 @@ element, stopping when either stream ends."
         (if (or (eq step-a :end) (eq step-b :end)) :end
           (cons (cons (car step-a) (car step-b)) (stream-zip (cdr step-a) (cdr step-b))))))))
 
-(defun stream-tap #'stream
+(defun stream-tap (function stream)
   "Return a stream identical to STREAM, calling FUNCTION on each element for its
 side effect as the element passes through."
   (%make-flow-stream
