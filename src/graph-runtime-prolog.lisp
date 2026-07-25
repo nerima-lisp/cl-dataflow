@@ -9,6 +9,28 @@
 (defparameter +graph-node-predicate+ 'graph-node)
 (defparameter +graph-edge-predicate+ 'graph-edge)
 
+(defmacro with-deduped-graph-edges ((from to) (graph rulebase) &body body)
+  "Execute BODY once for each distinct (FROM . TO) pair read from RULEBASE's
+bulk Prolog edge query over GRAPH -- the single-query, dedupe-parallel-edges
+scaffold %GRAPH-ADJACENCY and %GRAPH-DIRECTIONAL-ADJACENCY both need, so that
+each keeps only what it does with a pair, not how the pair was found. Skips
+the query entirely when GRAPH has no edges."
+  (let ((graph-value (gensym "GRAPH"))
+        (seen-pairs (gensym "SEEN-PAIRS"))
+        (pair (gensym "PAIR"))
+        (solution (gensym "SOLUTION")))
+    `(let ((,graph-value ,graph))
+       (when (%graph-edges-list ,graph-value)
+         (let ((,seen-pairs (make-hash-table :test #'equal)))
+           (dolist (,solution
+                     (cl-prolog:query-prolog ,rulebase (list +graph-edge-predicate+ '?from '?to)))
+             (let* ((,from (cl-prolog:solution-binding '?from ,solution))
+                     (,to (cl-prolog:solution-binding '?to ,solution))
+                     (,pair (cons ,from ,to)))
+               (unless (gethash ,pair ,seen-pairs)
+                 (setf (gethash ,pair ,seen-pairs) t)
+                 ,@body))))))))
+
 (defun %graph-rulebase (graph)
   (let ((clauses '()))
     (maphash (lambda (name node)
@@ -45,24 +67,15 @@ counted once, so parallel edges across different ports do not inflate indegree -
 matching the deduplicating per-node queries this replaces. Successor lists are
 sorted so downstream traversal order stays deterministic."
   (let ((successors (%make-result-table))
-        (indegree (%make-result-table))
-        (seen-pairs (make-hash-table :test #'equal)))
+        (indegree (%make-result-table)))
     (maphash (lambda (name node)
                 (declare (ignore node))
                 (setf (gethash name indegree) 0)
                 (setf (gethash name successors) '()))
               (%graph-nodes-table graph))
-    (when (%graph-edges-list graph)
-      (dolist (solution (cl-prolog:query-prolog
-                          rulebase
-                          (list +graph-edge-predicate+ '?from '?to)))
-        (let* ((from (cl-prolog:solution-binding '?from solution))
-                (to (cl-prolog:solution-binding '?to solution))
-                (pair (cons from to)))
-          (unless (gethash pair seen-pairs)
-            (setf (gethash pair seen-pairs) t)
-            (push to (gethash from successors))
-            (incf (gethash to indegree))))))
+    (with-deduped-graph-edges (from to) (graph rulebase)
+      (push to (gethash from successors))
+      (incf (gethash to indegree)))
     (maphash (lambda (name succ)
                 (setf (gethash name successors) (sort succ #'string<)))
               successors)
@@ -102,23 +115,15 @@ terminates cleanly on cycles via the shared VISITED set."
   "Return a name -> sorted-neighbor-names table for GRAPH from one bulk edge
 query. DIRECTION is :successors (edge from -> to) or :predecessors (edge to ->
 from). Distinct (from . to) pairs are counted once."
-  (let ((adjacency (%make-result-table))
-        (seen-pairs (make-hash-table :test #'equal)))
+  (let ((adjacency (%make-result-table)))
     (maphash (lambda (name node)
                 (declare (ignore node))
                 (setf (gethash name adjacency) '()))
               (%graph-nodes-table graph))
-    (dolist (solution (cl-prolog:query-prolog
-                        rulebase
-                        (list +graph-edge-predicate+ '?from '?to)))
-      (let* ((from (cl-prolog:solution-binding '?from solution))
-              (to (cl-prolog:solution-binding '?to solution))
-              (pair (cons from to)))
-        (unless (gethash pair seen-pairs)
-          (setf (gethash pair seen-pairs) t)
-          (ecase direction
-            (:successors (push to (gethash from adjacency)))
-            (:predecessors (push from (gethash to adjacency)))))))
+    (with-deduped-graph-edges (from to) (graph rulebase)
+      (ecase direction
+        (:successors (push to (gethash from adjacency)))
+        (:predecessors (push from (gethash to adjacency)))))
     (maphash (lambda (name neighbors)
                 (setf (gethash name adjacency) (sort neighbors #'string<)))
               adjacency)
