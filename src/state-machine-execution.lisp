@@ -69,21 +69,25 @@ GRAPH-PATH."
              '())
             (t
              (let ((parent (make-hash-table :test #'equal))
-                   (seen (make-hash-table :test #'equal))
-                   (frontier nil))
-               (setf (gethash start seen) t
-                     frontier (list start))
-               (loop
-                 (unless frontier (return nil))
-                 (let ((next '()))
-                   (dolist (state frontier)
-                     (dolist (edge (gethash state successors))
-                       (let ((event (car edge))
-                             (destination (cdr edge)))
-                         (unless (gethash destination seen)
-                           (setf (gethash destination seen) t
-                                 (gethash destination parent) (cons state event))
-                           (push destination next)))))
-                   (when (gethash goal parent)
-                     (return (%reconstruct-event-path parent start goal)))
-                   (setf frontier (nreverse next))))))))))
+                   (seen (make-hash-table :test #'equal)))
+               (setf (gethash start seen) t)
+               (labels ((expand-frontier (frontier)
+                          "Discover every unvisited destination reachable by one
+transition from a state in FRONTIER, recording PARENT (PREV-STATE . EVENT) on
+first discovery, and return the next frontier."
+                          (let ((next '()))
+                            (dolist (state frontier)
+                              (dolist (edge (gethash state successors))
+                                (let ((event (car edge))
+                                      (destination (cdr edge)))
+                                  (unless (gethash destination seen)
+                                    (setf (gethash destination seen) t
+                                          (gethash destination parent) (cons state event))
+                                    (push destination next)))))
+                            (nreverse next))))
+                 (let ((frontier (list start)))
+                   (loop
+                     (unless frontier (return nil))
+                     (setf frontier (expand-frontier frontier))
+                     (when (gethash goal parent)
+                       (return (%reconstruct-event-path parent start goal))))))))))))
