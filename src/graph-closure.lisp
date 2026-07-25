@@ -76,24 +76,6 @@ is cyclic (the reduction is only unique on a DAG). GRAPH is not modified."
             (%add-derived-edge result u v (gethash u nodes) (gethash v nodes))))))
     result))
 
-(defun graph-topological-rank (graph)
-  "Return an alist (NAME . RANK) where RANK is the length of the longest path from
-any source (indegree-0 node) to NAME; sources have rank 0. Signals
-GRAPH-CYCLE-ERROR when GRAPH is cyclic. Ordered by name."
-  (let ((order (topological-sort graph))
-        (rank (%make-result-table))
-        (successors (%graph-adjacency-snapshot graph :successors)))
-    (dolist (node order)
-      (setf (gethash (node-name node) rank) 0))
-    (dolist (node order)
-      (let ((distance (gethash (node-name node) rank)))
-        (dolist (successor (gethash (node-name node) successors))
-          (setf (gethash successor rank)
-                (max (gethash successor rank) (1+ distance))))))
-    (sort (loop for name being the hash-keys of rank using (hash-value value)
-                collect (cons name value))
-          #'string< :key #'car)))
-
 (defun %longest-path-dp (order successors)
   "Return (VALUES DISTANCE-TABLE PREV-TABLE) for the longest path ending at each
 node, over nodes in topological ORDER."
@@ -108,6 +90,21 @@ node, over nodes in topological ORDER."
             (setf (gethash successor distance) (1+ (gethash name distance))
                   (gethash successor previous) name)))))
     (values distance previous)))
+
+(defun graph-topological-rank (graph)
+  "Return an alist (NAME . RANK) where RANK is the length of the longest path from
+any source (indegree-0 node) to NAME; sources have rank 0. Signals
+GRAPH-CYCLE-ERROR when GRAPH is cyclic. Ordered by name.
+
+RANK is exactly GRAPH-LONGEST-PATH's per-node distance, so this shares
+%LONGEST-PATH-DP's dynamic program rather than re-running the same longest-path
+computation by hand; only the DISTANCE table is needed here, not the
+path-reconstruction PREV table %LONGEST-PATH-DP also produces."
+  (let* ((order (topological-sort graph))
+         (distance (%longest-path-dp order (%graph-adjacency-snapshot graph :successors))))
+    (sort (loop for name being the hash-keys of distance using (hash-value value)
+                collect (cons name value))
+          #'string< :key #'car)))
 
 (defun %longest-path-endpoint (order distance)
   (let ((best-name nil)
