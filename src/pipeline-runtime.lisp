@@ -59,17 +59,19 @@
       (loop for port in outputs
             collect (cons port (%pipeline-value-key name port))))))
 
-(defun %pipeline-input-key-plan (binding-plan target-signature edge-signatures)
+(defun %pipeline-edge-signature-table (edge-signatures)
+  "Edge -> its EDGE-SIGNATURE built once so %PIPELINE-INPUT-KEY-PLAN's per-binding
+lookup is O(1) instead of rescanning EDGE-SIGNATURES linearly."
+  (let ((table (make-hash-table :test #'eq)))
+    (dolist (signature edge-signatures)
+      (setf (gethash (%pipeline-edge-signature-edge signature) table) signature))
+    table))
+
+(defun %pipeline-input-key-plan (binding-plan target-signature edge-signature-table)
   (cons
     (car binding-plan)
     (loop for (target-port . edge) in (cdr binding-plan)
-          for edge-signature = (find
-        edge
-        edge-signatures
-        :key
-        #'%pipeline-edge-signature-edge
-        :test
-        #'eq)
+          for edge-signature = (gethash edge edge-signature-table)
           for private-target-port = (find
         target-port
         (%pipeline-stage-signature-inputs target-signature)
@@ -81,11 +83,18 @@
           (%pipeline-edge-signature-from edge-signature)
           (%pipeline-edge-signature-from-port edge-signature))))))
 
-(defun %pipeline-sink-result-plan (sink stage-signatures output-key-plans)
-  (loop for signature in stage-signatures
-        for output-key-plan in output-key-plans
-        when (eq sink (%pipeline-stage-signature-node signature))
-          return (cons (%pipeline-stage-signature-name signature) (cdr output-key-plan))))
+(defun %pipeline-node-result-plan-table (stage-signatures output-key-plans)
+  "Node -> (NAME . OUTPUT-KEY-PLAN) built once so %PIPELINE-SINK-RESULT-PLAN's
+per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
+  (let ((table (make-hash-table :test #'eq)))
+    (loop for signature in stage-signatures
+          for output-key-plan in output-key-plans
+          do (setf (gethash (%pipeline-stage-signature-node signature) table)
+                   (cons (%pipeline-stage-signature-name signature) (cdr output-key-plan))))
+    table))
+
+(defun %pipeline-sink-result-plan (sink node-result-plan-table)
+  (gethash sink node-result-plan-table))
 
 (defun %make-pipeline-execution-plan (graph stages)
   (let* ((incoming-index (%incoming-edges-index graph))
@@ -95,6 +104,7 @@
           (edge-signatures
         (loop for edge in (%graph-edges-list graph)
               collect (%make-pipeline-edge-signature edge)))
+          (edge-signature-table (%pipeline-edge-signature-table edge-signatures))
           (input-binding-plans
         (loop for node in stages
               for incoming-edges = (gethash (node-name node) incoming-index)
@@ -104,10 +114,11 @@
           (input-key-plans
         (loop for binding-plan in input-binding-plans
               for signature in stage-signatures
-              collect (%pipeline-input-key-plan binding-plan signature edge-signatures)))
+              collect (%pipeline-input-key-plan binding-plan signature edge-signature-table)))
           (output-key-plans
         (mapcar #'%pipeline-output-key-plan stage-signatures))
-          (sinks (%sink-nodes-in-order graph stages)))
+          (sinks (%sink-nodes-in-order graph stages))
+          (node-result-plan-table (%pipeline-node-result-plan-table stage-signatures output-key-plans)))
     (make-instance
       'pipeline-execution-plan
       :graph
@@ -128,7 +139,7 @@
       sinks
       :sink-result-plans
       (loop for sink in sinks
-            collect (%pipeline-sink-result-plan sink stage-signatures output-key-plans))
+            collect (%pipeline-sink-result-plan sink node-result-plan-table))
       :edge-signatures
       edge-signatures)))
 

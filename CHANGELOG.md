@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- No changes yet.
+### Fixed
+
+- `%make-pipeline-execution-plan` (`pipeline-runtime.lisp`) rebuilt plan pieces on every iteration of two loops instead of once: `%pipeline-input-key-plan` linearly `find`-scanned the full edge-signature list per input binding (O(E) work per binding, O(E^2) overall), and `%pipeline-sink-result-plan` linearly rescanned the full stage-signature list per sink (O(sinks*V), worst case O(V^2)). Both now look up a hash table (`%pipeline-edge-signature-table`, `%pipeline-node-result-plan-table`) built once before their loops, matching the same "share precomputed structure across a whole-collection loop" fix already applied to the graph-metrics family in 0.4.0. This only affects pipeline construction/topology-change cost, since the execution plan is cached and reused across repeated `run-pipeline` calls.
 
 ## [0.4.0] - 2026-07-25
 
