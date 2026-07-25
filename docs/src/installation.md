@@ -69,7 +69,7 @@ system depends on them, so must
 [`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
 [`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). `nix develop` puts
 all of them on `CL_SOURCE_REGISTRY` for you. See
-[Testing and Coverage](testing.md).
+[Development](development.md).
 
 ## Next steps
 

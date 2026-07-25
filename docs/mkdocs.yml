@@ -1,8 +1,12 @@
 # cl-dataflow documentation — MkDocs + Material configuration.
 #
-# Build:   mkdocs build -f docs/mkdocs.yml --strict
+# Build:   mkdocs build --strict -f docs/mkdocs.yml
 # Serve:   mkdocs serve  -f docs/mkdocs.yml
 # The Nix flake (`nix build .#docs`) drives the same config offline.
+#
+# Start from the repository root, not from docs/: pymdownx.snippets resolves
+# `--8<-- "CHANGELOG.md"` relative to the working directory. Use
+# `mkdocs serve --no-strict` while editing if warnings-as-errors get in the way.
 
 site_name: cl-dataflow
 site_description: >-
@@ -19,6 +23,10 @@ edit_uri: edit/main/docs/src/
 docs_dir: src
 site_dir: ../site
 use_directory_urls: true
+
+# Also set here, not only passed as `--strict` from flake.nix, so that every
+# invocation path (including `mkdocs serve`) applies the same gate.
+strict: true
 
 copyright: Copyright &copy; cl-dataflow contributors — MIT License
 
@@ -93,7 +101,13 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  # base_path is relative to mkdocs' working directory, which is the repository
+  # root (see the header). check_paths turns a missing include into a build
+  # failure rather than a silently empty page.
+  - pymdownx.snippets:
+      base_path:
+        - "."
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -102,14 +116,13 @@ markdown_extensions:
   # Content tabs (e.g. the Nix run / Quicklisp / local-checkout install paths).
   - pymdownx.tabbed:
       alternate_style: true
-  # Task lists, key bindings, smart symbols, emoji.
+  # Task lists, key bindings, smart symbols. pymdownx.emoji is deliberately
+  # absent: the docs do not use emoji, and leaving the extension configured
+  # invites someone to conclude that they may.
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.keys
   - pymdownx.smartsymbols
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - md_in_html
   - def_list
@@ -119,29 +132,44 @@ markdown_extensions:
       permalink: true
       title: On this page
 
+# Six fixed sections in this order, per the org docs standard: Home, Getting
+# Started, Guide, Reference, Internals, Project. They track the reader's state
+# — not yet running, running but new to the design, looking something up,
+# changing the internals, contributing — and readership drops at each step, so
+# reference and internals sit at the back.
+#
+# Guide topics are ordered by dependency, not alphabetically: each page uses
+# vocabulary introduced by the ones above it.
+#
+# Every page under docs/src/ must appear here. `strict: true` fails the build
+# on an unlisted page, which is what keeps this list from falling behind.
 nav:
-  - Home: README.md
+  - Home: index.md
   - Getting Started:
       - Installation: installation.md
       - Quick Start: quick-start.md
-      - Core Concepts: core-concepts.md
   - Guide:
-      - Pipelines and Workflows: pipelines.md
+      - Core Concepts: core-concepts.md
       - Graphs: graphs.md
       - Graph Algorithms: graph-algorithms.md
+      - Pipelines and Workflows: pipelines.md
       - State Machines: state-machines.md
       - Events and Effects: events-and-effects.md
       - Streams (Pull): streams.md
       - Reactive Subjects (Push): reactive.md
       - Combinators and Resilience: combinators.md
       - Observability and Serialization: observability.md
+      - Examples: examples.md
   - Reference:
       - Public API Reference: api-reference.md
+  - Internals:
       - Architecture: architecture.md
-      - Examples: examples.md
-      - Testing and Coverage: testing.md
   - Project:
+      - Development: development.md
       - Changelog: changelog.md
-      - Contributing: contributing.md
-      - Security Policy: security.md
-      - Code of Conduct: code-of-conduct.md
+
+# docs/notes/ holds long-lived measurement records that are not public
+# documentation. Declaring it here keeps `strict: true` from failing the build
+# the moment such a note is added.
+not_in_nav: |
+  notes/

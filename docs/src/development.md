@@ -1,4 +1,31 @@
-# Testing and Coverage
+# Development
+
+## The Nix entry points
+
+Everything CI runs is reachable from the flake, so a local run and a CI run
+gate on exactly the same derivations:
+
+```bash
+nix develop      # SBCL with CL_SOURCE_REGISTRY already set
+nix run .#test   # run the test suite
+nix flake check  # every check below, in parallel, with build caching
+nix fmt          # format Nix sources (treefmt/nixfmt)
+nix build .#docs # render this site, offline, with mkdocs --strict
+```
+
+`nix flake check` evaluates four checks:
+
+| Check | What it gates |
+| --- | --- |
+| `checks.default` | the `cl-dataflow/test` suite under `cl-weave` |
+| `checks.coverage` | the coverage thresholds below, plus the report artifact |
+| `checks.paredit-lint` | every Lisp file parses under `paredit` |
+| `checks.formatting` | every Nix file is nixfmt-formatted |
+| `checks.docs` | this site builds under `mkdocs --strict` |
+
+Granularity lives in these attributes rather than in extra GitHub Actions
+jobs, because `nix flake check` already runs them in parallel and shares a
+build cache between them.
 
 ## Running the suite
 
@@ -9,24 +36,23 @@ dispatches to it:
 (asdf:test-system :cl-dataflow)
 ```
 
-Outside Nix, `cl-weave` and `cl-process-kit` must be on the ASDF source
+Without Nix, the repository-root entry point runs the same suite:
+
+```bash
+sbcl --script run-tests.lisp
+```
+
+Either way, `cl-weave` and `cl-process-kit` must be on the ASDF source
 registry — and because `cl-process-kit`'s own system depends on them, so must
 [`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
 [`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). See
 [Installation](installation.md#verifying-the-install).
 
-Or with the Nix flake, without touching your global Lisp environment:
-
-```bash
-nix run          # cl-weave run cl-dataflow/test
-nix flake check  # tests + coverage + paredit lint, on every supported system
-```
-
-The current local verification commands, also run in CI:
+`./scripts/verify.sh` wraps the suite, and the example scripts double as smoke
+tests for the core execution paths:
 
 ```bash
 ./scripts/verify.sh
-nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).coverage
 sbcl --script examples/simple-pipeline.lisp
 sbcl --script examples/event-workflow.lisp
 sbcl --script examples/state-machine.lisp
@@ -78,16 +104,33 @@ Override output paths and thresholds with environment variables:
 
 ## Continuous integration
 
-GitHub Actions runs the CI workflow on a matrix of `ubuntu-latest`
-(`x86_64-linux`) and `macos-latest` (`aarch64-darwin`), so cross-platform
-support is verified on every push and pull request. Each job runs the same
-`nix flake check` and coverage build as local verification, and uploads the
-generated per-system coverage report as a build artifact.
+`ci.yml` runs a single `check` job on `ubuntu-latest` that does nothing but
+`nix flake check --print-build-logs`, so the CI gate and the local gate are
+the same set of derivations.
 
-Pushing a `vX.Y.Z` tag additionally triggers the release workflow, which
-verifies the tag matches `cl-dataflow.asd`'s `:version`, extracts the
-matching [`CHANGELOG.md`](changelog.md) section, and publishes a GitHub
-release from it — see [Contributing](contributing.md#releasing).
+`docs.yml` publishes this site to GitHub Pages on every push to `main` that
+touches `docs/**`, `flake.nix`, or `flake.lock`.
+
+`flake-update.yml` opens a weekly pull request bumping every flake input.
+
+Pushing a `vX.Y.Z` tag triggers `release.yml`, which verifies the tag matches
+`cl-dataflow.asd`'s `:version`, extracts the matching
+[`CHANGELOG.md`](changelog.md) section, and publishes a GitHub release from
+it. The tag must equal the `.asd` version or the release job fails by design.
+
+## Editing this site
+
+The site is built with [MkDocs](https://www.mkdocs.org/) and the
+[Material](https://squidfunk.github.io/mkdocs-material/) theme from
+`docs/src/`. Preview changes locally:
+
+```bash
+nix build .#docs                 # matches the Pages build exactly, offline
+mkdocs serve -f docs/mkdocs.yml  # with mkdocs-material on PATH
+```
+
+Every page must appear in `nav`: `--strict` turns an unlisted page or a broken
+link into a build failure, which is what makes `checks.docs` useful.
 
 ## Testing helpers for downstream projects
 

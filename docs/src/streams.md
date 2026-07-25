@@ -309,7 +309,7 @@ dividing by zero:
 ## Runnable examples
 
 The example scripts under `examples/` double as smoke tests (see
-[Examples](examples.md) and [Testing and Coverage](testing.md)):
+[Examples](examples.md) and [Development](development.md)):
 
 ```bash
 sbcl --script examples/streams.lisp

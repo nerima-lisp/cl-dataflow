@@ -75,4 +75,4 @@ which is what keeps the Expected output column above honest. Because those
 tests spawn an external SBCL process, they are opt-in: they run only when
 `CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1` is set, and are skipped otherwise. Set it
 when changing runtime behavior, or run the scripts by hand — see
-[Testing and Coverage](testing.md).
+[Development](development.md).
