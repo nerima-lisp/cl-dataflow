@@ -49,14 +49,14 @@ insertion order silently deciding it the other way."
           when edge
             collect (cons port edge))))
 
-(progn
-  (defun %resolve-input-binding-plan (context binding-plan)
-    (loop for (port . edge) in binding-plan
-          collect (cons port (%read-value context (edge-from edge) (edge-from-port edge)))))
-  (defun %incoming-edge-bindings (context node incoming-edges)
-    (%resolve-input-binding-plan
-      context
-      (%node-input-binding-plan node incoming-edges))))
+(defun %resolve-input-binding-plan (context binding-plan)
+  (loop for (port . edge) in binding-plan
+        collect (cons port (%read-value context (edge-from edge) (edge-from-port edge)))))
+
+(defun %incoming-edge-bindings (context node incoming-edges)
+  (%resolve-input-binding-plan
+    context
+    (%node-input-binding-plan node incoming-edges)))
 
 (defun %resolve-input-key-plan (context binding-plan)
   (loop for (port . key) in binding-plan

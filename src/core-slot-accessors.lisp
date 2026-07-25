@@ -69,13 +69,14 @@
   (new-history)
   `(setf (%read-slot ,machine 'history) ,new-history))
 
-(progn
-  (defun %pipeline-stages-list (pipeline)
-    (%read-slot pipeline 'stages))
-  (defun %pipeline-execution-plan (pipeline)
-    (%read-slot pipeline 'execution-plan))
-  (defun (setf %pipeline-execution-plan) (plan pipeline)
-    (setf (%read-slot pipeline 'execution-plan) plan)))
+(defun %pipeline-stages-list (pipeline)
+  (%read-slot pipeline 'stages))
+
+(defun %pipeline-execution-plan (pipeline)
+  (%read-slot pipeline 'execution-plan))
+
+(defun (setf %pipeline-execution-plan) (plan pipeline)
+  (setf (%read-slot pipeline 'execution-plan) plan))
 
 (defun %slot-api-getter-form (name object-name body)
   `(defun ,name (,object-name)

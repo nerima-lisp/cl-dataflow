@@ -68,62 +68,64 @@
     (history-limit :initarg :history-limit :initform nil)
     (metadata :initarg :metadata :initform '())))
 
-(progn
-  (defclass pipeline-stage-signature ()
-    ((node :initarg :node :reader %pipeline-stage-signature-node)
-      (name :initarg :name :reader %pipeline-stage-signature-name)
-      (inputs :initarg :inputs :reader %pipeline-stage-signature-inputs)
-      (outputs :initarg :outputs :reader %pipeline-stage-signature-outputs)))
-  (defclass pipeline-edge-signature ()
-    ((edge :initarg :edge :reader %pipeline-edge-signature-edge)
-      (from :initarg :from :reader %pipeline-edge-signature-from)
-      (from-port :initarg :from-port :reader %pipeline-edge-signature-from-port)
-      (to :initarg :to :reader %pipeline-edge-signature-to)
-      (to-port :initarg :to-port :reader %pipeline-edge-signature-to-port)))
-  (defclass pipeline-execution-plan ()
-    ((graph :initarg :graph :reader %pipeline-execution-plan-graph)
-      (stages :initarg :stages :reader %pipeline-execution-plan-stages)
-      (stage-signatures
-        :initarg
-        :stage-signatures
-        :reader
-        %pipeline-execution-plan-stage-signatures)
-      (incoming-index
-        :initarg
-        :incoming-index
-        :reader
-        %pipeline-execution-plan-incoming-index)
-      (input-binding-plans
-        :initarg
-        :input-binding-plans
-        :reader
-        %pipeline-execution-plan-input-binding-plans)
-      (input-key-plans
-        :initarg
-        :input-key-plans
-        :reader
-        %pipeline-execution-plan-input-key-plans)
-      (output-key-plans
-        :initarg
-        :output-key-plans
-        :reader
-        %pipeline-execution-plan-output-key-plans)
-      (sinks :initarg :sinks :reader %pipeline-execution-plan-sinks)
-      (sink-result-plans
-        :initarg
-        :sink-result-plans
-        :reader
-        %pipeline-execution-plan-sink-result-plans)
-      (edge-signatures
-        :initarg
-        :edge-signatures
-        :reader
-        %pipeline-execution-plan-edge-signatures)))
-  (defclass pipeline ()
-    ((graph :initarg :graph)
-      (stages :initarg :stages :initform '())
-      (execution-plan :initarg :execution-plan :initform nil)
-      (metadata :initarg :metadata :initform '()))))
+(defclass pipeline-stage-signature ()
+  ((node :initarg :node :reader %pipeline-stage-signature-node)
+    (name :initarg :name :reader %pipeline-stage-signature-name)
+    (inputs :initarg :inputs :reader %pipeline-stage-signature-inputs)
+    (outputs :initarg :outputs :reader %pipeline-stage-signature-outputs)))
+
+(defclass pipeline-edge-signature ()
+  ((edge :initarg :edge :reader %pipeline-edge-signature-edge)
+    (from :initarg :from :reader %pipeline-edge-signature-from)
+    (from-port :initarg :from-port :reader %pipeline-edge-signature-from-port)
+    (to :initarg :to :reader %pipeline-edge-signature-to)
+    (to-port :initarg :to-port :reader %pipeline-edge-signature-to-port)))
+
+(defclass pipeline-execution-plan ()
+  ((graph :initarg :graph :reader %pipeline-execution-plan-graph)
+    (stages :initarg :stages :reader %pipeline-execution-plan-stages)
+    (stage-signatures
+      :initarg
+      :stage-signatures
+      :reader
+      %pipeline-execution-plan-stage-signatures)
+    (incoming-index
+      :initarg
+      :incoming-index
+      :reader
+      %pipeline-execution-plan-incoming-index)
+    (input-binding-plans
+      :initarg
+      :input-binding-plans
+      :reader
+      %pipeline-execution-plan-input-binding-plans)
+    (input-key-plans
+      :initarg
+      :input-key-plans
+      :reader
+      %pipeline-execution-plan-input-key-plans)
+    (output-key-plans
+      :initarg
+      :output-key-plans
+      :reader
+      %pipeline-execution-plan-output-key-plans)
+    (sinks :initarg :sinks :reader %pipeline-execution-plan-sinks)
+    (sink-result-plans
+      :initarg
+      :sink-result-plans
+      :reader
+      %pipeline-execution-plan-sink-result-plans)
+    (edge-signatures
+      :initarg
+      :edge-signatures
+      :reader
+      %pipeline-execution-plan-edge-signatures)))
+
+(defclass pipeline ()
+  ((graph :initarg :graph)
+    (stages :initarg :stages :initform '())
+    (execution-plan :initarg :execution-plan :initform nil)
+    (metadata :initarg :metadata :initform '())))
 
 (defmethod print-object ((node node) stream)
   (print-unreadable-object
