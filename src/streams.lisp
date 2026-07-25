@@ -212,6 +212,26 @@ element fails PREDICATE, the remainder is emitted unchanged."
       (setf (gethash value singleton) t)
       (carry singleton 1 levels))))
 
+(defun %stream-distinct-emit (value step hashable seen hash-levels standard-test test
+                              distinct-count max-distinct)
+  "Build the CONS cell %STREAM-DISTINCT-STEP returns once VALUE is confirmed new:
+signal a MAX-DISTINCT overflow first, then continue lazily from (CDR STEP) with
+VALUE recorded in whichever of SEEN/HASH-LEVELS its hashability picked."
+  (when (and max-distinct (>= distinct-count max-distinct))
+    (%signal-stream-limit-exceeded "STREAM-DISTINCT" max-distinct))
+  (cons
+    value
+    (%stream-distinct-step
+      (cdr step)
+      (if hashable seen
+        (cons value seen))
+      (if hashable (%distinct-hash-levels-add value hash-levels standard-test)
+        hash-levels)
+      standard-test
+      test
+      (1+ distinct-count)
+      max-distinct)))
+
 (defun %stream-distinct-step (stream seen hash-levels standard-test test distinct-count max-distinct)
   (%make-flow-stream
     (lambda ()
@@ -225,22 +245,9 @@ element fails PREDICATE, the remainder is emitted unchanged."
                   (if hashable (%distinct-hash-levels-member-p value hash-levels)
                     (member value seen :test test))))
               (if duplicate-p (setf current (cdr step))
-                (progn
-                  (when (and max-distinct (>= distinct-count max-distinct))
-                    (%signal-stream-limit-exceeded "STREAM-DISTINCT" max-distinct))
-                  (return
-                    (cons
-                      value
-                      (%stream-distinct-step
-                        (cdr step)
-                        (if hashable seen
-                          (cons value seen))
-                        (if hashable (%distinct-hash-levels-add value hash-levels standard-test)
-                          hash-levels)
-                        standard-test
-                        test
-                        (1+ distinct-count)
-                        max-distinct))))))))))))
+                (return
+                  (%stream-distinct-emit value step hashable seen hash-levels
+                                         standard-test test distinct-count max-distinct))))))))))
 
 (defun stream-distinct (stream &key (test 'equal) max-distinct)
   "Return a lazy stream containing only the first occurrence of each value.
