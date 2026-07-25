@@ -56,9 +56,8 @@
             (effect-trace-index effect))))
       (%push-context-trace-entry context trace-entry)
       (let ((result (funcall handler effect context)))
-        (progn
-          (setf (effect-result effect) result
-                (getf trace-entry :result) (%copy-structured-value (effect-result effect)))
-          (remf trace-entry :handled-p))
+        (setf (effect-result effect) result
+              (getf trace-entry :result) (%copy-structured-value (effect-result effect)))
+        (remf trace-entry :handled-p)
         (setf (slot-value context 'effects) (cons (%copy-effect effect) (%context-effects-list context)))
         effect))))
