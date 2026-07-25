@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Repository-layout work only: no source file under `src/` changed, so no public
+API, behavior, or contract changed with it.
+
+### Added
+
+- `run-tests.lisp` at the repository root, so the suite can be started with
+  `sbcl --script run-tests.lisp` without the `cl-weave` CLI on `PATH`.
+- `checks.formatting` (treefmt/nixfmt) and `checks.docs` (the `mkdocs --strict`
+  build) now run under `nix flake check`. The docs build previously only ran in
+  `docs.yml`, i.e. after the merge to `main`, so a broken link or a page missing
+  from the nav surfaced as a failed deploy rather than as a failed pull request.
+- `apps.test`, so `nix run .#test` works alongside the existing `nix run .`.
+- `.github/workflows/flake-update.yml`, which opens a weekly pull request
+  bumping every flake input, and `.github/actions/nix-setup/`, the shared
+  composite action that pins the nix-installer and Cachix SHAs in one place.
+
+### Changed
+
+- Every sibling flake input is pinned to a release tag rather than following the
+  upstream default branch: `cl-prolog/v1.0.1`, `cl-weave/v1.0.0`,
+  `paredit-cli/v1.0.0`, `cl-process-kit/v1.0.0`, `cl-boundary-kit/v0.6.0`,
+  `cl-log-kit/v1.0.0`. An unpinned reference means an upstream push to `main`
+  can break this repository's CI with no change here.
+- `cl-prolog` and `cl-process-kit` are pulled with `flake = false`, matching
+  `cl-boundary-kit` and `cl-log-kit`. Only their source trees were ever used, and
+  a `flake = true` sibling drags its whole transitive input graph in. Together
+  with the tag pinning this takes `flake.lock` from 78 nodes to 10; the old lock
+  held 16 copies of `cl-weave` and 13 each of `paredit-cli`, `rust-overlay` and
+  `treefmt-nix`. `cl-weave` and `paredit-cli` stay `flake = true` because their
+  `packages`/`lib` outputs are what `checks.default`, `checks.coverage` and
+  `checks.paredit-lint` actually call.
+- `flake.nix` reads the package version out of `cl-dataflow.asd` instead of
+  hardcoding it in two places, so a release edits one line.
+- `nix fmt` is now treefmt (Nix files only) rather than bare `nixfmt`, and shares
+  its configuration with `checks.formatting`.
+- The test directory is `t/` and both systems in `cl-dataflow.asd` are named with
+  strings rather than `#:` designators, per the org package standard. The test
+  system name, `cl-dataflow/test`, is unchanged.
+- `ci.yml` is now a single `check` job running `nix flake check`, on
+  `ubuntu-latest` only. Granularity moved into the flake's `checks.*`, which
+  `nix flake check` already runs in parallel with a shared build cache. **The
+  per-system coverage artifact upload is gone**; `checks.coverage` still enforces
+  the same 84%-expression / 100%-branch gate, but the HTML report is no longer
+  published from CI. Run `./scripts/coverage.sh` locally for it.
+- Every `uses:` in every workflow is pinned to a 40-character commit SHA.
+- `docs/src/README.md` is now `docs/src/index.md`, `testing.md` is now
+  `development.md`, and the nav has the six standard sections. `changelog.md` is
+  a `pymdownx.snippets` include of this file, so the site and the repository can
+  no longer drift apart.
+
+### Removed
+
+- `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md` and `SECURITY.md`, plus their
+  `docs/src/` copies. GitHub serves these from the org's `.github` repository for
+  any repository that does not define its own, so a local copy is 21 files to
+  update instead of one. Nothing in the removed files was specific to
+  `cl-dataflow`; the verification commands they carried are now in
+  [Development](https://nerima-lisp.github.io/cl-dataflow/development/).
+
 ## [1.0.0] - 2026-07-26
 
 The first stable release. Every symbol exported from the `cl-dataflow` package
