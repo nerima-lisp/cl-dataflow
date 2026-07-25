@@ -69,21 +69,31 @@ NEXT-SEED."
            :detail (format nil "~A size must be positive." caller)))
   size)
 
+(defun %stream-collect-batch (n stream)
+  "Collect up to N leading elements of STREAM, returning (VALUES BATCH REST-STREAM
+COUNT): the collected elements (fewer than N only when STREAM ends first), the
+remaining stream after them, and how many were collected. STREAM-CHUNK and
+STREAM-WINDOW both need exactly this fill -- chunking skips forward by a whole
+batch each time, windowing slides by one -- so only this shared collection loop
+is factored out; what each does with the result stays with its own caller."
+  (let ((batch '())
+        (current stream)
+        (count 0))
+    (loop
+      (when (= count n) (return))
+      (let ((step (%stream-step current)))
+        (when (eq step :end) (return))
+        (push (car step) batch)
+        (setf current (cdr step))
+        (incf count)))
+    (values (nreverse batch) current count)))
+
 (defun %stream-chunk (n stream)
   (%make-flow-stream
    (lambda ()
-     (let ((chunk '())
-           (current stream)
-           (count 0))
-       (loop
-         (when (= count n) (return))
-         (let ((step (%stream-step current)))
-           (when (eq step :end) (return))
-           (push (car step) chunk)
-           (setf current (cdr step))
-           (incf count)))
+     (multiple-value-bind (chunk current) (%stream-collect-batch n stream)
        (if chunk
-           (cons (nreverse chunk) (%stream-chunk n current))
+           (cons chunk (%stream-chunk n current))
            :end)))))
 
 (defun stream-chunk (n stream)
@@ -91,19 +101,6 @@ NEXT-SEED."
 (the final list may be shorter). N must be positive."
   (%positive-size n "STREAM-CHUNK")
   (%stream-chunk n stream))
-
-(defun %stream-window-fill (n stream)
-  (let ((window '())
-        (current stream)
-        (count 0))
-    (loop
-      (when (= count n) (return))
-      (let ((step (%stream-step current)))
-        (when (eq step :end) (return))
-        (push (car step) window)
-        (setf current (cdr step))
-        (incf count)))
-    (values (nreverse window) current count)))
 
 (defun %stream-window-state->list (front rear)
   (if rear
@@ -138,7 +135,7 @@ NEXT-SEED."
   (%make-flow-stream
    (lambda ()
      (multiple-value-bind (window rest-stream count)
-         (%stream-window-fill n stream)
+         (%stream-collect-batch n stream)
        (if (= count n)
            (%stream-step (%stream-window-from window '() rest-stream))
            :end)))))
