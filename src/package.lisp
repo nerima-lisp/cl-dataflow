@@ -403,3 +403,13 @@
     #:assert-state-machine-state
     #:assert-pipeline-result))
 
+;; SB-COVER instruments forms via the compiler pipeline; STORE-COVERAGE-DATA
+;; and aggressive SPEED optimization both influence what the compiler does to
+;; a form, so a coverage run (detected the same way cl-weave's own
+;; --coverage flag detects it: SB-COVER is REQUIREd before this system loads)
+;; keeps the default policy instead. Every other load -- tests, REPL use,
+;; and applications depending on this library -- gets full SPEED 3.
+#.(if (find-package "SB-COVER")
+      '(progn)
+      '(declaim (optimize (speed 3) (safety 1) (compilation-speed 0))))
+

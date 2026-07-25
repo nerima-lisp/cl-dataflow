@@ -4,31 +4,39 @@
 ;;;; graph structure, missing effect handlers, invalid transitions, guard
 ;;;; failures) and the shared detail-report formatting they use.
 
-(declaim (notinline %copy-structured-value
-                    %copy-node-snapshot
-                    %copy-edge-snapshot
-                    %copy-graph-snapshot
-                    %copy-event
-                    %copy-effect
-                    graph-nodes
-                    graph-edges
-                    graph-metadata
-                    context-values
-                    context-events
-                    context-effects
-                    context-trace
-                    context-metadata
-                    context-effect-handlers
-                    context-result
-                    context-state
-                    event-type
-                    event-payload
-                    event-metadata
-                    event-trace-index
-                    effect-type
-                    effect-payload
-                    effect-metadata
-                    effect-trace-index))
+;; NOTINLINE only under coverage instrumentation (see PACKAGE.LISP): it makes
+;; SB-COVER see every call site separately, at the cost of the CLOS
+;; fast-slot-access transform and copier inlining a SPEED 3 policy would
+;; otherwise apply. Outside coverage runs, this declaim is skipped entirely
+;; so the default (non-NOTINLINE) policy -- combined with PACKAGE.LISP's
+;; SPEED 3 -- can optimize these hot accessors and copiers freely.
+#.(if (find-package "SB-COVER")
+      '(declaim (notinline %copy-structured-value
+                           %copy-node-snapshot
+                           %copy-edge-snapshot
+                           %copy-graph-snapshot
+                           %copy-event
+                           %copy-effect
+                           graph-nodes
+                           graph-edges
+                           graph-metadata
+                           context-values
+                           context-events
+                           context-effects
+                           context-trace
+                           context-metadata
+                           context-effect-handlers
+                           context-result
+                           context-state
+                           event-type
+                           event-payload
+                           event-metadata
+                           event-trace-index
+                           effect-type
+                           effect-payload
+                           effect-metadata
+                           effect-trace-index))
+      '(progn))
 
 (define-condition cl-dataflow-error (error) ())
 
