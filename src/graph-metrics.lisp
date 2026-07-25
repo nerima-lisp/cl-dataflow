@@ -25,16 +25,15 @@ across distinct ports count once."
 (defun graph-degree-histogram (graph)
   "Return an alist (DEGREE . COUNT) over each node's total degree -- the number of
 distinct successors plus distinct predecessors -- ordered by ascending degree."
-  (let ((successors (%graph-adjacency-snapshot graph :successors))
-        (predecessors (%graph-adjacency-snapshot graph :predecessors))
-        (counts (make-hash-table :test #'eql)))
-    (dolist (name (%graph-node-name-set graph))
-      (incf (gethash (+ (length (gethash name successors))
-                        (length (gethash name predecessors)))
-                     counts 0)))
-    (sort (loop for degree being the hash-keys of counts using (hash-value count)
-                collect (cons degree count))
-          #'< :key #'car)))
+  (multiple-value-bind (successors predecessors) (%graph-both-adjacencies graph)
+    (let ((counts (make-hash-table :test #'eql)))
+      (dolist (name (%graph-node-name-set graph))
+        (incf (gethash (+ (length (gethash name successors))
+                          (length (gethash name predecessors)))
+                       counts 0)))
+      (sort (loop for degree being the hash-keys of counts using (hash-value count)
+                  collect (cons degree count))
+            #'< :key #'car))))
 
 (defun graph-bipartite-p (graph)
   "Return true when GRAPH's underlying undirected graph is 2-colourable (bipartite).

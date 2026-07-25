@@ -68,6 +68,18 @@ ports are counted individually, matching GRAPH-EDGES."
                  (%graph-nodes-table graph))
         adjacency)))
 
+(defun %graph-both-adjacencies (graph)
+  "Return (VALUES successor-table predecessor-table) for GRAPH. Callers that
+need both directions build the underlying Prolog rulebase once and reuse it
+for both directional queries, instead of calling %GRAPH-ADJACENCY-SNAPSHOT
+twice -- which would rebuild an equivalent rulebase from scratch each time."
+  (if (%graph-edges-list graph)
+      (let ((rulebase (%graph-rulebase graph)))
+        (values (%graph-directional-adjacency graph rulebase :successors)
+                (%graph-directional-adjacency graph rulebase :predecessors)))
+      (values (%graph-adjacency-snapshot graph :successors)
+              (%graph-adjacency-snapshot graph :predecessors))))
+
 (defun %graph-neighbor-name (edge name direction)
   (ecase direction
     (:successors (when (equal (edge-from edge) name) (edge-to edge)))

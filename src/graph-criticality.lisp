@@ -150,9 +150,8 @@ Cooper-Harvey-Kennedy dominance algorithm over reverse postorder, so it stays
 polynomial and stack-safe on deep, cyclic graphs. Signals when SOURCE is absent."
   (let ((source-name (%node-designator-name source)))
     (%ensure-graph-node graph source-name)
-    (%immediate-dominators source-name
-                           (%graph-adjacency-snapshot graph :successors)
-                           (%graph-adjacency-snapshot graph :predecessors))))
+    (multiple-value-bind (successors predecessors) (%graph-both-adjacencies graph)
+      (%immediate-dominators source-name successors predecessors))))
 
 (defun graph-post-dominators (graph sink)
   "Return the immediate-post-dominator map of GRAPH toward SINK as an alist
@@ -163,6 +162,5 @@ SINK, so it shares the same iterative, stack-safe machinery; nodes that cannot
 reach SINK are omitted. Signals when SINK is absent."
   (let ((sink-name (%node-designator-name sink)))
     (%ensure-graph-node graph sink-name)
-    (%immediate-dominators sink-name
-                           (%graph-adjacency-snapshot graph :predecessors)
-                           (%graph-adjacency-snapshot graph :successors))))
+    (multiple-value-bind (successors predecessors) (%graph-both-adjacencies graph)
+      (%immediate-dominators sink-name predecessors successors))))
