@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Published a MkDocs (Material) documentation site under `docs/`, built with `nix build .#docs` and deployed by `.github/workflows/docs.yml`.
 
+### Fixed
+
+- `examples/bootstrap.lisp` hand-maintained a duplicate of `cl-dataflow.asd`'s source-file list instead of calling `(asdf:load-system "cl-dataflow")`. It had drifted out of sync with the `graph-algorithms.lisp`/`graph-connectivity.lisp` -> `graph-structure.lisp`/`graph-components.lisp`/`graph-distance.lisp` split earlier in this changelog, silently breaking every one of the 12 examples (all of them load `bootstrap.lisp` first). Replaced the hand-listed files with a plain `asdf:load-system` call, so this class of drift can't recur; verified all 12 examples run to completion again.
+
 ### Changed
 
 - Fixed stray `github.com/takeokunn/cl-dataflow` URLs left over from the `nerima-lisp` org migration across `README.md`, `CHANGELOG.md`, `SECURITY.md`, `cl-dataflow.asd`, `.github/ISSUE_TEMPLATE/config.yml`, and the MkDocs documentation site.

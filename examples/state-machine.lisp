@@ -22,6 +22,9 @@
           (cl-dataflow:make-transition "running" "complete" "completed"))))
        (context
       (cl-dataflow:make-context :state (cl-dataflow:state-machine-state machine))))
+  ;; RUN-STATE-MACHINE-WITH-CONTEXT mutates MACHINE in place and also returns
+  ;; it as UPDATED-MACHINE, so the STATE-MACHINE-LAST-TRANSITION call below
+  ;; against the original MACHINE binding already reflects the run.
   (multiple-value-bind (updated-machine transition-records updated-context) (cl-dataflow:run-state-machine-with-context
       machine
       '("start" "complete")
