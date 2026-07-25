@@ -1,6 +1,59 @@
-# Compiled Common Lisp artifacts
+# nerima-lisp standard .gitignore
+# Copy to <repo>/.gitignore and append repository-specific entries below the
+# marked section. Everything above the marker must stay identical across repos
+# so that "is this artifact ignored?" has the same answer everywhere.
+
+# --- Common Lisp build output ---
 *.fasl
 *.fas
+*.lib
+*.dfsl
+*.ufsl
+*.fsl
+
+# --- Nix ---
+/result
+/result-*
+/.direnv/
+
+# --- Test and coverage output ---
+/coverage/
+/coverage-report/
+/*-coverage-report/
+*.coverage
+coverage.dat
+/__snapshots__/
+/*-snapshots/
+
+# --- Local caches and scratch space ---
+/.cache/
+/.deps/
+/tmp/
+/.worktrees/
+/.paredit.cleanup/
+
+# --- Credentials ---
+# Not because anyone plans to put a key here, but because the cost of the one
+# time it happens by accident is a rotation across the whole org. See
+# SUPPLY_CHAIN.md for what to do if one is committed anyway.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/secrets/
+
+# --- Editor and OS noise ---
+.DS_Store
+*~
+\#*\#
+.\#*
+
+# --- Repository-specific entries below this line ---
+
+# Compiled output from Lisp implementations other than SBCL/CCL's *.fasl.
 *.lx64fsl
 *.lx32fsl
 *.dx64fsl
@@ -12,31 +65,19 @@
 *.so
 *.dylib
 
-# ASDF / build output
-.cache/
+# ASDF scratch output.
 build/
 system-index.txt
 
-# Coverage reports (regenerate with scripts/coverage.sh)
-/coverage/
-
-# Saved images / cores
+# Saved images and cores.
 *.core
 *.image
 
-# Editor and OS cruft
-*~
-\#*\#
-.\#*
-.DS_Store
+# Vim swap files.
 *.swp
 *.swo
 
-# Coverage data file (regenerate with scripts/coverage.sh)
-/cl-dataflow.coverage
-
-# Nix build result symlink
-/result
-
-# cl-weave snapshot lock (transient; snapshots.sexp itself is tracked)
+# cl-weave snapshot lock. The lock is transient; __snapshots__/snapshots.sexp
+# itself is tracked and stays tracked despite the /__snapshots__/ rule above,
+# because .gitignore does not apply to files already in the index.
 __snapshots__/*.lock
