@@ -28,6 +28,17 @@ or both:
                   (cl-dataflow:make-node "validate"))))
 ```
 
+What `:stages` may contain depends on whether `:graph` is also given:
+
+- **Without `:graph`**, each stage is either a `node` or a plist of
+  `make-node`'s own arguments (`:name`, `:inputs`, `:outputs`, `:handler`,
+  `:metadata`), which `make-pipeline` turns into a node for you before
+  chaining.
+- **With `:graph`**, `:stages` is an explicit stage *order* over that graph,
+  so each element must be a `node` — typically one returned by `find-node` —
+  and is resolved against the graph's own node of that name. (Bare name
+  strings are only accepted by `define-pipeline`'s `:stages`, below.)
+
 `make-pipeline` also accepts `:metadata`, stored on the pipeline (see
 [`pipeline-metadata`](#inspecting-a-pipeline) below).
 
@@ -90,8 +101,10 @@ in the graph's topological order, not just a single straight-line path.
 When a pipeline has exactly one sink node (a node with no outgoing edge),
 `run-pipeline` returns that sink's collapsed output directly, as in the
 linear example above. When there is more than one sink, it returns a list
-of `(node-name . outputs)` entries, one per sink, in graph order — as
-shown here, where `"double"` and `"increment"` are both sinks.
+of `(node-name . outputs)` entries, one per sink, in the pipeline's stage
+order — as shown here, where `"double"` and `"increment"` are both sinks.
+(That is the execution order, which is not necessarily the name order
+[`pipeline-sink-names`](#inspecting-a-pipeline) reports.)
 
 ## Running pipelines
 
@@ -129,10 +142,25 @@ the other handler-wrapping helpers used above.
 
 | Function | Returns |
 | --- | --- |
+| `pipeline-p` | True when the value is a `pipeline`. |
 | `pipeline-graph` | The **live** graph backing the pipeline. |
-| `pipeline-stages` | An independent snapshot of the resolved stage order. |
+| `pipeline-stages` | An independent snapshot of the resolved stage order, as `node` objects. |
 | `pipeline-metadata` | An independent snapshot of the pipeline's metadata. |
 | `pipeline-stage-count` | The number of stages (from `pipeline-ext.lisp`). |
+| `pipeline-stage-names` | The stage *names*, in execution order. |
+| `pipeline-node-names` | Every node name in the graph, ordered lexicographically. |
+| `pipeline-source-names` | The names of the source nodes (indegree 0), ordered by name. |
+| `pipeline-sink-names` | The names of the sink nodes (no successors), ordered by name. |
+| `pipeline->dot` / `pipeline->mermaid` | The graph rendered as a Graphviz DOT or Mermaid flowchart string. |
+
+`pipeline-node-names`, `pipeline-source-names`, `pipeline-sink-names`,
+`pipeline->dot`, and `pipeline->mermaid` are thin forwards to `graph-node-names`,
+`graph-source-nodes`, `graph-sink-nodes`, `graph->dot`, and `graph->mermaid`
+on `pipeline-graph`; see
+[Observability and Serialization](observability.md) for their full behaviour.
+Note the ordering difference: `pipeline-stage-names` follows execution order,
+while `pipeline-node-names`, `pipeline-source-names`, and `pipeline-sink-names`
+are ordered by name.
 
 `pipeline-graph` is the one exception to "readers return snapshots": it
 returns the actual graph object the pipeline runs against, so mutating it
@@ -209,7 +237,10 @@ returns `(values pipeline machine)`:
   stage via `make-state-machine-node`, accepting `:name`, `:event-fn`,
   `:result-fn`, and `:metadata`. `:event-fn` computes the event to step the
   machine with from the node's `(input context)`; without it, the node's
-  input is used as the event directly.
+  input is used as the event directly. `:result-fn` is called with
+  `(machine event input context)` to compute the node's output; without it,
+  the node emits the machine's new state — which is why the run above yields
+  `"shipped"`.
 
 Top-level options include `:state`/`:initial-state`, `:history`,
 `:history-limit`, and `:machine-metadata` (all forwarded to
@@ -251,10 +282,14 @@ events, effects, and trace accumulate across the whole run.
 ```
 
 `run-pipeline-times n` with `n = 0` returns `(values input context)`
-unchanged. `run-pipeline-until-fixpoint` compares with `:test` (default
-`#'equal`) and returns `(values result iterations fixpoint-p)`, where
-`fixpoint-p` is only true when equality was reached before the cap.
-`run-pipeline-while` returns `(values final-value iterations)`.
+unchanged — `n` is the iteration count, so it takes no `:max-iterations`.
+`run-pipeline-until-fixpoint` compares with `:test` (default `#'equal`) and
+returns `(values result iterations fixpoint-p)`, where `fixpoint-p` is only
+true when equality was reached before the cap; on hitting the cap it returns
+`(values last-value max-iterations nil)`. `run-pipeline-while` returns
+`(values final-value iterations)`. Both of the unbounded forms take
+`:max-iterations` (default 1000) so a non-converging pipeline or an
+always-true predicate still terminates.
 
 ## Extension APIs
 

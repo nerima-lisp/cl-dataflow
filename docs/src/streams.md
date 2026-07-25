@@ -26,8 +26,14 @@ throughout this page:
 
 ## Laziness and construction
 
-`flow-stream-p` recognizes a stream value. The basic constructors turn
-ordinary data into a stream:
+`flow-stream-p` recognizes a stream value. Despite the shared `flow-`
+prefix it is not part of the `flow-name`/`flow-metadata`/`flow-kind`
+introspection protocol described in [Observability](observability.md) —
+that protocol covers nodes, edges, graphs, contexts, events, effects,
+transitions, state machines, and pipelines, and signals a `type-error` when
+handed a stream or a subject. Streams are inspected by consuming them.
+
+The basic constructors turn ordinary data into a stream:
 
 | Function | Produces |
 | --- | --- |
@@ -193,12 +199,28 @@ Eager, `:limit`-aware terminal operations for common summaries:
 | `stream-last` | The last element, or `default` if empty. |
 | `stream-nth` | The 0-based `n`th element, or `default` if the stream is shorter. |
 
+The empty-stream `default` is passed two different ways, so it is worth
+checking which family a function belongs to before calling it:
+
+- **Positional** (`stream-first`, `stream-nth`, `stream-find`,
+  `stream-last`) — the default is an ordinary optional argument, and
+  `:limit` follows it. `(stream-find #'evenp s :none :limit 100)`. Passing
+  `:default` to these signals `invalid-input-error`.
+- **Keyword `:default`** (`stream-min`, `stream-max`) — alongside `:key` and
+  `:limit`. `(stream-min s :default 0)`.
+
 ```lisp
 (cl-dataflow:stream-sum (cl-dataflow:stream-of 1 2 3 4))
 ;; => 10
 
 (cl-dataflow:stream-find #'evenp (cl-dataflow:stream-of 1 3 5 6 7))
 ;; => 6
+
+(cl-dataflow:stream-find #'oddp (cl-dataflow:stream-of 2 4) :none)
+;; => :NONE
+
+(cl-dataflow:stream-min (cl-dataflow:empty-stream) :default 0)
+;; => 0
 ```
 
 ## Additional operators and collectors
@@ -233,22 +255,33 @@ useful for data-shaping pipelines. Grouping collectors (`stream-group-by`,
 ;; => ((2 4 6) (1 3 5))
 ```
 
-## Statistics
+## Statistics and folds
 
-Statistical consumers force the stream once and fold it in pure Lisp.
-**Every one of these returns `nil` on an empty stream** rather than dividing
-by zero:
+Two more lazy operators and a counting consumer. These are *not* statistics
+and do not follow the empty-stream rule below — the lazy pair yields the
+empty stream, and `stream-count-if` yields `0`:
 
 | Function | Returns |
 | --- | --- |
-| `stream-flatten` | Concatenates the elements of each list yielded by the stream (one level; equivalent to `stream-flat-map` with `list->stream`). |
-| `stream-scan1` | Running accumulation seeded by the stream's own first element (so the result starts with that element). |
-| `stream-count-if` | The number of elements satisfying `predicate`. |
-| `stream-variance` | Population variance of `(key element)`, or `nil` if empty. |
-| `stream-stddev` | Population standard deviation, or `nil` if empty. |
-| `stream-median` | The median (mean of the two middle values for an even count), or `nil` if empty. |
+| `stream-flatten` | Lazy. Concatenates the elements of each list yielded by the stream (one level; equivalent to `stream-flat-map` with `list->stream`). |
+| `stream-scan1` | Lazy. Running accumulation seeded by the stream's own first element (so the result starts with that element, and — unlike `stream-scan` — no seed is prepended). |
+| `stream-count-if` | The number of elements satisfying `predicate` (`0` when empty). |
+
+The statistical consumers proper force the stream once and fold it in pure
+Lisp. **Each of these three returns `nil` on an empty stream** rather than
+dividing by zero:
+
+| Function | Returns |
+| --- | --- |
+| `stream-variance` | Population variance of `(key element)`. |
+| `stream-stddev` | Population standard deviation. |
+| `stream-median` | The median (mean of the two middle values for an even count). |
 
 ```lisp
+(cl-dataflow:stream-collect (cl-dataflow:stream-scan1 #'+ (cl-dataflow:stream-of 1 2 3 4)))
+;; => (1 3 6 10)
+
+
 (cl-dataflow:stream-variance (cl-dataflow:stream-of 2 4 4 4 5 5 7 9))
 ;; => 4
 

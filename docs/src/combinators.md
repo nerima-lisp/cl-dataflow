@@ -72,9 +72,11 @@ number of total invocations:
 ;; => 70, after 3 attempts
 ```
 
-`:condition-type` (default `error`) restricts which conditions are retried;
-anything outside that type re-signals immediately. Once `:attempts` is
-exhausted the last failure is re-signalled rather than swallowed.
+`:attempts` (default `3`) is the total number of invocations, not the number
+of *re*-tries. `:condition-type` (default `error`) restricts which conditions
+are retried; anything outside that type re-signals immediately. Once
+`:attempts` is exhausted the last failure is re-signalled rather than
+swallowed.
 `retrying-handler` requires at least one attempt — passing `:attempts 0` or
 lower signals `invalid-input-error`.
 
@@ -301,7 +303,7 @@ its input and accumulates events, effects, and trace onto one shared context:
 (let ((double (single-node-pipeline "double" (lambda (x) (* x 2))))
       (increment (single-node-pipeline "increment" (lambda (x) (+ x 1)))))
   (cl-dataflow:run-pipeline-sequence (list double increment) :input 20))
-;; => 41
+;; => (VALUES 41 #<CONTEXT ...>)
 ```
 
 `run-pipeline-sequence` is a pipeline-level combinator rather than a

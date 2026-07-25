@@ -15,6 +15,29 @@
       ;; the inputs are untouched.
       (is (equal (context-event-types base) '("A"))))))
 
+(deftest context-merge-collision-precedence-is-asymmetric
+  ;; CONTEXT-MERGE's documented contract is deliberately asymmetric: OTHER
+  ;; overlays BASE for stored node values and effect handlers (both hash tables,
+  ;; where a later write replaces an earlier one), but metadata is a plist/alist
+  ;; concatenated BASE-first, and a plist lookup resolves to the first match --
+  ;; so BASE wins there. The test above checks that metadata concatenates; this
+  ;; one checks which side actually wins a *lookup* on a colliding key, which is
+  ;; the part the docstring promises and the part a caller depends on.
+  (let ((base (make-context))
+        (other (make-context)))
+    (cl-dataflow::%store-value base "n" "value" :base)
+    (cl-dataflow::%store-value other "n" "value" :other)
+    (register-effect-handler base "log"
+                             (lambda (effect ctx) (declare (ignore effect ctx)) :base))
+    (register-effect-handler other "log"
+                             (lambda (effect ctx) (declare (ignore effect ctx)) :other))
+    (setf (context-metadata base) '(:owner :base))
+    (setf (context-metadata other) '(:owner :other))
+    (let ((merged (context-merge base other)))
+      (is (eq (context-value merged "n") :other))
+      (is (eq (effect-result (perform-effect merged "log")) :other))
+      (is (eq (getf (context-metadata merged) :owner) :base)))))
+
 (deftest context-trace-of-kind-filters-entries
   (let ((context (make-context)))
     (register-effect-handler context "log"

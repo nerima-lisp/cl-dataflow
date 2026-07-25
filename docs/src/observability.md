@@ -31,11 +31,25 @@ sort order and rendering details) applied to `pipeline-graph`:
 
 ```lisp
 (cl-dataflow:pipeline->dot *pipeline* :name "ingest-pipeline")
-;; => "digraph ingest-pipeline {\n  \"start\";\n  \"finish\";\n  \"start\" -> \"finish\";\n}\n"
+;; => "digraph ingest-pipeline {
+;;      \"finish\";
+;;      \"start\";
+;;      \"start\" -> \"finish\" [label=\"value -> value\"];
+;;    }
+;;    "
 
 (cl-dataflow:pipeline->mermaid *pipeline* :direction "LR")
-;; => "flowchart LR\n  n0[\"start\"]\n  n1[\"finish\"]\n  n0 --> n1\n"
+;; => "flowchart LR
+;;      n0[\"finish\"]
+;;      n1[\"start\"]
+;;      n1 -->|value -> value| n0
+;;    "
 ```
+
+Note that nodes are emitted in **name** order (`finish` before `start`), not
+execution order, and every edge carries a `from-port -> to-port` label — the
+default `value` ports here — so parallel edges across different ports stay
+distinguishable.
 
 `:name` and `:direction` default to `"pipeline"` and `"TD"`, matching the
 graph-level defaults.
@@ -83,11 +97,16 @@ or report on.
 
 ```lisp
 (princ (cl-dataflow:format-trace *context*))
-;; 0. node start
-;; 1. node finish
-;; 2. event order-created
-;; 3. transition idle --order-created--> order-created
+;; 0. event order-created
+;; 1. transition idle --order-created--> order-created
+;; 2. node start
+;; 3. node finish
 ```
+
+A node's trace record is appended *after* its handler returns, so anything the
+handler emits along the way — events, effects, state transitions — lands
+before its own `node` entry. Above, `start`'s handler emitted the event and
+stepped the state machine, so both precede `node start`.
 
 `trace-summary` counts trace entries by kind:
 
@@ -129,12 +148,12 @@ a small workflow and then inspects it with both functions:
 
 (defparameter *context*
   (cl-dataflow:run-pipeline-with-test-context
-    *workflow* :input '(:order-id "A-100") :state "idle"))
+    *workflow* :input "A-100" :state "idle"))
 
 (princ (cl-dataflow:format-trace *context*))
-;; 0. node create-order
-;; 1. event order-created
-;; 2. transition idle --order-created--> order-created
+;; 0. event order-created
+;; 1. transition idle --order-created--> order-created
+;; 2. node create-order
 
 (cl-dataflow:trace-summary *context*)
 ;; => (:total 3 :nodes 1 :events 1 :effects 0 :transitions 1)
@@ -164,11 +183,16 @@ The merge rules:
 - Stored node values: `*context-b*`'s values overlay `*context-a*`'s
   (`*context-b*` wins on key collisions).
 - Events, effects, and trace: concatenated, `*context-a*`'s entries first.
-- Metadata and effect handlers: merged, with `*context-b*`'s entries
-  overlaying `*context-a*`'s.
+- Effect handlers: merged into one table, with `*context-b*`'s handlers
+  overlaying `*context-a*`'s on key collisions.
+- Metadata: the two plists are concatenated with `*context-a*`'s first. Since
+  `getf` returns the *first* match, `*context-a*` wins on duplicate keys — the
+  opposite of the effect-handler rule, and the opposite direction from stored
+  node values. Merging `(:m 1)` with `(:m 2 :n 3)` yields `(:m 1 :m 2 :n 3)`.
 - Current state and result: taken from `*context-a*` (the base).
 
-Neither input context is modified.
+Neither input context is modified — every context reader hands back a copy,
+so the merge builds its tables without touching either input.
 
 ### Filtering a trace by kind
 
@@ -178,7 +202,8 @@ which is handy when `format-trace`'s combined view is too broad:
 
 ```lisp
 (cl-dataflow:context-trace-of-kind *context* :transition)
-;; => ((:from "idle" :event-type "order-created" :to "order-created"))
+;; => ((:from "idle" :event-type "order-created" :to "order-created"
+;;      :state-before "idle" :guard-passed t :action-result nil))
 ```
 
 ### A uniform structural view: flow-describe / flow-children
@@ -266,7 +291,7 @@ survives:
 (getf *plist* :state)
 ;; => "order-created"
 (getf *plist* :events)
-;; => ((:type "order-created" :payload (:order-id "A-100") :metadata nil :trace-index 1))
+;; => ((:type "order-created" :payload "A-100" :metadata nil :trace-index 0))
 
 (defparameter *restored* (cl-dataflow:plist-to-context *plist*))
 
@@ -295,14 +320,15 @@ before running it further.
 
 ## Structural equality and reachability
 
-`src/equality-predicates.lisp` provides four predicates, all built on the
-same idea: two values are structurally equal when their **deterministic
-plist serializations** are `equal`, so runtime closures (node handlers,
-effect handlers, state-machine guards and actions) never affect the
-comparison — the same principle `graph-equal-p` already applies to graphs.
+`src/equality-predicates.lisp` generates four structural-equality predicates
+from one `define-plist-equal-p` macro, all built on the same idea: two values
+are structurally equal when their **deterministic plist serializations** are
+`equal`, so runtime closures (node handlers, effect handlers, state-machine
+guards and actions) never affect the comparison.
 
 | Predicate | Compares |
 | --- | --- |
+| `graph-equal-p` | Nodes (names, ports, metadata) and edges (endpoints, ports, metadata), independent of insertion order (via `graph-to-plist`; see [Graphs](graphs.md)). Node handlers are ignored. |
 | `pipeline-equal-p` | Graphs, stage order, and metadata (via `pipeline-to-plist`). Node handlers are ignored. |
 | `state-machine-equal-p` | Current state, initial state, metadata, and transitions by from/event/to/metadata (via `state-machine-to-plist`). Guards and actions are ignored. |
 | `context-equal-p` | Stored values, events, effects, trace, metadata, state, and result (via `context-to-plist`). Effect handlers are ignored. |
@@ -336,6 +362,6 @@ reachable), comparing state names case-insensitively:
   `plist-to-state-machine` and the analysis functions
   (`state-machine-reachable-states`, `state-machine-unreachable-states`, ...)
   that `state-machine-reachable-p` builds on.
-- [Public API Reference](api-reference.md) lists every function in this
-  page's Observability, Serialization, Context & introspection, Protocols,
-  and Equality/reachability groups in one place.
+- [Public API Reference](api-reference.md) lists every function on this page
+  in one place, across its Observability, Context, Protocols, and
+  serialization/equality groups.

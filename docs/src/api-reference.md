@@ -75,7 +75,8 @@ groups fit together, with runnable examples.
 `context-effects-in-order`, `context-effect-types`, `context-effects-of-type`,
 `context-trace`, `context-trace-in-order`, `context-last-event`,
 `context-last-effect`, `context-metadata`, `context-effect-handlers`,
-`context-result`, `context-state`, `context-merge`, `context-trace-of-kind`
+`context-result`, `context-state`, `context-merge`, `context-trace-of-kind`,
+`context-equal-p`
 
 ## Event and effect APIs — see [Events and Effects](events-and-effects.md)
 
@@ -198,9 +199,12 @@ pipelines.
 - `pipeline-graph` returns the *live*, validated graph owned by the
   pipeline — mutating it intentionally affects the pipeline. Use
   `copy-pipeline` for an isolated graph clone.
-- `context-effect-handlers` is intentionally mutable and returns the live
-  handler table so callers can register handlers directly; `copy-context`
-  clones this table too.
+- `context-effect-handlers` is the exception to the note above: unlike
+  `pipeline-graph`, it returns an *independent snapshot*, so mutating the
+  returned hash table does not register anything. Use
+  `register-effect-handler`, `with-effect-handler-scope`, or
+  `(setf context-effect-handlers)` — which copies too. `copy-context` clones
+  the table as well.
 - Effect handlers are stored on the context with normalized lowercase string
   keys, so symbols and strings both resolve consistently through
   `make-context` and `perform-effect`.

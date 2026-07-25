@@ -16,12 +16,12 @@ easiest to review when they preserve that shape.
 
 ## Local verification
 
-Use the same commands the repository documents, or run the bundled verifier:
+Use the bundled scripts. Each one runs the suite through `cl-weave` when it is
+on `PATH`, and falls back to `nix run .` otherwise:
 
 ```bash
 ./scripts/verify.sh
-sbcl --noinform --eval '(require :asdf)' \
-     --eval '(progn (push #P"./" asdf:*central-registry*) (asdf:test-system :cl-dataflow) (quit))'
+./scripts/coverage.sh
 sbcl --script examples/simple-pipeline.lisp
 sbcl --script examples/event-workflow.lisp
 sbcl --script examples/state-machine.lisp
@@ -48,8 +48,8 @@ CI matrix.
 
 Releases are tag-driven. To cut version `X.Y.Z`:
 
-1. Bump `:version` in both systems in `cl-dataflow.asd` and the `version`
-   field in `flake.nix`.
+1. Bump `:version` in both systems in `cl-dataflow.asd` and both `version`
+   fields in `flake.nix`.
 2. Move the `## [Unreleased]` entries in `CHANGELOG.md` under a new
    `## [X.Y.Z] - YYYY-MM-DD` heading, reset `## [Unreleased]`, and update the
    compare/link references at the bottom.

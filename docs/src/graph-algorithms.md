@@ -45,6 +45,11 @@ adjacency-snapshot pass.
   reverse.
 - `graph-acyclic-p` — true when the graph has no directed cycle (built on
   `topological-sort`, catching `graph-cycle-error`).
+- `graph-self-loop-nodes` — the names of nodes carrying an edge to
+  themselves, lexicographically sorted. Self-loops are the edge case several
+  algorithms on this page single out — they make a graph non-bipartite and
+  are excluded from `graph-reciprocity` — so this is the direct way to find
+  them.
 
 ```lisp
 (dolist (name '("fetch" "compile" "test" "package"))
@@ -84,6 +89,10 @@ direction), the parallelizable layering of a DAG, and the SCC condensation.
   copies ordered by name. This is the layering that tells you which stages of
   a dependency DAG can run in parallel. Signals `graph-cycle-error` on a
   cyclic graph.
+- `graph-connected-p` / `graph-strongly-connected-p` — the whole-graph
+  predicates over those two component families: true when every node lies in
+  one weakly / strongly connected component. Both are "at most one
+  component", so the empty graph and a single node qualify either way.
 - `graph-condensation` — a new DAG with one node per strongly connected
   component (named after the component's smallest member, with the full
   member list under its `:members` metadata) and an edge between components
@@ -207,7 +216,7 @@ one cycle witness, and Eulerian trails.
 ;; The critical path is the longest dependency chain.
 (cl-dataflow:graph-longest-path *graph*) ; => ("fetch" "compile" "test" "package")
 
-;; fetch -> package is redundant once fetch -> compile -> ... -> package exists.
+;; compile -> package is redundant once compile -> test -> package exists.
 (cl-dataflow:graph-size (cl-dataflow:graph-transitive-reduction *graph*)) ; => 3
 
 ;; Every simple path from fetch to package.

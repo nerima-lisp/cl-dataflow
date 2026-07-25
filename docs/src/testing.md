@@ -9,6 +9,12 @@ dispatches to it:
 (asdf:test-system :cl-dataflow)
 ```
 
+Outside Nix, `cl-weave` and `cl-process-kit` must be on the ASDF source
+registry — and because `cl-process-kit`'s own system depends on them, so must
+[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
+[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). See
+[Installation](installation.md#verifying-the-install).
+
 Or with the Nix flake, without touching your global Lisp environment:
 
 ```bash
@@ -86,14 +92,33 @@ release from it — see [Contributing](contributing.md#releasing).
 ## Testing helpers for downstream projects
 
 `src/testing.lisp` exports deterministic assertion helpers usable from your
-own test suite:
+own test suite, independent of `cl-weave`:
+
+```lisp
+(run-pipeline-with-test-context pipeline &key input effect-handlers state metadata)
+(assert-emitted-events    context expected)
+(assert-performed-effects context expected)
+(assert-final-state       context expected)
+(assert-state-machine-state machine expected)
+(assert-pipeline-result   context expected)
+```
 
 - `run-pipeline-with-test-context` seeds `state`, `metadata`, and effect
-  handlers onto a fresh context and returns that live context after execution.
-- `assert-emitted-events` / `assert-performed-effects` accept either a single
-  expected type or a list of expected types.
+  handlers onto a fresh context, runs `pipeline` over `input`, and returns
+  that live context — the run's return value is discarded, so assert on
+  `assert-pipeline-result` rather than a returned value.
+- `assert-emitted-events` / `assert-performed-effects` compare the context's
+  full chronological type list (`context-event-types` /
+  `context-effect-types`) against `expected`. A non-list `expected` is
+  wrapped into a one-element list, so a singleton expectation can be written
+  either way; `nil` asserts that nothing was emitted or performed.
 - `assert-final-state`, `assert-state-machine-state`, and
-  `assert-pipeline-result` check the shape of a run's outcome directly.
+  `assert-pipeline-result` compare `context-state`, `state-machine-state`,
+  and `context-result` against `expected`.
 
-See the [Testing helpers APIs](api-reference.md#testing-helpers) for the full
-signature list.
+Every assertion compares with `equal`, returns `t` on success, and signals a
+`simple-error` naming the expected and actual values on failure — so they
+compose with whatever test framework you already use.
+
+The [Public API Reference](api-reference.md#testing-helpers) lists these
+alongside the rest of the exported surface.

@@ -4,10 +4,24 @@
 concern, one file per topic:
 
 - `src/package.lisp` defines the public package and its exported API surface.
-- Shared graph, node, and context primitives live in focused `src/core-*.lisp`
-  files — normalization, structural copying, slot accessors, conditions,
-  model classes/constructors, and the `cl-prolog`-backed graph runtime — each
-  listed directly in the system definition.
+- Shared node, context, and model primitives live in focused
+  `src/core-*.lisp` files — normalization, structural copying, slot
+  accessors, conditions, and the model layer split across
+  `core-models-classes` / `-copying` / `-slot-accessors` / `-constructors` —
+  each listed directly in the system definition.
+- The `cl-prolog`-backed graph runtime lives in `src/graph-runtime-*.lisp`:
+  structural validation, the Prolog rulebase and bulk edge query, topology
+  (topological sort, boundaries), port bindings, and pipeline-graph builders.
+- The graph analysis layer above it is split one file per algorithm family:
+  `src/graph-structure.lisp` (order/size, adjacency, degree, transpose,
+  acyclicity, topological generations), `src/graph-components.lisp`
+  (strongly/weakly connected components and the connectivity predicates and
+  condensation built on them), `src/graph-distance.lisp` (BFS/DFS order,
+  eccentricity, diameter/radius/center/periphery, closeness and betweenness
+  centrality), and the sibling `graph-closure`, `graph-paths`,
+  `graph-shortest-path`, `graph-flow`, `graph-eulerian`, `graph-metrics`,
+  `graph-algebra`, `graph-criticality`, `graph-export`, and `graph-builders`
+  files.
 - `src/protocols.lisp` defines the shared introspection and printing
   protocols (`flow-name`, `flow-metadata`, `flow-kind`) implemented by every
   flow object.
@@ -15,13 +29,17 @@ concern, one file per topic:
   DSL expander next to a schema table and its execution logic beside it:
   `src/pipeline-macros.lisp` / `src/pipeline-runtime.lisp`,
   `src/state-machine-macros.lisp` / `src/state-machine-runtime-*.lisp`,
-  `src/events.lisp`, and `src/effects.lisp`.
+  `src/events.lisp`, and `src/effects.lisp`. The state-machine runtime is
+  itself layered: `-core` holds construction and transition selection,
+  `-cps` holds `step-state-machine`'s continuation-passing execution chain,
+  and `-api` is the thin direct-style public surface over it.
 - `src/testing.lisp` contains deterministic test helpers, including
   state-machine assertions.
 - `cl-dataflow.asd` loads the library system and routes
   `asdf:test-system :cl-dataflow` to `cl-dataflow/test`.
-- `examples/` contains runnable scripts that bootstrap the ASDF system for
-  zero-setup demonstrations (see [Examples](examples.md)).
+- `examples/` contains eleven runnable scripts plus the shared
+  `bootstrap.lisp` that loads the ASDF system for them (see
+  [Examples](examples.md)).
 
 ## The graph runtime
 
@@ -46,12 +64,23 @@ replace the entire live collection:
 - `context-values`, `context-events`, `context-effects`, `context-trace`
 - `event-payload`, `event-metadata`, `effect-payload`, `effect-metadata`, `effect-result`
 - `transition-metadata`, `state-machine-transitions`, `pipeline-stages`
+- `context-effect-handlers`
 
-`context-effect-handlers` is the one intentionally mutable collection reader,
-since it is the live registration surface for effect handlers. `pipeline-graph`
-returns the live, validated graph owned by the pipeline, so mutating it
-intentionally affects the pipeline — use `copy-pipeline` when an isolated
-graph clone is needed instead.
+`context-effect-handlers` returns a fresh table mapping each normalized effect
+type to the registered handler *function itself* (a closure cannot be copied),
+so mutating the returned table registers nothing. Register through
+`register-effect-handler`, which writes to the live table, or replace the whole
+table with `(setf context-effect-handlers)` — the save/restore pair that
+`with-effect-handler-scope` is built on.
+
+`pipeline-graph` is the one reader that returns live state: the validated graph
+owned by the pipeline, so mutating it intentionally affects the pipeline — use
+`copy-pipeline` when an isolated graph clone is needed instead. Handing back an
+uncopied object is safe because `(setf pipeline-graph)` copies on the way *in*
+via `copy-graph` and re-validates, so the pipeline owns a graph no caller
+already holds a reference to. Object identity is what is shared here, not
+mutable internals: `graph-nodes` and `graph-edges` on that live graph are still
+copying readers.
 
 ## Error conditions
 
@@ -88,6 +117,9 @@ what failed:
 | Graph connectivity | Done | Weak/strong connectivity predicates, self-loop nodes, the SCC condensation DAG, single-source distances, eccentricity, and diameter. |
 | Graph algebra | Done | Set operations `graph-union`, `graph-intersection`, `graph-difference`, plus `graph-filter-nodes` (predicate-induced subgraph) and `graph-map-nodes` (injective relabel). |
 | Graph criticality | Done | `graph-articulation-points` (cut vertices), `graph-bridges` (critical connections), `graph-dominators` (immediate-dominator tree), and `graph-post-dominators` (its dual toward a sink), all recursion-free. |
+| Graph centrality | Done | `graph-closeness-centrality` and Brandes' `graph-betweenness-centrality`, plus `graph-radius`, `graph-center`, `graph-periphery`, `graph-wiener-index`, and `graph-average-path-length`. |
+| Graph flow | Done | `graph-max-flow`/`graph-min-cut` over edge-metadata capacities via Edmonds-Karp, and `graph-eulerian-path` via Hierholzer's algorithm. |
+| Node contracts | Done | `contract-handler` and `node-with-contract` enforce input/output predicates at the node boundary, signalling `invalid-input-error` on violation. |
 | State-machine analysis | Done | State/event enumeration, reachability, unreachable/terminal-state detection, structural determinism check, and DOT/Mermaid rendering. |
 | State-machine execution | Done | `state-machine-run-states` (visited-state trace), `state-machine-accepts-p` (acceptance), and `state-machine-event-path` (shortest driving event sequence). |
 | State-machine builders | Done | Serialization (`to-plist`/`plist-to`), `state-machine-complete-p`, `state-machine-transition-for`, `add-transition`/`remove-transition`, and `state-machine-relabel-state`. |
@@ -104,7 +136,7 @@ what failed:
 | Effect ergonomics | Done | `register-effect-handler`, `context-effect-handler`, `effect-handled-p`, `context-effect-handler-types`, and `with-effect-handler-scope`. |
 | Protocols | Done | `flow-name`, `flow-metadata`, and `flow-kind` provide consistent introspection across flow objects. |
 | Testing helpers | Done | Dedicated helpers assert emitted events, effects, final state, state-machine state, and pipeline results. |
-| Runnable examples | Done | Scripts cover a simple pipeline, event workflow, state machine, graph analysis, the graph toolkit, state-machine visualization, resilient pipelines, and streams. |
+| Runnable examples | Done | Eleven scripts cover a simple pipeline, event workflow, state machine, basic and advanced graph analysis, the graph toolkit, state-machine visualization, resilient pipelines, streams, stream analytics, and an end-to-end integration scenario. |
 | Public API | Stable | `cl-dataflow` is the single exported package. |
 
 ## Repository layout

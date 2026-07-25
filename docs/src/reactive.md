@@ -33,7 +33,10 @@ whether a value is one:
 A subject is opaque — there is no reader for its internal subscriber list.
 Everything else in this page (`subject-subscribe`, `subject-emit`, and the
 derived/stateful operators) is the public surface for building and driving
-one.
+one. Subjects are also outside the `flow-name`/`flow-metadata`/`flow-kind`
+introspection protocol in [Observability](observability.md), which signals a
+`type-error` for them just as it does for streams; `subject-subscriber-count`
+is the only built-in introspection a subject offers.
 
 ## Subscription lifecycle
 
@@ -141,8 +144,14 @@ emission order:
 (cl-dataflow:subject-emit *priced* 10)
 (cl-dataflow:subject-emit *priced* 99)
 (funcall *alerts*)
-;; => (70 99)
+;; => (99)
 ```
+
+Note the "since": the collector only sees emissions that happen *after* it
+subscribes. The `70` that `*big*` emitted earlier on this page is already
+gone — nothing buffers it — and `10` never reaches `*big*` at all because
+the filter rejects it. Subjects have no replay, so attach collectors and
+subscribers before the emissions you care about.
 
 `:limit` bounds how many values are retained, and `:on-limit` controls what
 happens once the limit is reached — `:error` (the default) signals from the
@@ -160,7 +169,7 @@ a queue, ...) lives in a closure private to that derived subject.
 
 | Subject operator | Push semantics | Stream analog |
 | --- | --- | --- |
-| `subject-scan` | Emits a running accumulation: from `seed`, each value produces `(funcall function accumulator value)`. | `stream-scan` |
+| `subject-scan` | Emits a running accumulation: from `seed`, each value produces `(funcall function accumulator value)`. The seed itself is never emitted, so N source values produce N emissions. | `stream-scan` (which *does* yield the seed first, so N elements in produce N+1 out) |
 | `subject-distinct` | Re-emits only the first occurrence of each value (per `:test`). | `stream-distinct` |
 | `subject-tap` | Calls a function on each value for its side effect, then re-emits it unchanged. | `stream-tap` |
 | `subject-take` | Re-emits only the first `n` values, then emits nothing further. | `stream-take` |
@@ -172,7 +181,7 @@ a queue, ...) lives in a closure private to that derived subject.
 | `subject-partition` | Returns two derived subjects, splitting emissions live by a predicate. | `stream-partition` (an eager, one-shot list split) |
 | `subject-zip` | Pairs two sources in lockstep, queuing values until their counterpart arrives. | `stream-zip` |
 | `subject-combine-latest` | Emits `(latest-a . latest-b)` whenever either source emits, once both have emitted at least once. | no direct stream analog |
-| `subject-buffer` | Collects every `n` values into a list and emits that list; a trailing partial buffer is never emitted. | `stream-chunk`/`stream-window`-style batching |
+| `subject-buffer` | Collects every `n` values into a list and emits that list; a trailing partial buffer is never emitted. `n` must be positive. | `stream-chunk`/`stream-window`-style batching |
 
 A few operators are worth calling out in more detail:
 

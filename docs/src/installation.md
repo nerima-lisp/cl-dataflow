@@ -63,8 +63,12 @@ Confirm the system loads and a trivial pipeline runs:
 ;; => 42
 ```
 
-If you want to run the full test suite locally (requires `cl-weave` and
-`cl-process-kit` on the source registry as well), see
+If you want to run the full test suite locally, `cl-weave` and `cl-process-kit`
+must be on the source registry as well — and because `cl-process-kit`'s own
+system depends on them, so must
+[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
+[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). `nix develop` puts
+all of them on `CL_SOURCE_REGISTRY` for you. See
 [Testing and Coverage](testing.md).
 
 ## Next steps

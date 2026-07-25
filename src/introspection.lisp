@@ -14,9 +14,10 @@
 (defun context-merge (base other)
   "Return a new context combining BASE and OTHER: OTHER's stored node values overlay
 BASE's (OTHER wins on key collisions), and their events, effects, and traces are
-concatenated with BASE's first. Metadata and effect handlers merge (OTHER's
-overlaying BASE's), while the current state and result come from BASE. Neither
-input is modified."
+concatenated with BASE's first. Effect handlers merge with OTHER's overlaying
+BASE's, but metadata is a plist concatenated with BASE's entries first, so BASE
+wins on key collisions (the reverse of the handler-table rule). The current
+state and result come from BASE. Neither input is modified."
   (let ((values (context-values base)))
     (maphash (lambda (key value)
                (setf (gethash key values) (%copy-structured-value value)))

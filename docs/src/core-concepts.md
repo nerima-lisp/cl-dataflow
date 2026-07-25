@@ -33,13 +33,20 @@ top of it.
 A `context` carries everything a pipeline run accumulates: per-node result
 values, an ordered event log, an ordered effect log, a unified trace across
 node/event/effect/transition entries, arbitrary metadata, the registered
-effect-handler table, and the final `context-result`. Collection readers
-(`context-values`, `context-events`, `context-effects`, `context-trace`, ...)
-return independent snapshots, so inspecting a running context never risks
-mutating it by accident. `context-effect-handlers` is the one intentionally
-mutable reader — it is the live registration surface effect handlers attach
-to. `copy-context` clones the handler table too, so a forked context can
-register different handlers without cross-talk with the original.
+effect-handler table, the current state-machine state (`context-state`), and
+the final `context-result`. Every collection reader — `context-values`,
+`context-events`, `context-effects`, `context-trace`, and
+`context-effect-handlers` included — returns an independent snapshot, so
+inspecting a running context never risks mutating it by accident. The event,
+effect, and trace logs are stored newest-first; the `-in-order` readers
+(`context-events-in-order`, `context-effects-in-order`,
+`context-trace-in-order`, and the filtered `context-trace-of-kind`) return
+them chronologically. Because the handler table is readable only as a
+snapshot, handlers are registered through `register-effect-handler` — or
+scoped with `with-effect-handler-scope` — rather than by mutating what
+`context-effect-handlers` hands back. `copy-context` clones the handler table
+too, so a forked context can register different handlers without cross-talk
+with the original.
 
 ## Pipelines and workflows
 
@@ -57,11 +64,12 @@ structure and transition data separate from handler logic — see
 `event`s (`make-event`/`emit-event`) and `effect`s (`make-effect`/`perform-effect`)
 are how a pipeline stage records a workflow occurrence or a tracked side
 effect. A `state-machine` (`make-state-machine`/`step-state-machine`) is a
-guarded transition model: `step-state-machine` returns a transition record,
-and when given a `context` it also updates `context-state` and appends the
-transition to `context-trace` — so a state machine behaves like a reducer
-inside pipeline and workflow code. `make-state-machine-node` turns a state
-machine into an ordinary pipeline stage, and `define-workflow` unifies graph
+guarded transition model: `step-state-machine` advances the machine in place
+and returns it, with a transition record as a second value; when given a
+`context` it also updates `context-state` and appends the transition to
+`context-trace` — so a state machine can be stepped from inside pipeline and
+workflow handlers. `make-state-machine-node` turns a state machine into an
+ordinary pipeline stage, and `define-workflow` unifies graph
 edges, transitions, and embedded machine nodes in one macro expansion while
 still returning plain `pipeline` and `state-machine` values. See
 [State Machines](state-machines.md) and [Events and Effects](events-and-effects.md).

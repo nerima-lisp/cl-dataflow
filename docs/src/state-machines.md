@@ -62,7 +62,29 @@ and wraps the whole thing in `make-state-machine`:
 The definition-level options are `:state`, `:initial-state`, `:history`,
 `:history-limit`, and `:metadata`; each transition clause accepts `:guard`,
 `:action`, and `:metadata`. Both forms produce a plain `state-machine` value
-— there is no special macro-only representation to unwrap.
+— there is no special macro-only representation to unwrap. Anything else in
+either position is rejected at macroexpansion time with `invalid-input-error`.
+
+### Readers and predicates
+
+`state-machine-p` and `state-transition-p` are the type predicates for the two
+classes `state-machine` and `state-transition`. A transition exposes
+`transition-from`, `transition-event-type`, `transition-to`,
+`transition-guard`, `transition-action`, and `transition-metadata`; a machine
+exposes `state-machine-state`, `state-machine-initial-state`,
+`state-machine-transitions`, `state-machine-history`,
+`state-machine-history-limit`, and `state-machine-metadata`.
+
+`state-machine-transitions` hands back *copies*, so mutating what it returns
+does not change the machine — use `add-transition`/`remove-transition`, or
+`(setf state-machine-transitions)`, which re-copies the list and rebuilds the
+internal lookup index in lock-step.
+
+State and event names are normalized the same way node names are: strings pass
+through unchanged and symbols become their (upcased) symbol name. Transition
+lookup then compares case-insensitively, so both `"submit"` and `'submit`
+select a transition declared as `"submit"` — though a symbol event is recorded
+in the transition record as `:event-type "SUBMIT"`.
 
 ## Stepping
 
@@ -151,9 +173,10 @@ state, in place — it only touches `state-machine-state`, so accumulated
 ;; => 2  ; the "start" and "complete" records from run-state-machine-with-context
 ```
 
-`copy-state-machine` clones a machine's transitions, history, and metadata
-into an independent value, so you can fork a machine and let each copy evolve
-on its own without touching the original:
+`copy-state-machine` clones everything a machine carries — current state,
+initial state, transitions, history, history limit, and metadata — into an
+independent value, so you can fork a machine and let each copy evolve on its
+own without touching the original:
 
 ```lisp
 (defparameter *scratch* (cl-dataflow:copy-state-machine *machine*))
@@ -166,9 +189,10 @@ on its own without touching the original:
 
 `state-machine-history` returns the ordered list of transition records (most
 recent first), bounded by `state-machine-history-limit` (`nil` means
-unbounded; `0` disables history entirely). `state-machine-last-transition` is
-a convenience reader for the most recent record, or `nil` if the machine has
-never stepped:
+unbounded; `0` disables history entirely; any other value must be a
+non-negative integer, or `make-state-machine` signals `invalid-input-error`).
+`state-machine-last-transition` is a convenience reader for the most recent
+record, or `nil` if the machine has never stepped:
 
 ```lisp
 (cl-dataflow:state-machine-last-transition *machine*)
@@ -185,7 +209,11 @@ from `(input context)` — it may return an event designator (string/symbol) or
 a full `event` object; when omitted, the stage's input is used directly as
 the event. `:result-fn` computes the stage's output from
 `(updated-machine event input context)`; when omitted, the stage's output is
-the machine's new state:
+the machine's new state. The resulting node has a single `"value"` output port
+and defaults to the name `"state-machine"`; `:metadata` is attached to the node
+unchanged. The stage passes its runtime context down into `step-state-machine`
+only when it really is a `context`, so guards and actions see the same context
+the surrounding pipeline is threading:
 
 ```lisp
 (cl-dataflow:make-state-machine-node
@@ -238,16 +266,28 @@ and current state, even if no transition touches them):
 ;; => ("approve" "reject" "restore" "submit")
 ```
 
-`state-machine-reachable-states` walks forward from a starting state (the
-initial state by default) and `state-machine-unreachable-states` is its
-complement over all known states — this is how `"archived"` shows up as
-unreachable:
+`state-machine-reachable-states` walks forward from a starting state (`:from`,
+defaulting to the initial state; the start state itself is always included, and
+an unknown `:from` yields `nil`). `state-machine-unreachable-states` is its
+complement over all known states, always measured from the initial state — this
+is how `"archived"` shows up as unreachable:
 
 ```lisp
 (cl-dataflow:state-machine-reachable-states *order-machine*)
 ;; => ("cancelled" "draft" "review" "shipped")
 (cl-dataflow:state-machine-unreachable-states *order-machine*)
 ;; => ("archived")
+```
+
+`state-machine-reachable-p` is the two-state yes/no form of the same walk,
+comparing state names case-insensitively — so a known state is always reachable
+from itself, and an unknown endpoint is never reachable:
+
+```lisp
+(cl-dataflow:state-machine-reachable-p *order-machine* "draft" "cancelled")
+;; => T
+(cl-dataflow:state-machine-reachable-p *order-machine* "draft" "archived")
+;; => NIL
 ```
 
 `state-machine-terminal-states` lists states with no outgoing transition
@@ -268,7 +308,9 @@ resolving that event requires a guard to pick among candidates:
 as nodes, transitions as event-labelled edges, a synthetic start marker into
 the initial state) for diagrams — `write-state-machine-dot` and
 `write-state-machine-mermaid` are the streaming counterparts that write
-directly to a stream instead of building a string:
+directly to a stream (and return the machine) instead of building a string.
+Both DOT entry points take a `:name` for the generated digraph, defaulting to
+`"S"`:
 
 ```lisp
 (format t "~A" (cl-dataflow:state-machine->mermaid *order-machine*))
@@ -293,7 +335,9 @@ stateDiagram-v2
 Where the analysis layer looks at structure, the execution layer interprets
 event sequences with the runtime's exact guard/transition semantics. Each
 helper below works over an internal `copy-state-machine`, so `*order-machine*`
-is never mutated by any of them.
+is never mutated by any of them. `state-machine-run-states` and
+`state-machine-accepts-p` also take a `:context`, handed to guards and actions
+exactly as `step-state-machine` would.
 
 `state-machine-run-states` replays a list of events and returns the visited
 states, starting state included, stopping (without erroring) at the first
@@ -319,8 +363,9 @@ named `accepting` states:
 `state-machine-event-path` is the event-level analog of `graph-path` (see
 [Graph Algorithms](graph-algorithms.md)): a breadth-first search over
 transitions (guards ignored) that returns the shortest list of event types
-driving the machine from one state to another, or `nil` when the target is
-unreachable:
+driving the machine from one state to another, the empty list when `from` and
+`to` are the same known state, or `nil` when the target is unreachable (or
+either endpoint is unknown):
 
 ```lisp
 (cl-dataflow:state-machine-event-path *order-machine* "draft" "cancelled")
@@ -332,13 +377,26 @@ unreachable:
 `state-machine-to-plist` serializes a machine's state, initial state,
 metadata, and transitions (`:from`/`:event-type`/`:to`/`:metadata`) to a
 plist; `plist-to-state-machine` rebuilds a machine from one. Guards and
-actions are runtime closures, so they are **not** serialized — a round trip
-preserves states, events, targets, and metadata, but reconstructed
-transitions have no guard or action:
+actions are runtime closures, so they are **not** serialized — nor are
+`state-machine-history` and `state-machine-history-limit`. A round trip
+preserves states, events, targets, and metadata, but reconstructed transitions
+have no guard or action and the rebuilt machine starts with empty, unbounded
+history:
 
 ```lisp
 (cl-dataflow:plist-to-state-machine
   (cl-dataflow:state-machine-to-plist *order-machine*))
+```
+
+`state-machine-equal-p` compares two machines through exactly that plist, so it
+is structural equality that deliberately ignores guards, actions, and history:
+
+```lisp
+(cl-dataflow:state-machine-equal-p
+  *order-machine*
+  (cl-dataflow:plist-to-state-machine
+    (cl-dataflow:state-machine-to-plist *order-machine*)))
+;; => T
 ```
 
 `state-machine-complete-p` checks whether the transition relation is total —
@@ -348,7 +406,7 @@ events is vacuously complete:
 
 ```lisp
 (cl-dataflow:state-machine-complete-p *order-machine*)
-;; => NIL  ; e.g. no "shipped"/"approve"-from-"draft" transition
+;; => NIL  ; e.g. no transition from "draft" on "approve"
 ```
 
 `state-machine-transition-for` looks up the first transition from a state on
@@ -359,8 +417,9 @@ an event type (guards ignored), returning an independent copy or `nil`:
 ;; => #<STATE-TRANSITION review --approve--> shipped>
 ```
 
-`add-transition` appends a new transition in place and returns the machine;
-because guard selection picks the first matching transition, appended
+`add-transition` appends a new transition in place — taking the same
+`:guard`/`:action`/`:metadata` keywords as `make-transition` — and returns the
+machine; because guard selection picks the first matching transition, appended
 transitions act as lower-priority fallbacks. `remove-transition` deletes
 every transition matching a `(from, event-type, to)` triple, in place. Both
 work directly on the machine object you pass, so here we mutate a copy to
@@ -376,7 +435,8 @@ leave `*order-machine*` itself untouched for the next section:
 
 `state-machine-relabel-state` instead returns a **new** machine with a state
 renamed everywhere it appears — current state, initial state, and every
-transition endpoint — carrying guards and actions over unchanged:
+transition endpoint — carrying guards, actions, and metadata over unchanged.
+Like the plist round trip, it does not carry history over:
 
 ```lisp
 (cl-dataflow:state-machine-relabel-state *order-machine* "shipped" "delivered")

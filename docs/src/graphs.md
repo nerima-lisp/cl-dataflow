@@ -124,7 +124,10 @@ removal and composition:
 
 ```lisp
 (cl-dataflow:remove-edge *graph* "parse" "load")
-;; => nil  (no such edge; parse -> load was never added)
+;; => T  (the parse -> load edge was removed)
+
+(cl-dataflow:remove-edge *graph* "parse" "load")
+;; => nil  (already gone; no matching edge left to remove)
 
 (cl-dataflow:remove-node *graph* "ingest")
 ;; => *graph*, now missing "ingest" and the "ingest" -> "parse" edge
@@ -155,6 +158,16 @@ graphs through their deterministic plist serialization rather than object
 identity.
 
 ## Export and serialization
+
+The examples below use a four-node diamond:
+
+```lisp
+(defparameter *dag* (cl-dataflow:make-graph))
+(dolist (name '("a" "b" "c" "d"))
+  (cl-dataflow:add-node *dag* (cl-dataflow:make-node name)))
+(dolist (edge '(("a" "b") ("a" "c") ("b" "d") ("c" "d")))
+  (cl-dataflow:add-edge *dag* (first edge) (second edge)))
+```
 
 `graph->dot` and `graph->mermaid` render a graph for visualization, walking
 a deterministic snapshot — nodes name-sorted, edges sorted by

@@ -1,7 +1,15 @@
 # Examples
 
-Every example is a plain, dependency-bootstrapping script under `examples/`,
-runnable directly with SBCL and used as a smoke test in CI.
+Each of the eleven examples under `examples/` is a plain script you run
+directly with SBCL. Every one of them starts by `load`ing the twelfth file,
+`examples/bootstrap.lisp`, which pushes the repository root onto
+`asdf:*central-registry*` and calls `asdf:load-system "cl-dataflow"` — so ASDF
+resolves the load order and the `cl-prolog` dependency, and no script has to
+restate the source-file list.
+
+`cl-prolog` itself must already be somewhere ASDF can find it; `nix develop`
+puts it on `CL_SOURCE_REGISTRY` for you (see
+[Installation](installation.md)).
 
 ```bash
 sbcl --script examples/simple-pipeline.lisp
@@ -19,7 +27,7 @@ sbcl --script examples/integration.lisp
 
 | Script | Demonstrates | Expected output |
 | --- | --- | --- |
-| `simple-pipeline.lisp` | A two-stage `define-pipeline`. | `Simple pipeline result: rendered: 70` |
+| `simple-pipeline.lisp` | A four-stage `make-pipeline` — parse, validate, transform, render — built from explicit `make-node` handlers. | `Simple pipeline result: rendered: 70` |
 | `event-workflow.lisp` | A pipeline stage emitting events and driving a state machine (see [Quick Start](quick-start.md#adding-events-and-a-state-machine)). | The final workflow state and event trace. |
 | `state-machine.lisp` | A standalone state-machine transition flow. | `Final state: completed`, the transition count, and the last transition record. |
 | `graph-analysis.lisp` | Reachability analysis — descendants, ancestors, shortest path, boundaries — over a dataflow graph. | The downstream/upstream node sets, the shortest `ingest -> load` path, and the graph's source and sink nodes. |
@@ -61,6 +69,10 @@ the rest of the reachability and analysis surface.
 
 ## Example scripts as regression tests
 
-The example scripts double as smoke tests for the core execution paths in
-CI — see [Testing and Coverage](testing.md) — so any change to runtime
-behavior should keep them green.
+`tests/core-runtime-example-test.lisp` defines one smoke test per example
+script, each running the script and asserting exact substrings of its output —
+which is what keeps the Expected output column above honest. Because those
+tests spawn an external SBCL process, they are opt-in: they run only when
+`CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1` is set, and are skipped otherwise. Set it
+when changing runtime behavior, or run the scripts by hand — see
+[Testing and Coverage](testing.md).

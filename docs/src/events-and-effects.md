@@ -32,8 +32,8 @@ trace index it was recorded at.
   (cl-dataflow:emit-event context "order-created" :payload '(:order-id "A-100"))
   (cl-dataflow:emit-event context :inventory-reserved :payload '(:sku "WIDGET-1"))
   (mapcar #'cl-dataflow:event-type
-          (nreverse (cl-dataflow:context-events context))))
-;; => ("order-created" "inventory-reserved")
+          (cl-dataflow:context-events-in-order context)))
+;; => ("order-created" "INVENTORY-RESERVED")
 ```
 
 Event types are normalized the same way node and port names are: strings
@@ -43,6 +43,21 @@ above becomes `"INVENTORY-RESERVED"` — event types are *not* lowercased the
 way effect handler keys are (see [Key normalization](#key-normalization)
 below), so pick a consistent case convention for event type designators
 across a workflow.
+
+That convention matters because the lookup helpers disagree on case.
+`context-events-of-type` and `context-effects-of-type` compare normalized
+types with `equal`, so `(context-events-of-type context "inventory-reserved")`
+finds nothing after emitting `:inventory-reserved`; the predicates
+`event-of-type-p` and `effect-of-type-p` compare with `string-equal` and do
+match across case. Mixing `"order-created"` and `:order-created` for the same
+logical event therefore splits the type-filtered queries in two.
+
+Note also that `context-events` returns the log newest-first (it is the raw
+storage order); `context-events-in-order` is the chronological view, and
+`context-last-event` returns just the most recent entry without walking the
+whole log. `context-effects`, `context-effects-in-order`, and
+`context-last-effect` mirror this on the effect side, as do
+`context-event-types` and `context-effect-types` for the type lists.
 
 ### Batch emission with `emit-events`
 
@@ -63,9 +78,9 @@ occurrences up front, rather than calling `emit-event` once per line.
 
 ### `event-of-type-p`
 
-`event-of-type-p` compares an event's type against a designator after
-normalization, so callers do not need to normalize the comparison type
-themselves:
+`event-of-type-p` normalizes the comparison designator and then compares
+case-insensitively, so callers need neither normalize nor case-match the type
+they are testing against:
 
 ```lisp
 (let ((event (cl-dataflow:make-event :order-created)))
@@ -105,12 +120,25 @@ index — plus one more field: `effect-result`, filled in once a handler runs.
 
 If no handler is registered for the effect's (normalized) type,
 `perform-effect` signals `effect-handler-missing-error` rather than silently
-skipping the effect or returning `nil`. The condition carries
-`missing-effect-type` (the normalized type that had no handler) and
-`effect-handler-missing-effect` (a copied snapshot of the effect that
-triggered the failure, so the caller can inspect its payload after the
-fact). See [Public API Reference](api-reference.md) for the full condition
-hierarchy and its readers.
+skipping the effect or returning `nil`. Handler lookup happens *before* any
+recording, so a failed `perform-effect` leaves the context completely
+untouched: no effect is appended to the effect log, no trace entry is
+pushed, and the trace index the effect would have occupied is not consumed.
+Recovering from the condition and retrying after registering a handler is
+therefore safe.
+
+The condition carries three readers:
+
+- `missing-effect-type` — the normalized type that had no handler.
+- `effect-handler-missing-effect` — a copied snapshot of the effect that
+  triggered the failure, so the caller can inspect its payload and metadata
+  after the fact.
+- `effect-handler-missing-detail` — the human-readable message (`"No effect
+  handler registered for <type>"`), which is also what the condition's
+  report function prints.
+
+See [Public API Reference](api-reference.md) for the full condition
+hierarchy.
 
 ### Batch execution with `perform-effects`
 
@@ -144,15 +172,16 @@ helpers read results back off a context after a run:
 ## Effect handler ergonomics
 
 Effect handlers live in a hash table on the context, reachable through
-`context-effect-handlers`. That reader is intentionally the one *mutable*
-collection reader in the library — it returns the live table (not a
-snapshot), so callers can register handlers directly through it, and
-`copy-context` clones the table so a forked context can diverge without
-cross-talk with the original.
+`context-effect-handlers`. Like every other collection reader in the
+library, it is a *copying* reader: it hands back a snapshot, so mutating the
+table you get from it does not register anything on the context. Its `setf`
+counterpart replaces the context's table wholesale (also by copying), which
+is how `copy-context` gives a forked context a table that can diverge
+without cross-talk with the original.
 
-Rebuilding the whole handler table just to add one handler is awkward, so
-`src/effects-ext.lisp` adds direct register/lookup/scope helpers on top of
-that table:
+Rebuilding and re-assigning the whole table just to add one handler is
+awkward, so `src/effects-ext.lisp` adds direct register/lookup/scope helpers
+that reach the context's real table:
 
 - `register-effect-handler` — register a single `(effect context)` handler
   for a type on a context, mutating the table in place, and return the
@@ -239,9 +268,55 @@ before the scope — even on a non-local exit (a thrown condition, a
 ;; :after-scope   => (:production-log "after scope")
 ```
 
+Because it restores the whole table rather than undoing its own bindings one
+by one, a `register-effect-handler` call made *inside* the body is discarded
+on exit too. Register handlers meant to outlive the scope before entering it.
+
 `with-effect-handler-scope` is a good fit for tests that need a temporary
 stub handler, or for a workflow branch that should route an effect type
 differently only for its own duration.
+
+## Trace indices and the unified trace
+
+`event-trace-index` and `effect-trace-index` are not per-log counters. Each
+context has a single monotonic trace counter, and `emit-event`,
+`perform-effect`, and state-machine transition recording all append through
+one shared point, so an event's and an effect's indices are positions in the
+*same* sequence. That is what makes the two logs re-interleavable:
+
+```lisp
+(let ((context (cl-dataflow:make-context)))
+  (cl-dataflow:register-effect-handler
+    context "fx" (lambda (effect context)
+                   (declare (ignore effect context))
+                   :ok))
+  (cl-dataflow:emit-event context "a")
+  (cl-dataflow:perform-effect context "fx")
+  (cl-dataflow:emit-event context "b")
+  (list :events (mapcar #'cl-dataflow:event-trace-index
+                        (cl-dataflow:context-events-in-order context))
+        :effects (mapcar #'cl-dataflow:effect-trace-index
+                         (cl-dataflow:context-effects-in-order context))))
+;; => (:events (0 2) :effects (1))
+```
+
+`context-trace-in-order` returns those entries already interleaved, each a
+plist tagged with its kind:
+
+```lisp
+(cl-dataflow:context-trace-in-order context)
+;; => ((:event  "a"  :payload nil :trace-index 0)
+;;     (:effect "fx" :payload nil :result :ok :trace-index 1)
+;;     (:event  "b"  :payload nil :trace-index 2))
+```
+
+An effect's trace entry is written before its handler runs and then patched
+with `:result` once the handler returns, so a completed entry carries the
+same value as `effect-result`. `context-trace-of-kind` filters the
+chronological trace to one of `:node`, `:event`, `:effect`, or `:transition`
+when only one kind is of interest. See
+[Observability and Serialization](observability.md) for `format-trace` and
+the serialization round-trips.
 
 ## Events and effects inside a pipeline stage
 
