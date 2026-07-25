@@ -23,16 +23,26 @@
   `(defun ,name (,source)
     (%copy-hash-table-with-value-transform ,source ,element-copy)))
 
+(defparameter +first-printable-ascii-code+ 32
+  "The lowest ASCII code %ESCAPED-DISPLAY-STRING treats as printable as-is
+(the space character); codes below it are C0 control characters.")
+
+(defparameter +ascii-delete-code+ 127
+  "The ASCII DEL code, the one control character above +FIRST-PRINTABLE-ASCII-CODE+
+that %ESCAPED-DISPLAY-STRING still escapes.")
+
 (defun %escaped-display-string (value)
   (with-output-to-string (out)
     (loop for char across (princ-to-string value)
           do (case char
-        (#\Newline (write-string "\\n" out))
-        (#\Return (write-string "\\r" out))
-        (#\Tab (write-string "\\t" out))
-        (t
-          (if (or (< (char-code char) 32) (= (char-code char) 127)) (format out "\\x~2,'0X;" (char-code char))
-            (write-char char out)))))))
+               (#\Newline (write-string "\\n" out))
+               (#\Return (write-string "\\r" out))
+               (#\Tab (write-string "\\t" out))
+               (t
+                (if (or (< (char-code char) +first-printable-ascii-code+)
+                        (= (char-code char) +ascii-delete-code+))
+                    (format out "\\x~2,'0X;" (char-code char))
+                    (write-char char out)))))))
 
 (defstruct (%copy-bounce (:constructor %make-copy-bounce (thunk)))
   "A deferred continuation for %COPY-STRUCTURED-VALUE/CPS's trampoline: calling

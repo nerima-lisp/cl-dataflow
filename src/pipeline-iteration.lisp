@@ -8,6 +8,11 @@
 ;;;; Defaults are resolved in the body (not the lambda list) so both the supplied
 ;;;; and default paths are exercisable.
 
+(defparameter +default-max-pipeline-iterations+ 1000
+  "Iteration cap RUN-PIPELINE-UNTIL-FIXPOINT and RUN-PIPELINE-WHILE fall back to
+when MAX-ITERATIONS is not supplied, so a mistakenly non-converging or
+always-true predicate still terminates.")
+
 (defun run-pipeline-times (pipeline n &key input context)
   "Run PIPELINE N times, feeding each run's result in as the next run's input, and
 return (VALUES FINAL-RESULT CONTEXT). N = 0 returns (VALUES INPUT CONTEXT)."
@@ -24,7 +29,7 @@ RESULT ITERATIONS FIXPOINT-P), where FIXPOINT-P is true only when a fixpoint was
 reached before the iteration cap."
   (let ((ctx (%ensure-pipeline-context context))
         (comparison (or test #'equal))
-        (limit (or max-iterations 1000))
+        (limit (or max-iterations +default-max-pipeline-iterations+))
         (value input))
     (dotimes (iteration limit (values value limit nil))
       (let ((next (run-pipeline pipeline :input value :context ctx)))
@@ -37,7 +42,7 @@ reached before the iteration cap."
 the current value, up to MAX-ITERATIONS (default 1000). PREDICATE is checked before
 each run, so it can stop immediately. Returns (VALUES FINAL-VALUE ITERATIONS)."
   (let ((ctx (%ensure-pipeline-context context))
-        (limit (or max-iterations 1000))
+        (limit (or max-iterations +default-max-pipeline-iterations+))
         (value input)
         (iterations 0))
     (loop
