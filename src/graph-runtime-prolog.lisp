@@ -205,15 +205,19 @@ only through a cycle)."
         (setf frontier (nreverse frontier))
         (when (gethash to-name parent)
           (return-from graph-path (%reconstruct-path parent from-name to-name)))
-        (loop while frontier do
-          (let ((next '()))
-            (dolist (name frontier)
-              (dolist (successor (gethash name successors))
-                (unless (gethash successor enqueued)
-                  (setf (gethash successor enqueued) t
-                        (gethash successor parent) name)
-                  (when (equal successor to-name)
-                    (return-from graph-path
-                      (%reconstruct-path parent from-name to-name)))
-                  (push successor next))))
-            (setf frontier (nreverse next))))))))
+        (labels ((expand-one-level (frontier)
+                   "Discover every unvisited successor of a name in FRONTIER,
+recording PARENT on first discovery, and return the next frontier -- or
+return from GRAPH-PATH immediately once TO-NAME is discovered."
+                   (let ((next '()))
+                     (dolist (name frontier (nreverse next))
+                       (dolist (successor (gethash name successors))
+                         (unless (gethash successor enqueued)
+                           (setf (gethash successor enqueued) t
+                                 (gethash successor parent) name)
+                           (when (equal successor to-name)
+                             (return-from graph-path
+                               (%reconstruct-path parent from-name to-name)))
+                           (push successor next)))))))
+          (loop while frontier do
+            (setf frontier (expand-one-level frontier))))))))

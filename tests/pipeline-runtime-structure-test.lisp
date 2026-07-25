@@ -1,5 +1,15 @@
 (in-package #:cl-dataflow.test)
 
+(defmacro assert-plan-rebuilds (pipeline &body mutation)
+  "Capture PIPELINE's current execution plan, run MUTATION, force a rebuild,
+and assert the rebuilt plan is a distinct object from the one captured
+before MUTATION ran."
+  (let ((plan (gensym "PLAN-")))
+    `(let ((,plan (cl-dataflow::%pipeline-execution-plan ,pipeline)))
+        ,@mutation
+        (cl-dataflow::%ensure-pipeline-execution-plan ,pipeline)
+        (is (not (eq ,plan (cl-dataflow::%pipeline-execution-plan ,pipeline)))))))
+
 (deftest
   pipeline-constructor-and-setter-copy-stage-lists
   (let* ((stage-one (make-node "stage-one"))
@@ -200,18 +210,12 @@
     (let* ((live-graph (pipeline-graph pipeline))
             (extra (make-node "extra")))
       (add-node live-graph extra)
-      (let ((plan (cl-dataflow::%pipeline-execution-plan pipeline)))
-        (add-edge live-graph sink extra)
-        (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-        (is (not (eq plan (cl-dataflow::%pipeline-execution-plan pipeline)))))
-      (let ((plan (cl-dataflow::%pipeline-execution-plan pipeline)))
-        (remove-edge live-graph sink extra)
-        (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-        (is (not (eq plan (cl-dataflow::%pipeline-execution-plan pipeline)))))
-      (let ((plan (cl-dataflow::%pipeline-execution-plan pipeline)))
-        (setf (graph-edges live-graph) (graph-edges live-graph))
-        (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-        (is (not (eq plan (cl-dataflow::%pipeline-execution-plan pipeline))))))))
+      (assert-plan-rebuilds pipeline
+        (add-edge live-graph sink extra))
+      (assert-plan-rebuilds pipeline
+        (remove-edge live-graph sink extra))
+      (assert-plan-rebuilds pipeline
+        (setf (graph-edges live-graph) (graph-edges live-graph))))))
 
 (deftest
   pipeline-reuses-current-execution-plan
@@ -311,28 +315,18 @@
       (add-node live-graph alternate-source)
       (let ((edge (add-edge live-graph sink extra)))
         (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-        (flet ((assert-rebuilt (mutator)
-                  (let ((plan (cl-dataflow::%pipeline-execution-plan pipeline)))
-                (funcall mutator)
-                (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-                (is (not (eq plan (cl-dataflow::%pipeline-execution-plan pipeline)))))))
-          (assert-rebuilt
-            (lambda ()
-              (setf (edge-from edge) "source")))
-          (assert-rebuilt
-            (lambda ()
-              (setf (edge-from-port edge) "changed-from-port")))
-          (assert-rebuilt
-            (lambda ()
-              (setf (edge-to edge) "source")))
-          (assert-rebuilt
-            (lambda ()
-              (setf (edge-to-port edge) "changed-to-port")))
-          (setf (edge-from edge) "Source")
-          (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
-          (assert-rebuilt
-            (lambda ()
-              (setf (char (edge-from edge) 0) #\s))))))))
+        (assert-plan-rebuilds pipeline
+          (setf (edge-from edge) "source"))
+        (assert-plan-rebuilds pipeline
+          (setf (edge-from-port edge) "changed-from-port"))
+        (assert-plan-rebuilds pipeline
+          (setf (edge-to edge) "source"))
+        (assert-plan-rebuilds pipeline
+          (setf (edge-to-port edge) "changed-to-port"))
+        (setf (edge-from edge) "Source")
+        (cl-dataflow::%ensure-pipeline-execution-plan pipeline)
+        (assert-plan-rebuilds pipeline
+          (setf (char (edge-from edge) 0) #\s))))))
 
 (deftest
   pipeline-detects-renamed-live-stage

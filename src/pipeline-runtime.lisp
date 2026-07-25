@@ -258,9 +258,7 @@
           (%store-value-by-key context (cdar output-key-plan) output)
           (%push-context-trace-entry
             context
-            (list :node (node-name node)
-                  :input node-input
-                  :output (list (cons output-name (%copy-structured-value output))))))
+            (%make-node-trace-record node node-input (list (cons output-name output)))))
         (%record-node-run
           context node node-input
           (%node-output-bindings node output output-names)
