@@ -48,14 +48,35 @@
              distance)
     chosen))
 
-(defun %dijkstra-relax (distance name-cost neighbors settled)
+(defun %dijkstra-relax (distance previous name name-cost neighbors settled)
   (dolist (edge neighbors)
     (let ((to (car edge))
           (candidate (+ name-cost (cdr edge))))
       (unless (gethash to settled)
         (let ((existing (gethash to distance)))
           (when (or (null existing) (< candidate existing))
-            (setf (gethash to distance) candidate)))))))
+            (setf (gethash to distance) candidate
+                  (gethash to previous) name)))))))
+
+(defun %dijkstra-run (from-name neighbors)
+  "Run Dijkstra's algorithm from FROM-NAME over NEIGHBORS (as returned by
+%WEIGHTED-ADJACENCY) to exhaustion, returning (VALUES DISTANCE PREVIOUS): hash
+tables of the minimum cost to, and predecessor of, every node reached from
+FROM-NAME. Every weighted shortest-path function in this file shares this
+seed-then-settle-to-exhaustion loop and differs only in what it reads back out
+of DISTANCE/PREVIOUS afterward, so PREVIOUS is always tracked even when a
+caller only needs DISTANCE -- one extra SETF per relaxation is cheaper than a
+second driver loop."
+  (let ((distance (make-hash-table :test #'equal))
+        (previous (make-hash-table :test #'equal))
+        (settled (make-hash-table :test #'equal)))
+    (%dijkstra-relax distance previous from-name 0 (gethash from-name neighbors) settled)
+    (loop for name = (%dijkstra-pick distance settled)
+          while name
+          do (setf (gethash name settled) t)
+             (%dijkstra-relax distance previous name (gethash name distance)
+                              (gethash name neighbors) settled))
+    (values distance previous)))
 
 (defun graph-weighted-distance (graph from to &key weight-key default-weight)
   "Return the minimum total edge weight of a path from FROM to TO (traversing at
@@ -69,16 +90,8 @@ resolves only through a cycle, matching GRAPH-DISTANCE."
         (to-name (%node-designator-name to)))
     (%ensure-graph-node graph from-name)
     (%ensure-graph-node graph to-name)
-    (let ((neighbors (%weighted-adjacency graph weight-key default-weight))
-          (distance (make-hash-table :test #'equal))
-          (settled (make-hash-table :test #'equal)))
-      (%dijkstra-relax distance 0 (gethash from-name neighbors) settled)
-      (loop for name = (%dijkstra-pick distance settled)
-            while name
-            do (setf (gethash name settled) t)
-               (%dijkstra-relax distance (gethash name distance)
-                                (gethash name neighbors) settled))
-      (gethash to-name distance))))
+    (let ((neighbors (%weighted-adjacency graph weight-key default-weight)))
+      (gethash to-name (%dijkstra-run from-name neighbors)))))
 
 (defun graph-weighted-distances-from (graph from &key weight-key default-weight)
   "Return an alist (NAME . COST) of the minimum total edge weight from FROM to every
@@ -90,28 +103,11 @@ GRAPH-DISTANCES-FROM. Ordered by name."
         (default-weight (or default-weight 1))
         (from-name (%node-designator-name from)))
     (%ensure-graph-node graph from-name)
-    (let ((neighbors (%weighted-adjacency graph weight-key default-weight))
-          (distance (make-hash-table :test #'equal))
-          (settled (make-hash-table :test #'equal)))
-      (%dijkstra-relax distance 0 (gethash from-name neighbors) settled)
-      (loop for name = (%dijkstra-pick distance settled)
-            while name
-            do (setf (gethash name settled) t)
-               (%dijkstra-relax distance (gethash name distance)
-                                (gethash name neighbors) settled))
+    (let* ((neighbors (%weighted-adjacency graph weight-key default-weight))
+           (distance (%dijkstra-run from-name neighbors)))
       (sort (loop for name being the hash-keys of distance using (hash-value cost)
                   collect (cons name cost))
             #'string< :key #'car))))
-
-(defun %dijkstra-relax-with-previous (distance previous name name-cost neighbors settled)
-  (dolist (edge neighbors)
-    (let ((to (car edge))
-          (candidate (+ name-cost (cdr edge))))
-      (unless (gethash to settled)
-        (let ((existing (gethash to distance)))
-          (when (or (null existing) (< candidate existing))
-            (setf (gethash to distance) candidate
-                  (gethash to previous) name)))))))
 
 (defun %reconstruct-weighted-path (previous from to)
   "Rebuild the FROM ... TO node sequence from a Dijkstra PREVIOUS table, taking the
@@ -134,17 +130,7 @@ GRAPH-WEIGHTED-DISTANCE, and FROM = TO resolves only through a cycle."
         (to-name (%node-designator-name to)))
     (%ensure-graph-node graph from-name)
     (%ensure-graph-node graph to-name)
-    (let ((neighbors (%weighted-adjacency graph weight-key default-weight))
-          (distance (make-hash-table :test #'equal))
-          (previous (make-hash-table :test #'equal))
-          (settled (make-hash-table :test #'equal)))
-      (%dijkstra-relax-with-previous distance previous from-name 0
-                                     (gethash from-name neighbors) settled)
-      (loop for name = (%dijkstra-pick distance settled)
-            while name
-            do (setf (gethash name settled) t)
-               (%dijkstra-relax-with-previous distance previous name
-                                              (gethash name distance)
-                                              (gethash name neighbors) settled))
-      (when (nth-value 1 (gethash to-name distance))
-        (%reconstruct-weighted-path previous from-name to-name)))))
+    (let ((neighbors (%weighted-adjacency graph weight-key default-weight)))
+      (multiple-value-bind (distance previous) (%dijkstra-run from-name neighbors)
+        (when (nth-value 1 (gethash to-name distance))
+          (%reconstruct-weighted-path previous from-name to-name))))))
