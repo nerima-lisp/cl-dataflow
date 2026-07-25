@@ -24,6 +24,13 @@ passing the shared CONTEXT to every step. With no handlers this is the identity.
 
 ;;; --- Handler wrappers (handler -> handler) -------------------------------
 
+(defun %reject-unless-condition-type (condition condition-type)
+  "Re-signal CONDITION unless it matches CONDITION-TYPE -- the condition-type
+filter RETRYING-HANDLER and FALLBACK-HANDLER both apply before their own,
+genuinely different, recovery action (retry vs. fall back)."
+  (unless (typep condition condition-type)
+    (error condition)))
+
 (defun retrying-handler (handler &key (attempts 3) (condition-type 'error))
   "Wrap HANDLER so that a signalled condition of CONDITION-TYPE is retried, up to
 ATTEMPTS total invocations. A condition outside CONDITION-TYPE is re-signalled
@@ -40,8 +47,8 @@ immediately, and the last failure is re-signalled once ATTEMPTS is exhausted."
             (return (funcall handler input context))
           (error (condition)
             (incf attempt)
-            (when (or (>= attempt attempts)
-                      (not (typep condition condition-type)))
+            (%reject-unless-condition-type condition condition-type)
+            (when (>= attempt attempts)
               (error condition))))))))
 
 (defun fallback-handler (handler fallback &key (condition-type 'error))
@@ -53,8 +60,7 @@ outside CONDITION-TYPE propagate unchanged."
     (handler-case
         (funcall handler input context)
       (error (condition)
-        (unless (typep condition condition-type)
-          (error condition))
+        (%reject-unless-condition-type condition condition-type)
         (if (functionp fallback)
             (funcall fallback input context condition)
             fallback)))))
