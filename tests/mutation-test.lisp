@@ -13,10 +13,15 @@
 any signalled error as a distinguishable outcome rather than propagating --
 a mutant that errors where the original does not counts as caught, matching
 the intent of mutation testing without needing cl-weave to classify it as an
-:ERRORED result."
+:ERRORED result. Muffles compiler warnings: binding a mutation-testing edge
+case like COUNT = 0 makes SBCL's compiler prove a division-by-zero is
+reachable in isolation, even though the surrounding IF guard makes it
+unreachable at runtime for that binding -- exactly the case this helper
+exists to exercise, not a real problem to report."
   (handler-case
-      (eval `(let ,(mapcar (lambda (binding) (list (car binding) (cdr binding))) bindings)
-               ,form))
+      (handler-bind ((warning #'muffle-warning))
+        (eval `(let ,(mapcar (lambda (binding) (list (car binding) (cdr binding))) bindings)
+                 ,form)))
     (error () :error)))
 
 (defun %mutation-fully-killed-p (form cases)
