@@ -7,8 +7,10 @@
 ;;;; trampoline (%COPY-STRUCTURED-VALUE/CPS, %RUN-COPY-TRAMPOLINE) so copying
 ;;;; a very long list costs O(1) Lisp control-stack depth.
 
-(defun %make-result-table ()
-  (make-hash-table :test #'equal))
+(defun %make-result-table (&optional size)
+  (if size
+      (make-hash-table :test #'equal :size size)
+      (make-hash-table :test #'equal)))
 
 (defun %copy-hash-table-with-value-transform (table value-transform)
   (let ((copy

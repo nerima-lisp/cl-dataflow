@@ -66,8 +66,9 @@ linear in the number of edges rather than O(V*E). Distinct (from . to) pairs are
 counted once, so parallel edges across different ports do not inflate indegree --
 matching the deduplicating per-node queries this replaces. Successor lists are
 sorted so downstream traversal order stays deterministic."
-  (let ((successors (%make-result-table))
-        (indegree (%make-result-table)))
+  (let* ((node-count (hash-table-count (%graph-nodes-table graph)))
+         (successors (%make-result-table node-count))
+         (indegree (%make-result-table node-count)))
     (maphash (lambda (name node)
                 (declare (ignore node))
                 (setf (gethash name indegree) 0)

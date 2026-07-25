@@ -112,9 +112,9 @@ order (so the accumulation phase can walk it farthest-first), PREDECESSORS
 maps each node to its shortest-path predecessors from SOURCE, and SIGMA counts
 the number of distinct shortest paths from SOURCE to each node."
   (let ((stack '())
-        (predecessors (%make-result-table))
-        (sigma (%make-result-table))
-        (distance (%make-result-table)))
+        (predecessors (%make-result-table (length names)))
+        (sigma (%make-result-table (length names)))
+        (distance (%make-result-table (length names))))
     (dolist (name names)
       (setf (gethash name predecessors) '()
             (gethash name sigma) 0
@@ -140,7 +140,7 @@ PREDECESSORS, SIGMA) into BETWEENNESS. Walking STACK farthest-first guarantees
 every node's own dependency total is finished before it contributes to its
 predecessors', so each node's share of the shortest paths through it is added
 to BETWEENNESS exactly once."
-  (let ((delta (%make-result-table)))
+  (let ((delta (%make-result-table (length names))))
     (dolist (name names)
       (setf (gethash name delta) 0))
     (dolist (w stack)
@@ -157,9 +157,9 @@ node, the total over all ordered source/target pairs of the fraction of shortest
 paths between them that pass through the node. Computed with Brandes' algorithm over
 unweighted directed edges (iterative BFS plus reverse dependency accumulation, so
 deep graphs are safe). Ordered by name."
-  (let ((names (%graph-node-name-set graph))
-        (successors (%graph-adjacency-snapshot graph :successors))
-        (betweenness (%make-result-table)))
+  (let* ((names (%graph-node-name-set graph))
+         (successors (%graph-adjacency-snapshot graph :successors))
+         (betweenness (%make-result-table (length names))))
     (dolist (name names)
       (setf (gethash name betweenness) 0))
     (dolist (source names)
