@@ -56,44 +56,26 @@ ignores the rest."
   "Return a derived subject that pairs values of SUBJECT-A and SUBJECT-B in
 lockstep, emitting (A . B) once the Nth value of each has arrived. Values queue
 until their counterpart arrives."
-  (let ((result (make-subject))
-        (queue-a '())
-        (tail-a '())
-        (queue-b '())
-        (tail-b '()))
-    (flet ((enqueue-a (value)
-              (let ((cell (list value)))
-            (if queue-a (setf (rest tail-a) cell
-                    tail-a cell)
-              (setf queue-a cell
-                    tail-a cell))))
-            (enqueue-b (value)
-              (let ((cell (list value)))
-            (if queue-b (setf (rest tail-b) cell
-                    tail-b cell)
-              (setf queue-b cell
-                    tail-b cell))))
-            (emit-if-ready ()
-              (when (and queue-a queue-b)
-            (let ((value-a (first queue-a))
-                  (value-b (first queue-b)))
-              (setf queue-a (rest queue-a)
-                    queue-b (rest queue-b))
-              (unless queue-a
-                (setf tail-a '()))
-              (unless queue-b
-                (setf tail-b '()))
-              (subject-emit result (cons value-a value-b))))))
-      (subject-subscribe
-        subject-a
-        (lambda (value)
-          (enqueue-a value)
-          (emit-if-ready)))
-      (subject-subscribe
-        subject-b
-        (lambda (value)
-          (enqueue-b value)
-          (emit-if-ready))))
+  (let ((result (make-subject)))
+    (with-fifo-queue (queue-a enqueue-a)
+      (with-fifo-queue (queue-b enqueue-b)
+        (flet ((emit-if-ready ()
+                 (when (and queue-a queue-b)
+                   (let ((value-a (first queue-a))
+                         (value-b (first queue-b)))
+                     (setf queue-a (rest queue-a)
+                           queue-b (rest queue-b))
+                     (subject-emit result (cons value-a value-b))))))
+          (subject-subscribe
+            subject-a
+            (lambda (value)
+              (enqueue-a value)
+              (emit-if-ready)))
+          (subject-subscribe
+            subject-b
+            (lambda (value)
+              (enqueue-b value)
+              (emit-if-ready))))))
     result))
 
 (defun subject-combine-latest (subject-a subject-b)
