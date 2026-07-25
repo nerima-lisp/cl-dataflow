@@ -87,39 +87,55 @@ collapsed to a single element. Non-adjacent duplicates are kept."
            (cons (car step)
                  (%stream-interpose-rest separator (cdr step))))))))
 
-(defun %stream-distinct-by (function stream seen test max-distinct)
-  (%make-flow-stream
-   (lambda ()
-     (let ((current stream)
-           (already seen))
-       (loop
-         (let ((step (%stream-step current)))
-           (when (eq step :end)
-             (return :end))
-           (let* ((value (car step))
-                  (key (funcall function value)))
-             (if (member key already :test test)
-                 (setf current (cdr step))
-                 (return (%stream-distinct-by-emit function value key
-                                                    (cdr step) already test
-                                                    max-distinct))))))))))
-
-(defun %stream-distinct-by-emit (function value key rest already test max-distinct)
-  "Build the CONS cell STREAM-DISTINCT-BY returns once VALUE's KEY is confirmed
-new: signal a MAX-DISTINCT overflow first, then continue lazily from REST
-with KEY recorded among ALREADY."
-  (when (and max-distinct (>= (length already) max-distinct))
+(defun %stream-distinct-by-emit (function value key step hashable seen hash-levels
+                                 standard-test test distinct-count max-distinct)
+  "Build the CONS cell %STREAM-DISTINCT-BY-STEP returns once VALUE's KEY is confirmed
+new: signal a MAX-DISTINCT overflow first, then continue lazily from (CDR STEP) with
+KEY recorded in whichever of SEEN/HASH-LEVELS its hashability picked."
+  (when (and max-distinct (>= distinct-count max-distinct))
     (%signal-stream-limit-exceeded "STREAM-DISTINCT-BY" max-distinct))
-  (cons value (%stream-distinct-by function rest (cons key already) test max-distinct)))
+  (cons
+    value
+    (%stream-distinct-by-step
+      function
+      (cdr step)
+      (if hashable seen
+        (cons key seen))
+      (if hashable (%distinct-hash-levels-add key hash-levels standard-test)
+        hash-levels)
+      standard-test
+      test
+      (1+ distinct-count)
+      max-distinct)))
+
+(defun %stream-distinct-by-step (function stream seen hash-levels standard-test test distinct-count max-distinct)
+  (%make-flow-stream
+    (lambda ()
+      (let ((current stream))
+        (loop (let ((step (%stream-step current)))
+            (when (eq step :end)
+              (return :end))
+            (let* ((value (car step))
+                    (key (funcall function value))
+                    (hashable (%distinct-hashable-value-p standard-test key))
+                    (duplicate-p
+                  (if hashable (%distinct-hash-levels-member-p key hash-levels)
+                    (member key seen :test test))))
+              (if duplicate-p (setf current (cdr step))
+                (return
+                  (%stream-distinct-by-emit function value key step hashable seen hash-levels
+                                            standard-test test distinct-count max-distinct))))))))))
 
 (defun stream-distinct-by (function stream &key (test 'equal) max-distinct)
   "Return a stream of the elements of STREAM whose key (FUNCALL FUNCTION ELEMENT) has
 not appeared before (under TEST), keeping the first element for each key. The
-key-projected analog of STREAM-DISTINCT; O(n^2) in the number of distinct keys.
-MAX-DISTINCT bounds retained distinct keys and signals INVALID-INPUT-ERROR when
-exceeded."
+key-projected analog of STREAM-DISTINCT: standard EQ/EQL tests use persistent hash
+lookup for every key; standard EQUAL/EQUALP tests do so for mutation-stable scalar
+keys and retain list semantics for structural keys. MAX-DISTINCT bounds retained
+distinct keys and signals INVALID-INPUT-ERROR when exceeded."
   (%validate-stream-limit max-distinct "STREAM-DISTINCT-BY")
-  (%stream-distinct-by function stream '() test max-distinct))
+  (let ((standard-test (%standard-distinct-test test)))
+    (%stream-distinct-by-step function stream '() '() standard-test test 0 max-distinct)))
 
 ;;; --- Terminal collectors -------------------------------------------------
 
