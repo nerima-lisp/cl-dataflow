@@ -8,18 +8,23 @@
 ;;;; GRAPH-DISTANCE (which stops early once its target is settled) and
 ;;;; GRAPH-DISTANCES-FROM (which runs to exhaustion) drive.
 
+(defun %hop-distances-alist-from-successors (successors from-name)
+  "Return an alist (NAME . HOP-DISTANCE) of every node reachable from FROM-NAME
+through one or more edges of SUCCESSORS (as built by %GRAPH-ADJACENCY-SNAPSHOT),
+ordered by name."
+  (sort (loop for name being the hash-keys of (%bfs-hop-distances successors from-name)
+              using (hash-value d)
+              collect (cons name d))
+        #'string< :key #'car))
+
 (defun graph-distances-from (graph from)
   "Return an alist (NAME . HOP-DISTANCE) of every node reachable from FROM through
 one or more edges, via breadth-first search. FROM itself appears only when a cycle
 returns to it. Ordered by name."
   (let ((from-name (%node-designator-name from)))
     (%ensure-graph-node graph from-name)
-    (let ((distances (%bfs-hop-distances
-                       (%graph-adjacency graph (%graph-rulebase graph))
-                       from-name)))
-      (sort (loop for name being the hash-keys of distances using (hash-value d)
-                  collect (cons name d))
-            #'string< :key #'car))))
+    (%hop-distances-alist-from-successors
+     (%graph-adjacency-snapshot graph :successors) from-name)))
 
 (defun graph-bfs-order (graph from)
   "Return the node names reachable from FROM in breadth-first order, starting with
@@ -63,18 +68,32 @@ FROM, each appearing once. The name-least successor is descended first. Iterativ
                 (push successor stack))))))
       (nreverse order))))
 
-(defun graph-eccentricity (graph node)
-  "Return the eccentricity of NODE: the greatest hop distance to any node reachable
-from it, or 0 when NODE reaches nothing."
-  (let ((distances (mapcar #'cdr (graph-distances-from graph node))))
+(defun %eccentricity-from-successors (successors name)
+  "The eccentricity of NAME read from a precomputed SUCCESSORS adjacency (as
+built by %GRAPH-ADJACENCY-SNAPSHOT), so a whole-graph caller that already has
+SUCCESSORS never rebuilds the graph's adjacency per node."
+  (let ((distances (loop for d being the hash-values of (%bfs-hop-distances successors name)
+                         collect d)))
     (if distances
         (reduce #'max distances)
         0)))
 
+(defun graph-eccentricity (graph node)
+  "Return the eccentricity of NODE: the greatest hop distance to any node reachable
+from it, or 0 when NODE reaches nothing."
+  (let ((name (%node-designator-name node)))
+    (%ensure-graph-node graph name)
+    (%eccentricity-from-successors (%graph-adjacency-snapshot graph :successors) name)))
+
 (defun %graph-eccentricities (graph)
-  "Return an alist (NAME . ECCENTRICITY), ordered like GRAPH-NODE-NAMES."
-  (loop for name in (graph-node-names graph)
-        collect (cons name (graph-eccentricity graph name))))
+  "Return an alist (NAME . ECCENTRICITY), ordered like GRAPH-NODE-NAMES.
+
+The successor adjacency is built once and shared across every node instead of
+GRAPH-ECCENTRICITY's one-rebuild-per-call, so this stays linear in the number of
+BFS traversals rather than also redoing the O(V+E) adjacency build V times."
+  (let ((successors (%graph-adjacency-snapshot graph :successors)))
+    (loop for name in (graph-node-names graph)
+          collect (cons name (%eccentricity-from-successors successors name)))))
 
 (defun graph-closeness-centrality (graph node)
   "Return the closeness centrality of NODE: the number of nodes reachable from it
@@ -206,11 +225,16 @@ shortest paths stretch the whole diameter. Empty for a graph with no nodes."))
 (defun %graph-distance-totals (graph)
   "Return (values SUM COUNT) over the shortest-path hop distances of every ordered
 pair of distinct nodes whose target is reachable from its source. Self-returns
-through cycles are excluded so a node is never paired with itself."
-  (let ((sum 0)
+through cycles are excluded so a node is never paired with itself.
+
+The successor adjacency is built once and shared across every source instead of
+GRAPH-DISTANCES-FROM's one-rebuild-per-call, so this stays linear in the number of
+BFS traversals rather than also redoing the O(V+E) adjacency build V times."
+  (let ((successors (%graph-adjacency-snapshot graph :successors))
+        (sum 0)
         (count 0))
     (dolist (name (graph-node-names graph))
-      (dolist (entry (graph-distances-from graph name))
+      (dolist (entry (%hop-distances-alist-from-successors successors name))
         (unless (equal (car entry) name)
           (incf sum (cdr entry))
           (incf count))))

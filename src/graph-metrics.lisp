@@ -111,6 +111,23 @@ self-loops never inflate a neighbourhood."
              adjacency)
     result))
 
+(defun %clustering-coefficient-for-sets (name sets)
+  "The local clustering coefficient of NAME read from SETS (as built by
+%UNDIRECTED-NEIGHBOR-SETS), so a whole-graph caller that already has SETS never
+rebuilds it per node."
+  (let* ((neighbors (loop for neighbor being the hash-keys of (gethash name sets)
+                          collect neighbor))
+         (degree (length neighbors)))
+    (if (< degree 2)
+        0
+        (let ((links 0))
+          (loop for tail on neighbors
+                for left = (car tail)
+                do (dolist (right (cdr tail))
+                     (when (gethash right (gethash left sets))
+                       (incf links))))
+          (/ links (/ (* degree (1- degree)) 2))))))
+
 (defun graph-clustering-coefficient (graph node)
   "Return the local clustering coefficient of NODE over GRAPH's undirected view: the
 fraction of the pairs of NODE's distinct neighbours that are themselves adjacent (how
@@ -118,30 +135,23 @@ close the neighbourhood is to a clique). 0 when NODE has fewer than two neighbou
 Edge direction and self-loops are ignored; parallel edges count once."
   (let ((name (%node-designator-name node)))
     (%ensure-graph-node graph name)
-    (let* ((sets (%undirected-neighbor-sets graph))
-           (neighbors (loop for neighbor being the hash-keys of (gethash name sets)
-                            collect neighbor))
-           (degree (length neighbors)))
-      (if (< degree 2)
-          0
-          (let ((links 0))
-            (loop for tail on neighbors
-                  for left = (car tail)
-                  do (dolist (right (cdr tail))
-                       (when (gethash right (gethash left sets))
-                         (incf links))))
-            (/ links (/ (* degree (1- degree)) 2)))))))
+    (%clustering-coefficient-for-sets name (%undirected-neighbor-sets graph))))
 
 (defun graph-average-clustering (graph)
   "Return the average local clustering coefficient over every node of GRAPH -- the
 mean of GRAPH-CLUSTERING-COEFFICIENT, a global measure of how tightly neighbourhoods
-cluster. 0 for a graph with no nodes."
+cluster. 0 for a graph with no nodes.
+
+The undirected neighbour sets are built once and shared across every node instead
+of GRAPH-CLUSTERING-COEFFICIENT's one-rebuild-per-call, so this stays O(V+E) instead
+of O(V*(V+E))."
   (let ((names (graph-node-names graph)))
     (if names
-        (/ (reduce #'+ (mapcar (lambda (name)
-                                 (graph-clustering-coefficient graph name))
-                               names))
-           (length names))
+        (let ((sets (%undirected-neighbor-sets graph)))
+          (/ (reduce #'+ (mapcar (lambda (name)
+                                   (%clustering-coefficient-for-sets name sets))
+                                 names))
+             (length names)))
         0)))
 
 (defun graph-reciprocity (graph)

@@ -74,8 +74,10 @@ edges across different ports stay distinguishable."
 \"LR\", ...). Node names become quoted labels on generated ids, so names with
 spaces or punctuation render cleanly; edges carry their from-port -> to-port."
   (let* ((names (%graph-node-name-set graph))
-         (ids (%mermaid-node-ids names)))
-    (flet ((id-for (name) (cdr (assoc name ids :test #'equal))))
+         (ids (%make-result-table)))
+    (dolist (pair (%mermaid-node-ids names))
+      (setf (gethash (car pair) ids) (cdr pair)))
+    (flet ((id-for (name) (gethash name ids)))
       (with-output-to-string (out)
         (format out "flowchart ~A~%" direction)
         (dolist (name names)
