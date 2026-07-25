@@ -94,23 +94,23 @@ collapsed to a single element. Non-adjacent duplicates are kept."
            (already seen))
        (loop
          (let ((step (%stream-step current)))
-           (cond ((eq step :end) (return :end))
-                 (t
-                  (let* ((value (car step))
-                         (key (funcall function value)))
-                    (if (member key already :test test)
-                        (setf current (cdr step))
-                        (return (cons value
-                                      (progn
-                                        (when (and max-distinct
-                                                   (>= (length already) max-distinct))
-                                          (%signal-stream-limit-exceeded "STREAM-DISTINCT-BY"
-                                                                         max-distinct))
-                                        (%stream-distinct-by function
-                                                             (cdr step)
-                                                             (cons key already)
-                                                             test
-                                                             max-distinct))))))))))))))
+           (when (eq step :end)
+             (return :end))
+           (let* ((value (car step))
+                  (key (funcall function value)))
+             (if (member key already :test test)
+                 (setf current (cdr step))
+                 (return (%stream-distinct-by-emit function value key
+                                                    (cdr step) already test
+                                                    max-distinct))))))))))
+
+(defun %stream-distinct-by-emit (function value key rest already test max-distinct)
+  "Build the CONS cell STREAM-DISTINCT-BY returns once VALUE's KEY is confirmed
+new: signal a MAX-DISTINCT overflow first, then continue lazily from REST
+with KEY recorded among ALREADY."
+  (when (and max-distinct (>= (length already) max-distinct))
+    (%signal-stream-limit-exceeded "STREAM-DISTINCT-BY" max-distinct))
+  (cons value (%stream-distinct-by function rest (cons key already) test max-distinct)))
 
 (defun stream-distinct-by (function stream &key (test 'equal) max-distinct)
   "Return a stream of the elements of STREAM whose key (FUNCALL FUNCTION ELEMENT) has
