@@ -118,7 +118,8 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
           (output-key-plans
         (mapcar #'%pipeline-output-key-plan stage-signatures))
           (sinks (%sink-nodes-in-order graph stages))
-          (node-result-plan-table (%pipeline-node-result-plan-table stage-signatures output-key-plans)))
+          (node-result-plan-table
+        (%pipeline-node-result-plan-table stage-signatures output-key-plans)))
     (make-instance
       'pipeline-execution-plan
       :graph

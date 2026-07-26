@@ -111,8 +111,9 @@ by branching depth rather than an unbounded chain, so it stays safe."
   (%run-copy-trampoline (%copy-structured-value/cps value seen #'identity)))
 
 (defun %copy-structured-value (value)
-  (if (or (consp value) (hash-table-p value) (stringp value) (vectorp value)) (%copy-structured-value* value (make-hash-table :test #'eq))
-    value))
+  (if (or (consp value) (hash-table-p value) (stringp value) (vectorp value))
+      (%copy-structured-value* value (make-hash-table :test #'eq))
+      value))
 
 (defun %copy-result-table (table)
   (let ((copy

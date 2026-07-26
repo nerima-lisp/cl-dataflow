@@ -232,7 +232,8 @@ VALUE recorded in whichever of SEEN/HASH-LEVELS its hashability picked."
       (1+ distinct-count)
       max-distinct)))
 
-(defun %stream-distinct-step (stream seen hash-levels standard-test test distinct-count max-distinct)
+(defun %stream-distinct-step (stream seen hash-levels standard-test test distinct-count
+                              max-distinct)
   (%make-flow-stream
     (lambda ()
       (let ((current stream))
@@ -295,7 +296,8 @@ element of STREAM. FUNCTION must return a stream for every element."
             (let ((step (%stream-step (first remaining))))
               (if (eq step :end) (setf remaining (rest remaining))
                 (return
-                  (cons (car step) (%stream-concat-list (cons (cdr step) (rest remaining)))))))))))))
+                  (cons (car step)
+                        (%stream-concat-list (cons (cdr step) (rest remaining)))))))))))))
 
 (defun stream-concat (&rest streams)
   "Return the concatenation of STREAMS in order."

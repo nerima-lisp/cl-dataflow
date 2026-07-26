@@ -145,7 +145,8 @@
     (:transition `(:transition ,(%parse-workflow-transition-clause clause)))
     (:node `(:pipeline-node ,(%parse-pipeline-node-clause clause graph-var)))
     (:edge `(:pipeline-edge ,(%parse-pipeline-edge-clause clause graph-var)))
-    (:machine-node `(:pipeline-node ,(%parse-workflow-machine-node-clause clause graph-var machine-var)))
+    (:machine-node
+      `(:pipeline-node ,(%parse-workflow-machine-node-clause clause graph-var machine-var)))
     (t
       (%unsupported-structured-clause-error
       "DEFINE-WORKFLOW"

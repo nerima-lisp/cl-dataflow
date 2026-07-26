@@ -62,5 +62,6 @@
         (setf (effect-result effect) result
               (getf trace-entry :result) (%copy-structured-value (effect-result effect)))
         (remf trace-entry :handled-p)
-        (setf (slot-value context 'effects) (cons (%copy-effect effect) (%context-effects-list context)))
+        (setf (slot-value context 'effects)
+              (cons (%copy-effect effect) (%context-effects-list context)))
         effect))))

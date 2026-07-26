@@ -108,7 +108,8 @@ KEY recorded in whichever of SEEN/HASH-LEVELS its hashability picked."
       (1+ distinct-count)
       max-distinct)))
 
-(defun %stream-distinct-by-step (function stream seen hash-levels standard-test test distinct-count max-distinct)
+(defun %stream-distinct-by-step (function stream seen hash-levels standard-test test
+                                 distinct-count max-distinct)
   (%make-flow-stream
     (lambda ()
       (let ((current stream))

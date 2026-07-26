@@ -7,7 +7,8 @@
 ;;;; (map/filter/merge) subscribe to their sources and re-emit, so a small reactive
 ;;;; graph can be wired up for event-driven workflows. The SUBJECT type is opaque;
 ;;;; use SUBJECT-P and the operators below.
-(defstruct (subject (:constructor %make-subject ()) (:copier nil) (:predicate subject-p)) (subscribers '())
+(defstruct (subject (:constructor %make-subject ()) (:copier nil) (:predicate subject-p))
+  (subscribers '())
   (subscriber-tail nil))
 
 (defun make-subject ()
@@ -38,7 +39,8 @@ token)."
 
 (defun subject-unsubscribe (subject function)
   "Remove FUNCTION from SUBJECT's subscribers (all occurrences) and return SUBJECT."
-  (multiple-value-bind (subscribers tail) (%remove-subject-subscribers (subject-subscribers subject) function)
+  (multiple-value-bind (subscribers tail)
+      (%remove-subject-subscribers (subject-subscribers subject) function)
     (setf (subject-subscribers subject) subscribers
           (subject-subscriber-tail subject) tail))
   subject)
