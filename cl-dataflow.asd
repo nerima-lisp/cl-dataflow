@@ -107,9 +107,9 @@ helpers, all behind a single public package."
   :serial t
   :pathname "t/"
   :components ((:file "package")
-                (:file "test-support-assertions")
-                (:file "test-support-fixtures")
-                (:file "test-runner")
+                (:file "helpers-assertions")
+                (:file "helpers-fixtures")
+                (:file "suite")
                 (:file "core-graph-structure-test")
                 (:file "core-graph-api-test")
                 (:file "core-model-mutation-test")
