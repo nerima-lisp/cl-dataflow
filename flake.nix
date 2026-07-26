@@ -89,10 +89,13 @@
       cl-log-kit,
     }:
     let
+      # Only what is verified: x86_64-linux by CI, aarch64-darwin by the
+      # maintainer's local `nix flake check`. aarch64-linux and x86_64-darwin
+      # are not declared because nothing runs them, and a platform no runner
+      # can build makes `nix flake check --all-systems` fail with "platform
+      # mismatch" rather than skip it. See ADR-0078.
       systems = [
         "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
       forAllSystems =
