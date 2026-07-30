@@ -13,12 +13,13 @@ nix fmt          # format Nix sources (treefmt/nixfmt)
 nix build .#docs # render this site, offline, with mkdocs --strict
 ```
 
-`nix flake check` evaluates four checks:
+`nix flake check` evaluates five checks:
 
 | Check | What it gates |
 | --- | --- |
 | `checks.default` | the `cl-dataflow/test` suite under `cl-weave` |
 | `checks.coverage` | the coverage thresholds below, plus the report artifact |
+| `checks.examples` | every `examples/*.lisp` script runs to a clean exit, each under a hard timeout (see [Examples](examples.md#example-scripts-as-regression-tests)) |
 | `checks.paredit-lint` | every Lisp file parses under `paredit` |
 | `checks.formatting` | every Nix file is nixfmt-formatted |
 | `checks.docs` | this site builds under `mkdocs --strict` |
@@ -48,14 +49,14 @@ registry — and because `cl-process-kit`'s own system depends on them, so must
 [`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). See
 [Installation](installation.md#verifying-the-install).
 
-`./scripts/verify.sh` wraps the suite, and the example scripts double as smoke
-tests for the core execution paths:
+`./scripts/verify.sh` wraps the suite, and `./scripts/run-examples.sh` runs
+every `examples/*.lisp` script as its own process (the same check
+`checks.examples` runs in CI), doubling as a smoke test for the core
+execution paths:
 
 ```bash
 ./scripts/verify.sh
-sbcl --script examples/simple-pipeline.lisp
-sbcl --script examples/event-workflow.lisp
-sbcl --script examples/state-machine.lisp
+./scripts/run-examples.sh
 ```
 
 ## What the suite dogfoods

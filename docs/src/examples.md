@@ -69,10 +69,14 @@ the rest of the reachability and analysis surface.
 
 ## Example scripts as regression tests
 
-`tests/core-runtime-example-test.lisp` defines one smoke test per example
-script, each running the script and asserting exact substrings of its output —
-which is what keeps the Expected output column above honest. Because those
-tests spawn an external SBCL process, they are opt-in: they run only when
-`CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1` is set, and are skipped otherwise. Set it
-when changing runtime behavior, or run the scripts by hand — see
+`scripts/run-examples.sh` (also wired as the `examples` flake check) runs
+every example script as its own process under a hard timeout and asserts a
+clean exit, which is what actually keeps this page honest.
+
+`t/core-runtime-example-test.lisp` also defines one smoke test per example
+script, asserting exact substrings of its output — but do **not** enable it
+by setting `CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1`: spawning the example processes
+from inside the running test suite deadlocks it, confirmed by direct
+reproduction. It stays opt-in, and unused, for exactly that reason. Use
+`scripts/run-examples.sh` or run the scripts by hand instead — see
 [Development](development.md).
