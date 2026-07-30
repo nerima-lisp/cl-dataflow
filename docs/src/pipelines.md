@@ -344,9 +344,11 @@ serialized from.
 ## Where to go next
 
 - [Graphs](graphs.md) covers the node/edge/graph construction API that
-  `define-pipeline`'s `:node`/`:edge` clauses build on.
-- [Graph Algorithms](graph-algorithms.md) covers topological sort and the
-  rest of the analysis layer `run-pipeline` relies on for execution order.
+  `define-pipeline`'s `:node`/`:edge` clauses build on, including
+  `topological-sort`, the execution order `run-pipeline` relies on.
+- [Graph Algorithms](graph-algorithms.md) and
+  [Graph Analysis](graph-analysis.md) cover the rest of the analysis layer
+  built on top of a validated graph.
 - [State Machines](state-machines.md) covers `make-state-machine`,
   `step-state-machine`, and guarded transitions in depth.
 - [Combinators and Resilience](combinators.md) covers `mapping-handler`,

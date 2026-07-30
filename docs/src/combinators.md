@@ -219,10 +219,9 @@ or both. When `before` fails, `invalid-input-error` carries
 `invalid-input-expected` bound to `valid-node-input`; when `after` fails, it
 carries `valid-node-output`. In both cases `invalid-input-value` holds the
 offending value (the raw input or the raw output) and `invalid-input-detail`
-holds a human-readable string — the standard triple documented in the
-[README's error reference](https://github.com/nerima-lisp/cl-dataflow#public-api-reference):
-`invalid-input-error`, `invalid-input-expected`, `invalid-input-value`,
-`invalid-input-detail`.
+holds a human-readable string — the standard triple documented under
+[Errors](api-reference.md#errors): `invalid-input-error`,
+`invalid-input-expected`, `invalid-input-value`, `invalid-input-detail`.
 
 ### `node-with-contract`
 
