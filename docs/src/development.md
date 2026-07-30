@@ -8,6 +8,7 @@ gate on exactly the same derivations:
 ```bash
 nix develop      # SBCL with CL_SOURCE_REGISTRY already set
 nix run .#test   # run the test suite
+nix run .#watch  # re-run the suite on every source change (cl-weave watch)
 nix flake check  # every check below, in parallel, with build caching
 nix fmt          # format Nix sources (treefmt/nixfmt)
 nix build .#docs # render this site, offline, with mkdocs --strict

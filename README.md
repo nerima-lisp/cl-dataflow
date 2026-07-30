@@ -71,6 +71,7 @@ Outside Nix, put this checkout and `cl-prolog` somewhere ASDF can see them —
 ```sh
 nix develop          # SBCL with CL_SOURCE_REGISTRY already set
 nix run .#test       # run the test suite
+nix run .#watch      # re-run the suite on every source change
 nix flake check      # tests + coverage + lint + formatting + docs, as CI runs it
 nix fmt              # format Nix sources (treefmt)
 ```

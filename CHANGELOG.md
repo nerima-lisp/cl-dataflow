@@ -68,6 +68,9 @@ with it.
   doesn't hide anything the lower default was missing (515/515 still passes)
   and costs nothing worth trading off (the whole suite still compiles and
   runs in well under a minute).
+- `apps.watch`, so `nix run .#watch` drives `cl-weave watch cl-dataflow/test`
+  — a continuous local development loop that re-runs the suite on every
+  source change, alongside the existing one-shot `apps.test`.
 
 ### Changed
 
