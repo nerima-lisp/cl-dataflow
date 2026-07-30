@@ -13,7 +13,7 @@ on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
     ```bash
     nix develop      # drop into a shell with everything on CL_SOURCE_REGISTRY
     nix run          # run the cl-weave test app against cl-dataflow/test
-    nix flake check  # run the full check matrix (tests, coverage, paredit lint)
+    nix flake check  # run the full check matrix -- see Development for what each check gates
     ```
 
     `nix build .#docs` builds this documentation site offline, the same way
