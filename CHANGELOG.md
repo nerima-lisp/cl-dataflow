@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-31
+
+A concurrency and build-tooling release. The public API only grows: `run-pipeline`
+(and its `-with-context`/`-times`/`-until-fixpoint`/`-while` variants) and
+`map-pipeline` accept a new, backward-compatible `:parallel` keyword that runs
+independent work concurrently via cl-concurrent-kit. The flake's build/check/
+dependency graph moved onto [cl-nix-forge](https://github.com/nerima-lisp/cl-nix-forge),
+cl-weave was adopted for soft (aggregating) multi-field test assertions, and
+several internal call-site duplications were consolidated. No public API changed
+or removed; the suite holds its 100%-branch-coverage gate throughout.
+
 ### Added
 
 - `run-pipeline`, `run-pipeline-with-context`, `run-pipeline-times`,
@@ -413,7 +424,8 @@ public package.
 - Fixed guarded state-machine transition selection: when several transitions share a `(state, event)` pair, a rejecting guard now falls through to the next candidate, and `guard-failed-error` is signalled only when every matching guard rejects. `state-machine-can-step-p` uses the same guard-aware selection.
 - Fixed `define-pipeline` and `define-workflow` to evaluate a `:metadata`/`:pipeline-metadata` form once instead of twice, and to gensym their internal `graph`, `edge`, and `machine` bindings so user handler/guard/action forms can no longer capture them.
 
-[Unreleased]: https://github.com/nerima-lisp/cl-dataflow/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nerima-lisp/cl-dataflow/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/nerima-lisp/cl-dataflow/compare/v0.2.0...v0.3.0
