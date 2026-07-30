@@ -36,7 +36,16 @@
     (metadata :initarg :metadata :initform '())
     (effect-handlers :initform (%make-result-table))
     (result :initarg :result :initform nil)
-    (state :initarg :state :initform nil)))
+    (state :initarg :state :initform nil)
+    ;; Guards VALUES/EVENTS/EFFECTS/TRACE mutation when RUN-PIPELINE's :PARALLEL
+    ;; runs concurrent node handlers against this context; nil (the default) for
+    ;; every sequential run, so %WITH-CONTEXT-LOCK-IF-PRESENT is a single slot
+    ;; read plus an unlocked call, not a lock acquisition, on the hot path. Never
+    ;; an initarg: it is a runtime device %ENSURE-CONTEXT-LOCK installs, not
+    ;; semantic data, so COPY-CONTEXT/CONTEXT-TO-PLIST/CONTEXT-EQUAL-P (which all
+    ;; enumerate fields explicitly rather than copying slots in bulk) correctly
+    ;; never see it.
+    (lock :initform nil)))
 
 (defclass event ()
   ((type :initarg :type)
@@ -119,7 +128,20 @@
       :initarg
       :edge-signatures
       :reader
-      %pipeline-execution-plan-edge-signatures)))
+      %pipeline-execution-plan-edge-signatures)
+    ;; STAGES grouped into levels: nodes sharing a level have no dependency path
+    ;; between them, so RUN-PIPELINE's :PARALLEL mode may run a level's nodes
+    ;; concurrently. See %PIPELINE-NODE-LEVELS.
+    (levels :initarg :levels :reader %pipeline-execution-plan-levels)
+    ;; Node -> (INPUT-KEY-PLAN . OUTPUT-KEY-PLAN), so PIPELINE-PARALLEL.LISP's
+    ;; per-level, per-node lookup is O(1) instead of rescanning INPUT-KEY-PLANS/
+    ;; OUTPUT-KEY-PLANS -- the same "build once, key on the object" shape as
+    ;; %PIPELINE-EDGE-SIGNATURE-TABLE and %PIPELINE-NODE-RESULT-PLAN-TABLE above.
+    (stage-plan-table
+      :initarg
+      :stage-plan-table
+      :reader
+      %pipeline-execution-plan-stage-plan-table)))
 
 (defclass pipeline ()
   ((graph :initarg :graph)

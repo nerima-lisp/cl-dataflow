@@ -17,6 +17,31 @@
         "type": "github"
       }
     },
+    "cl-concurrent-kit": {
+      "inputs": {
+        "cl-weave": "cl-weave",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785417148,
+        "narHash": "sha256-apRS0wJhN0uUhC1n0wyHqQ5k1FkjfRytRt3XXgLveeg=",
+        "owner": "nerima-lisp",
+        "repo": "cl-concurrent-kit",
+        "rev": "4018d20b99385b764f183466ade1cbfaa8d905c6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.1.0",
+        "repo": "cl-concurrent-kit",
+        "type": "github"
+      }
+    },
     "cl-log-kit": {
       "flake": false,
       "locked": {
@@ -92,6 +117,23 @@
       }
     },
     "cl-weave": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784975289,
+        "narHash": "sha256-Je74eEojj79RuBQpVF8vSygjlSEhjnmMq8abgyB4sGc=",
+        "owner": "nerima-lisp",
+        "repo": "cl-weave",
+        "rev": "41020b897003fc1e3097cd62643f83ee8334c3be",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v1.0.0",
+        "repo": "cl-weave",
+        "type": "github"
+      }
+    },
+    "cl-weave_2": {
       "inputs": {
         "cl-nix-forge": "cl-nix-forge",
         "nixpkgs": [
@@ -177,10 +219,11 @@
     "root": {
       "inputs": {
         "cl-boundary-kit": "cl-boundary-kit",
+        "cl-concurrent-kit": "cl-concurrent-kit",
         "cl-log-kit": "cl-log-kit",
         "cl-process-kit": "cl-process-kit",
         "cl-prolog": "cl-prolog",
-        "cl-weave": "cl-weave",
+        "cl-weave": "cl-weave_2",
         "nixpkgs": "nixpkgs",
         "paredit-cli": "paredit-cli",
         "treefmt-nix": "treefmt-nix_3"

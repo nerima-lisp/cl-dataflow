@@ -76,6 +76,20 @@
       url = "github:nerima-lisp/cl-log-kit/v1.0.0";
       flake = false;
     };
+
+    # cl-concurrent-kit backs RUN-PIPELINE's :PARALLEL mode
+    # (src/pipeline-parallel.lisp): a real runtime dependency, not test- or
+    # build-only. Stays `flake = true`: its `packages.cl-concurrent-kit`
+    # output (a compiled ASDF system, `pkgs.sbcl.buildASDFSystem`) is the only
+    # way to get its source onto CL_SOURCE_REGISTRY -- confirmed by building
+    # it directly and inspecting the result: `cl-concurrent-kit.asd` sits at
+    # its outPath root alongside the compiled fasls, the same
+    # source-tree-at-root shape as cl-weave's `packages.cl-weave`.
+    cl-concurrent-kit = {
+      url = "github:nerima-lisp/cl-concurrent-kit/v0.1.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.treefmt-nix.follows = "treefmt-nix";
+    };
   };
 
   outputs =
@@ -89,6 +103,7 @@
       cl-process-kit,
       cl-boundary-kit,
       cl-log-kit,
+      cl-concurrent-kit,
     }:
     let
       # Only what is verified: x86_64-linux by CI, aarch64-darwin by the
@@ -221,7 +236,10 @@
           # cl-dataflow itself never loads or calls either.
           processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
-          sourceRegistry = "${prologSource}:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:$PWD//:";
+          # A real runtime dependency (RUN-PIPELINE's :PARALLEL mode), unlike
+          # cl-process-kit's test-only role above -- see cl-dataflow.asd.
+          concurrentKitSource = cl-concurrent-kit.packages.${system}.cl-concurrent-kit;
+          sourceRegistry = "${prologSource}:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:${concurrentKitSource}//:$PWD//:";
           mkWeaveCheck =
             {
               name,
@@ -322,7 +340,7 @@
               export HOME="$TMPDIR/home"
               export XDG_CACHE_HOME="$TMPDIR/cache"
               mkdir -p "$HOME" "$XDG_CACHE_HOME"
-              export CL_SOURCE_REGISTRY="${prologSource}:$PWD//:"
+              export CL_SOURCE_REGISTRY="${prologSource}:${concurrentKitSource}//:$PWD//:"
               ./scripts/run-examples.sh
             '';
             installPhase = ''
@@ -352,7 +370,8 @@
           weaveSource = cl-weave.packages.${system}.cl-weave;
           processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
-          exportSourceRegistry = ''export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:$PWD//:''${CL_SOURCE_REGISTRY:-}"'';
+          concurrentKitSource = cl-concurrent-kit.packages.${system}.cl-concurrent-kit;
+          exportSourceRegistry = ''export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:${concurrentKitSource}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"'';
           test = pkgs.writeShellApplication {
             name = "cl-dataflow-test";
             runtimeInputs = [ weave ];
@@ -410,7 +429,9 @@
             shellHook = ''
               export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${
                 cl-weave.packages.${system}.cl-weave
-              }//:${cl-process-kit.outPath}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
+              }//:${cl-process-kit.outPath}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:${
+                cl-concurrent-kit.packages.${system}.cl-concurrent-kit
+              }//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
             '';
           };
         }

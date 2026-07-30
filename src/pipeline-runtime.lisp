@@ -96,6 +96,42 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
 (defun %pipeline-sink-result-plan (sink node-result-plan-table)
   (gethash sink node-result-plan-table))
 
+(defun %pipeline-node-levels (stages incoming-index)
+  "Group STAGES (already topologically ordered) into levels: level 0 holds
+every node with no incoming edge among STAGES, and each later level holds
+nodes whose every incoming edge originates in an earlier level (its own level
+is 1 + the maximum level among its direct predecessors). Nodes sharing a
+level have no dependency path between them, so RUN-PIPELINE's :PARALLEL mode
+may run a level's handlers concurrently; each level keeps its members in
+STAGES' original (deterministic, string< tie-broken) relative order."
+  (when stages
+    (let ((level-by-name (make-hash-table :test #'equal))
+          (nodes-by-level (make-hash-table :test #'eql))
+          (max-level 0))
+      (dolist (node stages)
+        (let* ((incoming (gethash (node-name node) incoming-index))
+                (level
+              (if incoming
+                  (1+ (reduce #'max incoming
+                        :key (lambda (edge) (gethash (edge-from edge) level-by-name 0))))
+                  0)))
+          (setf (gethash (node-name node) level-by-name) level)
+          (setf max-level (max max-level level))
+          (push node (gethash level nodes-by-level))))
+      (loop for level from 0 to max-level
+            collect (nreverse (gethash level nodes-by-level))))))
+
+(defun %pipeline-stage-plan-table (stages input-key-plans output-key-plans)
+  "Node -> (INPUT-KEY-PLAN . OUTPUT-KEY-PLAN) built once so a per-level,
+per-node lookup is O(1) instead of rescanning the flat, STAGES-parallel
+INPUT-KEY-PLANS/OUTPUT-KEY-PLANS lists."
+  (let ((table (make-hash-table :test #'eq)))
+    (loop for node in stages
+          for input-key-plan in input-key-plans
+          for output-key-plan in output-key-plans
+          do (setf (gethash node table) (cons input-key-plan output-key-plan)))
+    table))
+
 (defun %make-pipeline-execution-plan (graph stages)
   (let* ((incoming-index (%incoming-edges-index graph))
           (stage-signatures
@@ -142,7 +178,11 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
       (loop for sink in sinks
             collect (%pipeline-sink-result-plan sink node-result-plan-table))
       :edge-signatures
-      edge-signatures)))
+      edge-signatures
+      :levels
+      (%pipeline-node-levels stages incoming-index)
+      :stage-plan-table
+      (%pipeline-stage-plan-table stages input-key-plans output-key-plans))))
 
 (defun %pipeline-edge-signature-current-p (edge signature)
   (and
@@ -270,28 +310,43 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
     context
     (%make-node-trace-record node node-input bindings)))
 
+(defun %resolve-node-input (context node input input-key-plan)
+  "The read-only half of running a node: compute its NODE-INPUT from already-
+stored upstream values. Split out from %RUN-NODE so PIPELINE-PARALLEL.LISP can
+run it before spawning a level's handlers -- safe unguarded even under
+:PARALLEL, since a level's inputs only ever reference earlier, already-
+completed levels."
+  (let ((has-incoming-p (car input-key-plan))
+        (bindings (cdr input-key-plan)))
+    (cond
+      ((null bindings)
+        (if has-incoming-p nil
+          (%node-input-binding node input)))
+      ((null (cdr bindings)) (%read-value-by-key context (cdar bindings)))
+      (t (%collapse-single-binding-list (%resolve-input-key-plan context bindings))))))
+
+(defun %finalize-node-run (context node node-input output output-names output-key-plan)
+  "The recording half of running a node: fold its already-computed OUTPUT into
+CONTEXT. Split out from %RUN-NODE so PIPELINE-PARALLEL.LISP can run it, for
+every node in a level, sequentially on the orchestrating thread after that
+level's handlers have all been awaited -- keeping every write to CONTEXT
+single-threaded regardless of :PARALLEL."
+  (if (%single-output-scalar-result-p output-names output)
+      (let ((output-name (caar output-key-plan)))
+        (%store-value-by-key context (cdar output-key-plan) output)
+        (%push-context-trace-entry
+          context
+          (%make-node-trace-record node node-input (list (cons output-name output)))))
+      (%record-node-run
+        context node node-input
+        (%node-output-bindings node output output-names)
+        output-key-plan))
+  output)
+
 (defun %run-node (context node input input-key-plan output-names output-key-plan)
-  (let* ((has-incoming-p (car input-key-plan))
-          (bindings (cdr input-key-plan))
-          (node-input
-        (cond
-          ((null bindings)
-            (if has-incoming-p nil
-              (%node-input-binding node input)))
-          ((null (cdr bindings)) (%read-value-by-key context (cdar bindings)))
-          (t (%collapse-single-binding-list (%resolve-input-key-plan context bindings)))))
+  (let* ((node-input (%resolve-node-input context node input input-key-plan))
           (output (funcall (node-handler node) node-input context)))
-    (if (%single-output-scalar-result-p output-names output)
-        (let ((output-name (caar output-key-plan)))
-          (%store-value-by-key context (cdar output-key-plan) output)
-          (%push-context-trace-entry
-            context
-            (%make-node-trace-record node node-input (list (cons output-name output)))))
-        (%record-node-run
-          context node node-input
-          (%node-output-bindings node output output-names)
-          output-key-plan))
-    output))
+    (%finalize-node-run context node node-input output output-names output-key-plan)))
 
 (defun %finalize-pipeline-run (context sink-result-plans)
   (setf (context-result context) (%collect-cached-sink-results context sink-result-plans))
@@ -309,21 +364,30 @@ per-sink lookup is O(1) instead of rescanning STAGE-SIGNATURES linearly."
 (defun %ensure-pipeline-context (context)
   (or context (make-context)))
 
-(defun run-pipeline (pipeline &key input context)
+(defun run-pipeline (pipeline &key input context parallel)
+  "Run PIPELINE's stages against INPUT, folding results into CONTEXT (a fresh
+one if not supplied). With PARALLEL true, stages that share a topological
+level (no dependency path between them; see %PIPELINE-NODE-LEVELS) run their
+handlers concurrently via cl-concurrent-kit -- see PIPELINE-PARALLEL.LISP for
+the concurrency-safety argument. Every value/trace write still happens on one
+thread, so a :PARALLEL run produces byte-identical results to a sequential one
+whenever no two same-level handlers both call EMIT-EVENT/PERFORM-EFFECT (those
+two serialize against each other but not against other handlers' pure work);
+if they do, memory safety is still guaranteed, but the relative order of
+their events/effects is not."
   (let* ((plan (%ensure-pipeline-execution-plan pipeline))
           (ctx (%ensure-pipeline-context context))
-          (order (%pipeline-execution-plan-stages plan))
-          (sink-result-plans (%pipeline-execution-plan-sink-result-plans plan))
-          (input-key-plans (%pipeline-execution-plan-input-key-plans plan))
-          (output-key-plans (%pipeline-execution-plan-output-key-plans plan)))
-    (%run-pipeline-stages
-      ctx
-      order
-      sink-result-plans
-      input
-      input-key-plans
-      output-key-plans)))
+          (sink-result-plans (%pipeline-execution-plan-sink-result-plans plan)))
+    (if parallel
+        (%run-pipeline-levels-parallel ctx plan sink-result-plans input)
+        (%run-pipeline-stages
+          ctx
+          (%pipeline-execution-plan-stages plan)
+          sink-result-plans
+          input
+          (%pipeline-execution-plan-input-key-plans plan)
+          (%pipeline-execution-plan-output-key-plans plan)))))
 
-(defun run-pipeline-with-context (pipeline &key input context)
+(defun run-pipeline-with-context (pipeline &key input context parallel)
   (let ((ctx (%ensure-pipeline-context context)))
-    (values (run-pipeline pipeline :input input :context ctx) ctx)))
+    (values (run-pipeline pipeline :input input :context ctx :parallel parallel) ctx)))

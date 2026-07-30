@@ -19,8 +19,12 @@ helpers, all behind a single public package."
   :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
   ;; cl-prolog backs the graph edge relation (src/graph-runtime-prolog.lisp).
-  ;; It is the only runtime dependency; see DEPENDENCY_POLICY.md (L3, depth 1).
-  :depends-on ("cl-prolog")
+  ;; cl-concurrent-kit backs RUN-PIPELINE's :PARALLEL mode
+  ;; (src/pipeline-parallel.lisp). Both are L1/L2 per DEPENDENCY_POLICY.md;
+  ;; cl-dataflow (L3, domain) depending on either is within policy (deps only
+  ;; go to the same layer or below), and depth stays at 1 for both -- neither
+  ;; pulls in a further org-internal dependency of its own.
+  :depends-on ("cl-prolog" "cl-concurrent-kit")
   :serial t
   :pathname "src/"
   :components ((:file "package")
@@ -48,6 +52,7 @@ helpers, all behind a single public package."
                 (:file "state-machine-runtime-api")
                 (:file "pipeline-macros")
                 (:file "pipeline-runtime")
+                (:file "pipeline-parallel")
                 (:file "graph-structure")
                 (:file "graph-components")
                 (:file "graph-export")
@@ -137,6 +142,7 @@ helpers, all behind a single public package."
                 (:file "pipeline-runtime-plan-cache-test")
                 (:file "pipeline-runtime-execution-test")
                 (:file "pipeline-runtime-branching-test")
+                (:file "pipeline-parallel-test")
                 (:file "cl-weave-advanced-test")
                 (:file "graph-advanced-property-test")
                 (:file "graph-algorithms-test")
