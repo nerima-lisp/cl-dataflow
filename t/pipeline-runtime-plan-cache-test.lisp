@@ -10,6 +10,20 @@ before MUTATION ran."
         (cl-dataflow::%ensure-pipeline-execution-plan ,pipeline)
         (is (not (eq ,plan (cl-dataflow::%pipeline-execution-plan ,pipeline)))))))
 
+(defmacro %recording-sink (inputs)
+  "A \"sink\" node whose handler records its input into the enclosing test's
+SEEN-INPUT binding and passes it through unchanged. Every test in this file
+that needs to observe what a sink actually received binds SEEN-INPUT itself
+before using this anaphorically, matching the rest of the file's local
+helper-macro convention (see ASSERT-PLAN-REBUILDS above)."
+  `(make-node
+     "sink"
+     :inputs ,inputs
+     :handler (lambda (input context)
+                (declare (ignore context))
+                (setf seen-input input)
+                input)))
+
 (deftest
   pipeline-rebuilds-plan-after-edge-collection-changes
   (with-linear-test-pipeline
@@ -192,16 +206,7 @@ before MUTATION ran."
           (lambda (input context)
             (declare (ignore input context))
             new-value)))
-          (sink
-        (make-node
-          "sink"
-          :inputs
-          '("right" "left")
-          :handler
-          (lambda (input context)
-            (declare (ignore context))
-            (setf seen-input input)
-            input))))
+          (sink (%recording-sink '("right" "left"))))
     (dolist (node (list old-source new-source sink))
       (add-node graph node))
     (add-edge graph old-source sink :from-port "right" :to-port "left")
@@ -243,16 +248,7 @@ before MUTATION ran."
             (lambda (input context)
               (declare (ignore input context))
               source-value)))
-        (sink
-          (make-node
-            "sink"
-            :inputs
-            '("declared")
-            :handler
-            (lambda (input context)
-              (declare (ignore context))
-              (setf seen-input input)
-              input))))
+        (sink (%recording-sink '("declared"))))
     (add-node graph source)
     (add-node graph sink)
     (add-edge graph source sink :to-port "declared")
@@ -284,16 +280,7 @@ before MUTATION ran."
           (lambda (input context)
             (declare (ignore input context))
             42)))
-        (sink
-        (make-node
-          "sink"
-          :inputs
-          '("value")
-          :handler
-          (lambda (input context)
-            (declare (ignore context))
-            (setf seen-input input)
-            input))))
+        (sink (%recording-sink '("value"))))
     (add-node graph source)
     (add-node graph sink)
     (add-edge graph source sink :from-port "value" :to-port "value")
@@ -338,16 +325,7 @@ before MUTATION ran."
           (lambda (input context)
             (declare (ignore input context))
             42)))
-        (sink
-        (make-node
-          "sink"
-          :inputs
-          '("value")
-          :handler
-          (lambda (input context)
-            (declare (ignore context))
-            (setf seen-input input)
-            input))))
+        (sink (%recording-sink '("value"))))
     (add-node graph source)
     (add-node graph sink)
     (add-edge graph source sink :from-port "value" :to-port "value")
