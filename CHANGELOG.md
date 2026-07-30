@@ -73,6 +73,14 @@ API, behavior, or contract changed with it.
   builders, and the graph-toolkit bridge) moved to the new
   `docs/src/state-machine-analysis.md`. Both new pages are added to the nav
   immediately after the page they continue from.
+- Every pinned sibling input bumped to its latest release tag:
+  `cl-prolog` v1.0.1 → v1.1.0, `cl-weave` v1.0.0 → v1.1.0, `paredit-cli`
+  v1.0.0 → v1.3.0, `cl-process-kit` v1.0.0 → v1.0.1, `cl-boundary-kit` v0.6.0
+  → v1.0.0. Each upstream changelog was read before bumping: none change an
+  API, CLI flag, or ASDF dependency graph that this repository actually
+  touches (`cl-boundary-kit`'s 0.6.0→1.0.0 jump only bumped `:version` in its
+  `.asd`; the system name and `:depends-on` list cl-dataflow needs through
+  `cl-process-kit` are unchanged).
 
 ### Removed
 
