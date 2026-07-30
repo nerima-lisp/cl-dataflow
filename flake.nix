@@ -342,12 +342,26 @@
           weave = cl-weave.packages.${system}.default;
           processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
+          exportSourceRegistry = ''export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weave}/share/common-lisp/source//:${processKit}//:${processKitTransitiveSources}:$PWD//:''${CL_SOURCE_REGISTRY:-}"'';
           test = pkgs.writeShellApplication {
             name = "cl-dataflow-test";
             runtimeInputs = [ weave ];
             text = ''
-              export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weave}/share/common-lisp/source//:${processKit}//:${processKitTransitiveSources}:$PWD//:''${CL_SOURCE_REGISTRY:-}"
+              ${exportSourceRegistry}
               exec cl-weave run cl-dataflow/test "$@"
+            '';
+          };
+          # `cl-weave watch` re-runs the suite on every source change --
+          # the fast local-development loop `advanced cl-weave usage` calls
+          # for. `--once` is for CI/scripts (run once, exit); bare `watch`
+          # here is the interactive default, matching how a developer
+          # actually uses it at a terminal.
+          watch = pkgs.writeShellApplication {
+            name = "cl-dataflow-watch";
+            runtimeInputs = [ weave ];
+            text = ''
+              ${exportSourceRegistry}
+              exec cl-weave watch cl-dataflow/test "$@"
             '';
           };
         in
@@ -362,6 +376,10 @@
           test = {
             type = "app";
             program = "${test}/bin/cl-dataflow-test";
+          };
+          watch = {
+            type = "app";
+            program = "${watch}/bin/cl-dataflow-watch";
           };
         }
       );
