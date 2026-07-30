@@ -297,15 +297,14 @@ before MUTATION ran."
     (add-node graph source)
     (add-node graph sink)
     (add-edge graph source sink :from-port "value" :to-port "value")
-    (let* ((pipeline (make-pipeline :graph graph :stages (list source sink)))
-          (old-plan (cl-dataflow::%pipeline-execution-plan pipeline)))
+    (let ((pipeline (make-pipeline :graph graph :stages (list source sink))))
       (is (= (run-pipeline pipeline) 42))
       (is (= seen-input 42))
       (setf seen-input :not-run)
-      (setf (node-inputs (find-node (pipeline-graph pipeline) "sink")) '("other"))
-      (is (null (run-pipeline pipeline :input :pipeline-input)))
-      (is (null seen-input))
-      (is (not (eq old-plan (cl-dataflow::%pipeline-execution-plan pipeline)))))))
+      (assert-plan-rebuilds pipeline
+        (setf (node-inputs (find-node (pipeline-graph pipeline) "sink")) '("other"))
+        (is (null (run-pipeline pipeline :input :pipeline-input)))
+        (is (null seen-input))))))
 
 (deftest
   pipeline-rebuilds-plan-after-node-outputs-setter
@@ -320,12 +319,11 @@ before MUTATION ran."
             (declare (ignore input context))
             '(("left" . 1) ("right" . 2))))))
     (add-node graph sink)
-    (let* ((pipeline (make-pipeline :graph graph :stages (list sink)))
-          (old-plan (cl-dataflow::%pipeline-execution-plan pipeline)))
+    (let ((pipeline (make-pipeline :graph graph :stages (list sink))))
       (is (= (run-pipeline pipeline) 1))
-      (setf (node-outputs (find-node (pipeline-graph pipeline) "sink")) '("right"))
-      (is (= (run-pipeline pipeline) 2))
-      (is (not (eq old-plan (cl-dataflow::%pipeline-execution-plan pipeline)))))))
+      (assert-plan-rebuilds pipeline
+        (setf (node-outputs (find-node (pipeline-graph pipeline) "sink")) '("right"))
+        (is (= (run-pipeline pipeline) 2))))))
 
 (deftest
   pipeline-rebuilds-plan-after-mutating-setter-port-string
