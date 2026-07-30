@@ -14,9 +14,14 @@ itself (the checkout root), since both systems are declared there."
 (defun %example-smoke-tests-enabled-p ()
   "Return true when tests should spawn external SBCL example processes.
 
-The verification script runs examples as a separate step. Keeping in-suite
-example process spawning opt-in avoids implementation-specific run-program
-deadlocks in the main test process."
+scripts/run-examples.sh (also wired as the `examples` flake check) runs every
+example as its own top-level process instead, confirmed safe by direct
+reproduction: enabling this flag hangs the suite, reproducing exactly the
+implementation-specific run-program deadlock this opt-in gate exists to
+avoid -- spawning examples through cl-process-kit's `run` from inside the
+running cl-weave test process entangles with its own process management in
+a way a plain shell loop does not. Leave this off; it is not a maintained
+verification path."
   (string= (uiop:getenv "CL_DATAFLOW_RUN_EXAMPLE_SMOKE") "1"))
 
 (defun %program-available-p (program)

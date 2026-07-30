@@ -28,6 +28,14 @@ API, behavior, or contract changed with it.
   log GitHub scans for `::error::` markers). Scoped to those two derivations
   only — `apps.default`/`apps.test` and the devShell keep the plain `:spec`
   reporter for local dev, so this adds no second test run.
+- `scripts/run-examples.sh` and a `checks.examples` flake check, which
+  actually run every `examples/*.lisp` script and verify it exits `0`. Each
+  script runs as its own top-level process under a hard, `--kill-after`-
+  enforced timeout — not the in-suite `t/core-runtime-example-test.lisp`
+  path, which reproducibly deadlocks when enabled (`CL_DATAFLOW_RUN_EXAMPLE_SMOKE`
+  stays opt-in and unused, as its docstring already warned). Until now
+  nothing actually ran that opt-in path or any equivalent, so the examples
+  had no automated verification at all.
 
 ### Changed
 

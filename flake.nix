@@ -291,6 +291,31 @@
             name = "cl-dataflow-paredit-lint";
           };
 
+          # t/core-runtime-example-test.lisp's own smoke tests spawn examples
+          # through cl-process-kit's `run` from inside the running cl-weave
+          # test process -- confirmed to deadlock (not just run slowly), which
+          # is exactly the "implementation-specific run-program deadlock" its
+          # docstring warns about and why they stay opt-in
+          # (CL_DATAFLOW_RUN_EXAMPLE_SMOKE). scripts/run-examples.sh runs each
+          # example as its own top-level `sbcl` process from a plain shell
+          # loop instead, with no such parent-process entanglement, so this
+          # check is what actually exercises every example on a schedule.
+          examples = pkgs.stdenvNoCC.mkDerivation {
+            name = "cl-dataflow-examples";
+            inherit src;
+            nativeBuildInputs = [ pkgs.sbcl ];
+            buildPhase = ''
+              export HOME="$TMPDIR/home"
+              export XDG_CACHE_HOME="$TMPDIR/cache"
+              mkdir -p "$HOME" "$XDG_CACHE_HOME"
+              export CL_SOURCE_REGISTRY="${prologSource}:$PWD//:"
+              ./scripts/run-examples.sh
+            '';
+            installPhase = ''
+              mkdir -p "$out"
+            '';
+          };
+
           # Fails `nix flake check` when any tracked Nix file is unformatted,
           # turning the formatter into an enforced CI gate rather than a
           # convention someone has to remember to run.
