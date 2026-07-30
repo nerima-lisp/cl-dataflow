@@ -33,7 +33,9 @@
     };
 
     # cl-weave stays `flake = true`: checks.default and checks.coverage invoke
-    # its `cl-weave` executable, which only its packages output provides.
+    # its `cl-weave` executable (packages.default), and every CL_SOURCE_REGISTRY
+    # build below needs its ASDF source tree (packages.cl-weave) -- both are
+    # packages outputs, so only a flake input provides them.
     cl-weave = {
       url = "github:nerima-lisp/cl-weave/v1.1.0";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -207,12 +209,19 @@
           # discovers on every system.
           prologSource = "${cl-prolog.outPath}//";
           weave = cl-weave.packages.${system}.default;
+          # `packages.cl-weave` publishes cl-weave's own ASDF system directly
+          # (cl-weave.asd at its outPath root) -- the sanctioned way a sibling
+          # gets cl-weave's source, the same output cl-prolog/cl-json-kit
+          # consume. `${weave}/share/common-lisp/source` is a different thing:
+          # an internal layout `installSource` creates so the DELIVERED BINARY
+          # can find its own systems, not a published interface for us to read.
+          weaveSource = cl-weave.packages.${system}.cl-weave;
           # cl-process-kit's base system :depends-on cl-boundary-kit and
           # cl-log-kit, so their source trees need to be discoverable too --
           # cl-dataflow itself never loads or calls either.
           processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
-          sourceRegistry = "${prologSource}:${weave}/share/common-lisp/source//:${processKit}//:${processKitTransitiveSources}:$PWD//:";
+          sourceRegistry = "${prologSource}:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:$PWD//:";
           mkWeaveCheck =
             {
               name,
@@ -340,9 +349,10 @@
         let
           system = pkgs.stdenv.hostPlatform.system;
           weave = cl-weave.packages.${system}.default;
+          weaveSource = cl-weave.packages.${system}.cl-weave;
           processKit = cl-process-kit.outPath;
           processKitTransitiveSources = "${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//";
-          exportSourceRegistry = ''export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weave}/share/common-lisp/source//:${processKit}//:${processKitTransitiveSources}:$PWD//:''${CL_SOURCE_REGISTRY:-}"'';
+          exportSourceRegistry = ''export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${weaveSource}//:${processKit}//:${processKitTransitiveSources}:$PWD//:''${CL_SOURCE_REGISTRY:-}"'';
           test = pkgs.writeShellApplication {
             name = "cl-dataflow-test";
             runtimeInputs = [ weave ];
@@ -399,8 +409,8 @@
             ];
             shellHook = ''
               export CL_SOURCE_REGISTRY="${cl-prolog.outPath}//:${
-                cl-weave.packages.${system}.default
-              }/share/common-lisp/source//:${cl-process-kit.outPath}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
+                cl-weave.packages.${system}.cl-weave
+              }//:${cl-process-kit.outPath}//:${cl-boundary-kit.outPath}//:${cl-log-kit.outPath}//:$PWD//:''${CL_SOURCE_REGISTRY:-}"
             '';
           };
         }

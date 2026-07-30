@@ -74,6 +74,14 @@ with it.
 
 ### Changed
 
+- `flake.nix` reads cl-weave's ASDF source from `cl-weave.packages.<system>.cl-weave`
+  (the org's sanctioned way to consume it, per `cl-weave` v1.1.0's changelog —
+  the same output `cl-prolog`/`cl-json-kit` already use) instead of reaching into
+  `cl-weave.packages.<system>.default`'s `/share/common-lisp/source`, an internal
+  layout `installSource` creates so the delivered CLI binary can find its own
+  systems, not a published interface. `packages.default` is still used for the
+  `cl-weave` executable itself. No observable behavior changed; verified via
+  `nix build .#checks.<system>.default` and `.coverage` (515/515, 100% branch).
 - Every sibling flake input is pinned to a release tag rather than following the
   upstream default branch: `cl-prolog/v1.0.1`, `cl-weave/v1.0.0`,
   `paredit-cli/v1.0.0`, `cl-process-kit/v1.0.0`, `cl-boundary-kit/v0.6.0`,
