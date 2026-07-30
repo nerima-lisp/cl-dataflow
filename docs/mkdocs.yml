@@ -152,8 +152,10 @@ nav:
       - Core Concepts: core-concepts.md
       - Graphs: graphs.md
       - Graph Algorithms: graph-algorithms.md
+      - Graph Analysis: graph-analysis.md
       - Pipelines and Workflows: pipelines.md
       - State Machines: state-machines.md
+      - State Machine Analysis: state-machine-analysis.md
       - Events and Effects: events-and-effects.md
       - Streams (Pull): streams.md
       - Reactive Subjects (Push): reactive.md

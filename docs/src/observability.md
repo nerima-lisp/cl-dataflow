@@ -19,8 +19,8 @@ protocol (`src/protocols.lisp`), context/event/effect serialization
 pipeline (`pipeline-to-plist`/`plist-to-pipeline`) and state-machine
 (`state-machine-to-plist`/`plist-to-state-machine`) plist round trips are
 documented on [Pipelines and Workflows](pipelines.md) and
-[State Machines](state-machines.md) respectively — this page completes that
-story for contexts, events, and effects.
+[State Machine Analysis](state-machine-analysis.md) respectively — this page
+completes that story for contexts, events, and effects.
 
 ## Rendering a pipeline
 
@@ -265,7 +265,7 @@ passing something unsupported gets a clear failure rather than silent
 `src/context-serialization.lisp` completes the plist round-trip story that
 graphs (`graph-to-plist`/`plist-to-graph`, see [Graphs](graphs.md)),
 pipelines, and state machines (see [Pipelines and Workflows](pipelines.md)
-and [State Machines](state-machines.md)) already have.
+and [State Machine Analysis](state-machine-analysis.md)) already have.
 
 `event-to-plist`/`plist-to-event` and `effect-to-plist`/`plist-to-effect`
 round-trip a single event or effect:
@@ -358,10 +358,11 @@ reachable), comparing state names case-insensitively:
   serializer this page's pipeline functions build on.
 - [Pipelines and Workflows](pipelines.md) covers `pipeline-to-plist`/
   `plist-to-pipeline` and the rest of the pipeline construction API.
-- [State Machines](state-machines.md) covers `state-machine-to-plist`/
-  `plist-to-state-machine` and the analysis functions
-  (`state-machine-reachable-states`, `state-machine-unreachable-states`, ...)
-  that `state-machine-reachable-p` builds on.
+- [State Machine Analysis](state-machine-analysis.md) covers
+  `state-machine-to-plist`/`plist-to-state-machine` and the analysis
+  functions (`state-machine-reachable-states`,
+  `state-machine-unreachable-states`, ...) that `state-machine-reachable-p`
+  builds on.
 - [Public API Reference](api-reference.md) lists every function on this page
   in one place, across its Observability, Context, Protocols, and
   serialization/equality groups.

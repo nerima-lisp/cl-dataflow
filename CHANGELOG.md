@@ -56,6 +56,17 @@ API, behavior, or contract changed with it.
   `development.md`, and the nav has the six standard sections. `changelog.md` is
   a `pymdownx.snippets` include of this file, so the site and the repository can
   no longer drift apart.
+- `docs/src/graph-algorithms.md` (478 lines) and `docs/src/state-machines.md`
+  (412 lines) exceeded the standard's 400-line page limit. Each is split at its
+  own natural seam: `graph-algorithms.md` keeps basic queries, connected
+  components, traversal order, and distance/centrality, with the rest (paths
+  and order, weighted paths and flow, metrics, algebra, criticality) moved to
+  the new `docs/src/graph-analysis.md`; `state-machines.md` keeps defining,
+  stepping, introspecting, lifecycle, and pipeline embedding, with the rest
+  (structural analysis, execution/interpretation, serialization/mutation
+  builders, and the graph-toolkit bridge) moved to the new
+  `docs/src/state-machine-analysis.md`. Both new pages are added to the nav
+  immediately after the page they continue from.
 
 ### Removed
 

@@ -25,8 +25,9 @@ order. Node names are unique within a graph, and edges are unique by
 `(from-node from-port to-node to-port)`, so `add-node`/`add-edge` reject
 duplicates rather than silently retargeting or double-counting a connection.
 See [Graphs](graphs.md) for the full construction, mutation, and export API,
-and [Graph Algorithms](graph-algorithms.md) for the analysis layer built on
-top of it.
+and [Graph Algorithms](graph-algorithms.md) /
+[Graph Analysis](graph-analysis.md) for the analysis layer built on top of
+it.
 
 ## Context
 

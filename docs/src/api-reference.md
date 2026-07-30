@@ -46,7 +46,7 @@ groups fit together, with runnable examples.
   `graph-to-plist`, `plist-to-graph`
 - Mutation: `remove-node`, `remove-edge`, `graph-subgraph`, `graph-merge`,
   `graph-relabel-node`, `graph-contract-edge`
-- Paths and order — see [Graph Algorithms](graph-algorithms.md#paths-and-order):
+- Paths and order — see [Graph Analysis](graph-analysis.md#paths-and-order):
   `graph-transitive-closure`, `graph-transitive-reduction`,
   `graph-topological-rank`, `graph-longest-path`, `graph-all-paths`,
   `graph-find-cycle`, `graph-eulerian-path`, `graph-weighted-distance`,
@@ -92,10 +92,10 @@ groups fit together, with runnable examples.
 - Serialization: `context-to-plist`, `plist-to-context`, `event-to-plist`,
   `plist-to-event`, `effect-to-plist`, `plist-to-effect`
 
-## State machine APIs — see [State Machines](state-machines.md)
+## State machine APIs — see [State Machines](state-machines.md) and [State Machine Analysis](state-machine-analysis.md)
 
-- Core: `make-transition`, `define-state-machine`, `step-state-machine`,
-  `run-state-machine`, `run-state-machine-with-context`,
+- Core (State Machines): `make-transition`, `define-state-machine`,
+  `step-state-machine`, `run-state-machine`, `run-state-machine-with-context`,
   `make-state-machine-node`, `make-state-machine`, `copy-state-machine`,
   `state-machine-last-transition`, `state-machine-available-transitions`,
   `state-machine-can-step-p`, `reset-state-machine`, `transition-from`,
@@ -104,18 +104,19 @@ groups fit together, with runnable examples.
   `state-machine-initial-state`, `state-machine-transitions`,
   `state-machine-history`, `state-machine-history-limit`,
   `state-machine-metadata`
-- Analysis: `state-machine-states`, `state-machine-event-types`,
-  `state-machine-reachable-states`, `state-machine-unreachable-states`,
-  `state-machine-terminal-states`, `state-machine-deterministic-p`,
-  `write-state-machine-dot`, `write-state-machine-mermaid`,
-  `state-machine->dot`, `state-machine->mermaid`
-- Execution: `state-machine-run-states`, `state-machine-accepts-p`,
-  `state-machine-event-path`
-- Builders: `state-machine-to-plist`, `plist-to-state-machine`,
-  `state-machine-complete-p`, `state-machine-transition-for`,
-  `add-transition`, `remove-transition`, `state-machine-relabel-state`,
-  `state-machine->graph`
-- Equality/reachability: `state-machine-equal-p`, `state-machine-reachable-p`
+- Analysis (State Machine Analysis): `state-machine-states`,
+  `state-machine-event-types`, `state-machine-reachable-states`,
+  `state-machine-unreachable-states`, `state-machine-terminal-states`,
+  `state-machine-deterministic-p`, `write-state-machine-dot`,
+  `write-state-machine-mermaid`, `state-machine->dot`, `state-machine->mermaid`
+- Execution (State Machine Analysis): `state-machine-run-states`,
+  `state-machine-accepts-p`, `state-machine-event-path`
+- Builders (State Machine Analysis): `state-machine-to-plist`,
+  `plist-to-state-machine`, `state-machine-complete-p`,
+  `state-machine-transition-for`, `add-transition`, `remove-transition`,
+  `state-machine-relabel-state`, `state-machine->graph`
+- Equality/reachability (State Machine Analysis): `state-machine-equal-p`,
+  `state-machine-reachable-p`
 
 ## Pipeline APIs — see [Pipelines and Workflows](pipelines.md)
 

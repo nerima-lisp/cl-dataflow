@@ -24,9 +24,9 @@ Those three pages get you from an empty REPL to a running pipeline, plus the
 vocabulary the rest of the site assumes.
 
 **Building graphs.** [Graphs](graphs.md) covers construction, validation,
-mutation, and export; [Graph Algorithms](graph-algorithms.md) covers the thirty
-or so analyses on top — connectivity, centrality, criticality, flow, and
-weighted shortest paths.
+mutation, and export; [Graph Algorithms](graph-algorithms.md) and
+[Graph Analysis](graph-analysis.md) cover the thirty or so analyses on top —
+connectivity, centrality, criticality, flow, and weighted shortest paths.
 
 **Running work through them.** [Pipelines and Workflows](pipelines.md) for
 sequential, branching, and fixpoint execution;

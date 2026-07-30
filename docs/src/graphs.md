@@ -6,8 +6,9 @@ querying its shape, mutating and composing graphs, and exporting them.
 Definitions of `node`, `edge`, and `graph` themselves live in
 [Core Concepts](core-concepts.md); the analysis layer built on top of this
 structure — connectivity, centrality, criticality, flow, and the rest —
-lives on [Graph Algorithms](graph-algorithms.md). Once a graph is validated it
-can back an executable [Pipeline](pipelines.md).
+lives on [Graph Algorithms](graph-algorithms.md) and
+[Graph Analysis](graph-analysis.md). Once a graph is validated it can back
+an executable [Pipeline](pipelines.md).
 
 ## Building a graph
 
