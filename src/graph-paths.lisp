@@ -34,10 +34,8 @@ MAX-DEPTH bounds the number of edges in a path. Signals NODE-NOT-FOUND-ERROR for
 unknown endpoints."
   (%validate-non-negative-limit :max-paths max-paths)
   (%validate-non-negative-limit :max-depth max-depth)
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (when (eql max-paths 0)
       (return-from graph-all-paths '()))
     (let ((successors (%graph-adjacency-snapshot graph :successors))

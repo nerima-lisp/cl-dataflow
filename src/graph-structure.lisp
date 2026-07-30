@@ -96,8 +96,7 @@ twice -- which would rebuild an equivalent rulebase from scratch each time."
           (push neighbor neighbors))))))
 
 (defun %graph-neighbor-nodes (graph node direction)
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (let ((nodes (%graph-nodes-table graph)))
       (mapcar (lambda (neighbor)
                  (%copy-node-snapshot (gethash neighbor nodes)))
@@ -116,14 +115,12 @@ ordered by name."
 (defun graph-out-degree (graph node)
   "Return the number of distinct successor nodes of NODE. Distinct (from . to)
 pairs are counted once, matching the indegree convention in %GRAPH-ADJACENCY."
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (length (%graph-neighbor-names graph name :successors))))
 
 (defun graph-in-degree (graph node)
   "Return the number of distinct predecessor nodes of NODE."
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (length (%graph-neighbor-names graph name :predecessors))))
 
 (defun graph-transpose (graph)

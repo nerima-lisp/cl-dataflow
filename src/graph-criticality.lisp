@@ -148,8 +148,7 @@ than SOURCE itself, the closest node through which every path from SOURCE must
 pass. Nodes unreachable from SOURCE are omitted. Uses the iterative
 Cooper-Harvey-Kennedy dominance algorithm over reverse postorder, so it stays
 polynomial and stack-safe on deep, cyclic graphs. Signals when SOURCE is absent."
-  (let ((source-name (%node-designator-name source)))
-    (%ensure-graph-node graph source-name)
+  (let ((source-name (%ensure-graph-node-name graph source)))
     (multiple-value-bind (successors predecessors) (%graph-both-adjacencies graph)
       (%immediate-dominators source-name successors predecessors))))
 
@@ -160,7 +159,6 @@ than SINK itself, the closest node through which every path from that node to
 SINK must pass. It is exactly GRAPH-DOMINATORS on the reversed graph rooted at
 SINK, so it shares the same iterative, stack-safe machinery; nodes that cannot
 reach SINK are omitted. Signals when SINK is absent."
-  (let ((sink-name (%node-designator-name sink)))
-    (%ensure-graph-node graph sink-name)
+  (let ((sink-name (%ensure-graph-node-name graph sink)))
     (multiple-value-bind (successors predecessors) (%graph-both-adjacencies graph)
       (%immediate-dominators sink-name predecessors successors))))

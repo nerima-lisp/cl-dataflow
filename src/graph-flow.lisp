@@ -104,10 +104,8 @@ DEFAULT-CAPACITY) -- the shared preamble GRAPH-MAX-FLOW and GRAPH-MIN-CUT both
 need before running Edmonds-Karp."
   (let ((capacity-key (or capacity-key :capacity))
         (default-capacity (or default-capacity 1))
-        (source-name (%node-designator-name source))
-        (sink-name (%node-designator-name sink)))
-    (%ensure-graph-node graph source-name)
-    (%ensure-graph-node graph sink-name)
+        (source-name (%ensure-graph-node-name graph source))
+        (sink-name (%ensure-graph-node-name graph sink)))
     (values source-name sink-name capacity-key default-capacity)))
 
 (defun graph-max-flow (graph source sink &key capacity-key default-capacity)

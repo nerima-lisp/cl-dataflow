@@ -21,8 +21,7 @@ ordered by name."
   "Return an alist (NAME . HOP-DISTANCE) of every node reachable from FROM through
 one or more edges, via breadth-first search. FROM itself appears only when a cycle
 returns to it. Ordered by name."
-  (let ((from-name (%node-designator-name from)))
-    (%ensure-graph-node graph from-name)
+  (let ((from-name (%ensure-graph-node-name graph from)))
     (%hop-distances-alist-from-successors
      (%graph-adjacency-snapshot graph :successors) from-name)))
 
@@ -30,8 +29,7 @@ returns to it. Ordered by name."
   "Return the node names reachable from FROM in breadth-first order, starting with
 FROM itself, each appearing once. Ties within a level are broken by name. Iterative,
 so deep graphs are safe."
-  (let ((from-name (%node-designator-name from)))
-    (%ensure-graph-node graph from-name)
+  (let ((from-name (%ensure-graph-node-name graph from)))
     (let ((successors (%graph-adjacency-snapshot graph :successors))
           (visited (make-hash-table :test #'equal))
           (order '())
@@ -52,8 +50,7 @@ so deep graphs are safe."
   "Return the node names reachable from FROM in depth-first preorder, starting with
 FROM, each appearing once. The name-least successor is descended first. Iterative
 (explicit stack), so deep graphs are safe."
-  (let ((from-name (%node-designator-name from)))
-    (%ensure-graph-node graph from-name)
+  (let ((from-name (%ensure-graph-node-name graph from)))
     (let ((successors (%graph-adjacency-snapshot graph :successors))
           (visited (make-hash-table :test #'equal))
           (order '())
@@ -81,8 +78,7 @@ SUCCESSORS never rebuilds the graph's adjacency per node."
 (defun graph-eccentricity (graph node)
   "Return the eccentricity of NODE: the greatest hop distance to any node reachable
 from it, or 0 when NODE reaches nothing."
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (%eccentricity-from-successors (%graph-adjacency-snapshot graph :successors) name)))
 
 (defun %graph-eccentricities (graph)
@@ -284,10 +280,8 @@ distance is settled, since GRAPH-DISTANCE only ever needs that one value."
   "Return the number of edges on a shortest path from FROM to TO (traversing at
 least one edge), or NIL when TO is unreachable from FROM. FROM = TO resolves only
 through a cycle, matching GRAPH-PATH / GRAPH-REACHABLE-P."
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (when (%graph-edges-list graph)
       (gethash to-name
                (%bfs-hop-distances (%graph-adjacency graph (%graph-rulebase graph))

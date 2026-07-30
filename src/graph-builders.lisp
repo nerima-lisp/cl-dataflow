@@ -13,8 +13,7 @@
 (defun remove-node (graph node)
   "Remove NODE and every edge incident to it from GRAPH, in place, and return
 GRAPH. Signals NODE-NOT-FOUND-ERROR when NODE is absent."
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (remhash name (%graph-nodes-table graph))
     (setf (%graph-edges-list graph)
           (remove-if (lambda (edge) (%edge-touches-node-p edge name))
@@ -106,10 +105,8 @@ is redirected to FROM (a redirected endpoint attaches to FROM's first port), edg
 that become self-loops through the merge are dropped, and resulting duplicate edges
 collapse (the first edge's metadata wins). FROM and TO must be distinct existing
 nodes; signals INVALID-INPUT-ERROR otherwise. GRAPH is not modified."
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (when (equal from-name to-name)
       (%signal-invalid-input-error
         'distinct-nodes
@@ -144,10 +141,9 @@ nodes; signals INVALID-INPUT-ERROR otherwise. GRAPH is not modified."
 NEW-NAME, updating every incident edge. Signals NODE-NOT-FOUND-ERROR when OLD-NAME
 is absent and GRAPH-ERROR when NEW-NAME already names a different node. GRAPH is
 not modified."
-  (let ((old (%node-designator-name old-name))
+  (let ((old (%ensure-graph-node-name graph old-name))
         (new (%node-designator-name new-name))
         (nodes (%graph-nodes-table graph)))
-    (%ensure-graph-node graph old)
     (when (gethash new nodes)
       (%signal-graph-error
        graph

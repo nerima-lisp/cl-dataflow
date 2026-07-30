@@ -88,10 +88,8 @@ tests for a valid 2-colouring). Ordered by name."
 (defun graph-undirected-reachable-p (graph from to)
   "Return true when FROM and TO lie in the same weakly connected component of GRAPH
 (edge direction ignored). A node is always undirected-reachable from itself."
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (let ((component (find-if (lambda (names) (member from-name names :test #'equal))
                               (graph-connected-components graph))))
       (and (member to-name component :test #'equal) t))))
@@ -132,8 +130,7 @@ rebuilds it per node."
 fraction of the pairs of NODE's distinct neighbours that are themselves adjacent (how
 close the neighbourhood is to a clique). 0 when NODE has fewer than two neighbours.
 Edge direction and self-loops are ignored; parallel edges count once."
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (%clustering-coefficient-for-sets name (%undirected-neighbor-sets graph))))
 
 (defun graph-average-clustering (graph)

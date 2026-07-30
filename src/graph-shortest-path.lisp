@@ -86,10 +86,8 @@ least one edge), or NIL when TO is unreachable. Each edge's weight is
 resolves only through a cycle, matching GRAPH-DISTANCE."
   (let ((weight-key (or weight-key :weight))
         (default-weight (or default-weight 1))
-        (from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+        (from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (let ((neighbors (%weighted-adjacency graph weight-key default-weight)))
       (gethash to-name (%dijkstra-run from-name neighbors)))))
 
@@ -101,8 +99,7 @@ Dijkstra to all targets -- the weighted, all-destinations companion to
 GRAPH-DISTANCES-FROM. Ordered by name."
   (let ((weight-key (or weight-key :weight))
         (default-weight (or default-weight 1))
-        (from-name (%node-designator-name from)))
-    (%ensure-graph-node graph from-name)
+        (from-name (%ensure-graph-node-name graph from)))
     (let* ((neighbors (%weighted-adjacency graph weight-key default-weight))
            (distance (%dijkstra-run from-name neighbors)))
       (sort (loop for name being the hash-keys of distance using (hash-value cost)
@@ -126,10 +123,8 @@ last), or NIL when TO is unreachable. Weights come from edge metadata exactly as
 GRAPH-WEIGHTED-DISTANCE, and FROM = TO resolves only through a cycle."
   (let ((weight-key (or weight-key :weight))
         (default-weight (or default-weight 1))
-        (from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+        (from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (let ((neighbors (%weighted-adjacency graph weight-key default-weight)))
       (multiple-value-bind (distance previous) (%dijkstra-run from-name neighbors)
         (when (nth-value 1 (gethash to-name distance))

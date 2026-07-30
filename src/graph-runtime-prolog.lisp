@@ -90,10 +90,8 @@ The successor relation is materialised once with a single bulk query (see
 keeps the search linear in the reachable subgraph (one Prolog query rather than
 two per visited node), bounds stack usage regardless of path length, and
 terminates cleanly on cycles via the shared VISITED set."
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (when (%graph-edges-list graph)
       (let* ((rulebase (%graph-rulebase graph))
              (successors (%graph-adjacency graph rulebase))
@@ -148,8 +146,7 @@ appears in its own closure, but an isolated node's closure is empty."
     (sort (%hash-table-keys visited) #'string<)))
 
 (defun %graph-closure-nodes (graph node direction)
-  (let ((name (%node-designator-name node)))
-    (%ensure-graph-node graph name)
+  (let ((name (%ensure-graph-node-name graph node)))
     (let ((names (if (%graph-edges-list graph)
                      (%reachable-closure
                       (%graph-directional-adjacency graph (%graph-rulebase graph) direction)
@@ -192,10 +189,8 @@ Breadth-first search over the single-query successor adjacency gives a shortest
 witness in linear time; PARENT is recorded on first discovery, and seeding with
 FROM's direct successors keeps the one-or-more-edges rule (so FROM = TO resolves
 only through a cycle)."
-  (let ((from-name (%node-designator-name from))
-        (to-name (%node-designator-name to)))
-    (%ensure-graph-node graph from-name)
-    (%ensure-graph-node graph to-name)
+  (let ((from-name (%ensure-graph-node-name graph from))
+        (to-name (%ensure-graph-node-name graph to)))
     (when (%graph-edges-list graph)
       (let ((successors (%graph-adjacency graph (%graph-rulebase graph)))
             (parent (make-hash-table :test #'equal))

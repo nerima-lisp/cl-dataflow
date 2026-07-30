@@ -62,6 +62,16 @@
                                       (format nil "Node not found: ~A"
                                               (%escaped-display-string name))))))
 
+(defun %ensure-graph-node-name (graph designator)
+  "Resolve DESIGNATOR to its name and signal NODE-NOT-FOUND-ERROR unless it
+names a node in GRAPH, returning the resolved name. For callers that need
+the name string afterward rather than the NODE itself -- %ENSURE-GRAPH-NODE
+already resolves DESIGNATOR internally, so calling both would resolve it
+twice."
+  (let ((name (%node-designator-name designator)))
+    (%ensure-graph-node graph name)
+    name))
+
 (defun %validate-node-ports (graph edge)
   (let ((from-node (find-node graph (edge-from edge)))
         (to-node (find-node graph (edge-to edge))))
