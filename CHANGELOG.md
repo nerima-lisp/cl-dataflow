@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Repository-layout work only: no source file under `src/` changed, so no public
-API, behavior, or contract changed with it.
+### Changed (src)
+
+- 19 call sites across 12 files hand-wrote the identical `(error
+  'invalid-input-error :expected E :value V :detail D)` shape. 18 of them now
+  call a single `%signal-invalid-input-error` helper in `core-conditions.lisp`
+  (moved there from `pipeline-macros.lisp`'s narrower
+  `%invalid-structured-clause-error`, which was already this same helper in
+  everything but name and location). `core-normalization.lisp`'s one remaining
+  site loads before `core-conditions.lisp` in `cl-dataflow.asd`'s component
+  list and stays a raw `error` call rather than reordering the system for it.
+  No public API or observable behavior changed.
+
+Everything else in this section is repository-layout work: no other source
+file under `src/` changed, so no public API, behavior, or contract changed
+with it.
 
 ### Added
 
