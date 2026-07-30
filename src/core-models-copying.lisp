@@ -24,10 +24,10 @@
                                            &body slots)
   `(defun ,name (,source)
      (unless (typep ,source ',class)
-       (error 'invalid-input-error
-              :expected ',expected-symbol
-              :value ,source
-              :detail (%expected-object-detail ,expected-kind ,source)))
+       (%signal-invalid-input-error
+         ',expected-symbol
+         ,source
+         (%expected-object-detail ,expected-kind ,source)))
      (make-instance ',class
        ,@(%copy-instance-slot-initargs slots))))
 

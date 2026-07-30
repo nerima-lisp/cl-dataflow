@@ -36,10 +36,10 @@ genuinely different, recovery action (retry vs. fall back)."
 ATTEMPTS total invocations. A condition outside CONDITION-TYPE is re-signalled
 immediately, and the last failure is re-signalled once ATTEMPTS is exhausted."
   (when (< attempts 1)
-    (error 'invalid-input-error
-           :expected 'positive-integer
-           :value attempts
-           :detail "RETRYING-HANDLER requires at least one attempt."))
+    (%signal-invalid-input-error
+      'positive-integer
+      attempts
+      "RETRYING-HANDLER requires at least one attempt."))
   (lambda (input context)
     (let ((attempt 0))
       (loop

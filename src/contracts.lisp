@@ -12,16 +12,16 @@ a failing predicate signals INVALID-INPUT-ERROR. Returns the handler's output
 unchanged when both contracts hold."
   (lambda (input context)
     (when (and before (not (funcall before input)))
-      (error 'invalid-input-error
-             :expected 'valid-node-input
-             :value input
-             :detail "Node input violated its contract."))
+      (%signal-invalid-input-error
+        'valid-node-input
+        input
+        "Node input violated its contract."))
     (let ((output (funcall handler input context)))
       (when (and after (not (funcall after output)))
-        (error 'invalid-input-error
-               :expected 'valid-node-output
-               :value output
-               :detail "Node output violated its contract."))
+        (%signal-invalid-input-error
+          'valid-node-output
+          output
+          "Node output violated its contract."))
       output)))
 
 (define-node-wrapper

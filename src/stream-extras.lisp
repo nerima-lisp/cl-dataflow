@@ -63,10 +63,10 @@ NEXT-SEED."
 
 (defun %positive-size (size caller)
   (when (< size 1)
-    (error 'invalid-input-error
-           :expected 'positive-integer
-           :value size
-           :detail (format nil "~A size must be positive." caller)))
+    (%signal-invalid-input-error
+      'positive-integer
+      size
+      (format nil "~A size must be positive." caller)))
   size)
 
 (defun %stream-collect-batch (n stream)
@@ -201,11 +201,11 @@ when STREAM is empty. LIMIT bounds the number of input elements accepted."
 
 (defun %parse-stream-default-limit-options (options caller)
   (labels ((invalid-options ()
-             (error 'invalid-input-error
-                    :expected '(default &key limit)
-                    :value options
-                    :detail (format nil "~A accepts at most DEFAULT and :LIMIT."
-                                    caller))))
+             (%signal-invalid-input-error
+               '(default &key limit)
+               options
+               (format nil "~A accepts at most DEFAULT and :LIMIT."
+                       caller))))
     (cond
       ((null options) (values nil nil))
       ((eq (first options) :limit)

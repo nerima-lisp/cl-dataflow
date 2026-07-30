@@ -11,26 +11,26 @@
 
 (defun %macro-validate-option-list (options allowed-keys context)
   (unless (evenp (length options))
-    (error 'invalid-input-error
-           :expected `(property-list ,allowed-keys)
-           :value options
-           :detail (format nil "~A options must be a property list."
-                           (%escaped-display-string context))))
+    (%signal-invalid-input-error
+      `(property-list ,allowed-keys)
+      options
+      (format nil "~A options must be a property list."
+              (%escaped-display-string context))))
   (loop for (key nil) on options by #'cddr
         do (unless (member key allowed-keys)
-             (error 'invalid-input-error
-                    :expected allowed-keys
-                    :value key
-                    :detail (format nil "Unsupported ~A option: ~S"
-                                    (%escaped-display-string context)
-                                    key)))))
+             (%signal-invalid-input-error
+               allowed-keys
+               key
+               (format nil "Unsupported ~A option: ~S"
+                       (%escaped-display-string context)
+                       key)))))
 
 (defun %parse-state-machine-clause (clause)
   (unless (and (listp clause) (>= (length clause) 3))
-    (error 'invalid-input-error
-           :expected '(from event to &key guard action metadata)
-           :value clause
-           :detail "DEFINE-STATE-MACHINE clauses require FROM EVENT TO."))
+    (%signal-invalid-input-error
+      '(from event to &key guard action metadata)
+      clause
+      "DEFINE-STATE-MACHINE clauses require FROM EVENT TO."))
   (destructuring-bind (from event to &rest options) clause
     (%macro-validate-option-list options +state-machine-transition-clause-options+
                                  "DEFINE-STATE-MACHINE transition")

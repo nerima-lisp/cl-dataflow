@@ -24,10 +24,10 @@
      (let ((resolved-initial-state (%normalize-name initial-state)))
        (values resolved-initial-state resolved-initial-state)))
     (t
-     (error 'invalid-input-error
-            :expected '(or state initial-state)
-            :value nil
-            :detail "State machine requires STATE or INITIAL-STATE."))))
+     (%signal-invalid-input-error
+       '(or state initial-state)
+       nil
+       "State machine requires STATE or INITIAL-STATE."))))
 
 (defun %copy-transition-history (history)
   (mapcar #'%copy-transition-record history))
@@ -35,10 +35,10 @@
 (defun %validate-state-machine-history-limit (limit)
   (unless (or (null limit)
               (and (integerp limit) (not (minusp limit))))
-    (error 'invalid-input-error
-           :expected '(or null unsigned-integer)
-           :value limit
-           :detail "STATE-MACHINE-HISTORY-LIMIT limit must be NIL or a non-negative integer."))
+    (%signal-invalid-input-error
+      '(or null unsigned-integer)
+      limit
+      "STATE-MACHINE-HISTORY-LIMIT limit must be NIL or a non-negative integer."))
   limit)
 
 (defun %trim-transition-history (history limit)
@@ -48,10 +48,10 @@
 
 (defun %copy-state-transition (transition)
   (unless (state-transition-p transition)
-    (error 'invalid-input-error
-           :expected 'state-transition
-           :value transition
-           :detail (format nil "Expected STATE-TRANSITION, got ~S" transition)))
+    (%signal-invalid-input-error
+      'state-transition
+      transition
+      (format nil "Expected STATE-TRANSITION, got ~S" transition)))
   (make-transition (transition-from transition)
                    (transition-event-type transition)
                    (transition-to transition)

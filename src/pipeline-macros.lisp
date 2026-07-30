@@ -42,18 +42,12 @@
   (when value
     (list key value)))
 
-(defun %invalid-structured-clause-error (expected value detail)
-  (error 'invalid-input-error
-          :expected expected
-          :value value
-          :detail detail))
-
 (defun %unsupported-structured-clause-error (macro-name expected clause)
-  (%invalid-structured-clause-error expected
-                                      (first clause)
-                                      (format nil "Unsupported ~A clause: ~S"
-                                              macro-name
-                                              (first clause))))
+  (%signal-invalid-input-error expected
+                               (first clause)
+                               (format nil "Unsupported ~A clause: ~S"
+                                       macro-name
+                                       (first clause))))
 
 (defun %parse-pipeline-node-clause (clause graph-var)
   (destructuring-bind (_ name &rest options) clause
@@ -81,7 +75,7 @@
 
 (defun %parse-pipeline-clause (clause graph-var)
   (unless (and (listp clause) (consp clause))
-    (%invalid-structured-clause-error
+    (%signal-invalid-input-error
       +pipeline-clause-shapes+
       clause
       "DEFINE-PIPELINE clauses must start with :NODE or :EDGE."))
@@ -137,7 +131,7 @@
 
 (defun %parse-workflow-clause (clause graph-var machine-var)
   (unless (and (listp clause) (consp clause))
-    (%invalid-structured-clause-error
+    (%signal-invalid-input-error
       +workflow-clause-shapes+
       clause
       "DEFINE-WORKFLOW clauses must start with :TRANSITION, :NODE, :EDGE, or :MACHINE-NODE."))

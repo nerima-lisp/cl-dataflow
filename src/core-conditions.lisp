@@ -75,6 +75,12 @@
    (detail :initarg :detail :reader invalid-input-detail))
   invalid-input-detail)
 
+(defun %signal-invalid-input-error (expected value detail)
+  (error 'invalid-input-error
+         :expected expected
+         :value value
+         :detail detail))
+
 (%define-condition-with-detail-report graph-error (cl-dataflow-error)
   ((graph :initarg :graph :reader graph-error-graph)
    (detail :initarg :detail :reader graph-error-detail))

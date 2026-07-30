@@ -111,10 +111,10 @@ nodes; signals INVALID-INPUT-ERROR otherwise. GRAPH is not modified."
     (%ensure-graph-node graph from-name)
     (%ensure-graph-node graph to-name)
     (when (equal from-name to-name)
-      (error 'invalid-input-error
-             :expected 'distinct-nodes
-             :value from-name
-             :detail "GRAPH-CONTRACT-EDGE requires two distinct nodes."))
+      (%signal-invalid-input-error
+        'distinct-nodes
+        from-name
+        "GRAPH-CONTRACT-EDGE requires two distinct nodes."))
     (let* ((nodes (%graph-nodes-table graph))
            (from-node (gethash from-name nodes))
            (from-out (first (%node-outputs-list from-node)))

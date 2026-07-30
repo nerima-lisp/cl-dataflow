@@ -14,16 +14,16 @@
 
 (defun %validate-non-negative-limit (name value)
   (when (and value (or (not (integerp value)) (minusp value)))
-    (error 'invalid-input-error
-           :expected '(or null (integer 0 *))
-           :value value
-           :detail (format nil "~A must be NIL or a non-negative integer." name))))
+    (%signal-invalid-input-error
+      '(or null (integer 0 *))
+      value
+      (format nil "~A must be NIL or a non-negative integer." name))))
 
 (defun %signal-path-limit-exceeded (limit)
-  (error 'invalid-input-error
-         :expected 'path-count-within-max-paths
-         :value limit
-         :detail (format nil "GRAPH-ALL-PATHS exceeded MAX-PATHS (~D)." limit)))
+  (%signal-invalid-input-error
+    'path-count-within-max-paths
+    limit
+    (format nil "GRAPH-ALL-PATHS exceeded MAX-PATHS (~D)." limit)))
 
 (defun graph-all-paths (graph from to &key (max-paths 10000) max-depth)
   "Return every simple path (no repeated node) from FROM to TO as a list of

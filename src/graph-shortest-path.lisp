@@ -6,12 +6,12 @@
 
 (defun %validate-non-negative-edge-value (caller key value)
   (unless (and (realp value) (not (minusp value)))
-    (error 'invalid-input-error
-           :expected 'non-negative-real
-           :value value
-           :detail (format nil "~A ~A must be a non-negative real number."
-                           caller
-                           (%escaped-display-string key))))
+    (%signal-invalid-input-error
+      'non-negative-real
+      value
+      (format nil "~A ~A must be a non-negative real number."
+              caller
+              (%escaped-display-string key))))
   value)
 
 (defun %edge-weight (edge weight-key default-weight caller)

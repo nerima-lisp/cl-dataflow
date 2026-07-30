@@ -38,10 +38,10 @@
 (defun %ensure-node (designator)
   (typecase designator
     (node designator)
-    (t (error 'invalid-input-error
-              :expected 'node
-              :value (%copy-error-value designator)
-              :detail (%expected-object-detail "NODE" designator)))))
+    (t (%signal-invalid-input-error
+         'node
+         (%copy-error-value designator)
+         (%expected-object-detail "NODE" designator)))))
 
 (defun %validate-node-port-lists (graph node)
   (%validate-node-port-list graph
