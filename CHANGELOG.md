@@ -29,6 +29,14 @@ Everything else in this section is repository-layout work: no other source
 file under `src/` changed, so no public API, behavior, or contract changed
 with it.
 
+### Changed (tests)
+
+- `t/pipeline-runtime-plan-cache-test.lisp`: 4 tests hand-built the same
+  input-recording "sink" node, differing only in its declared inputs. Extracted
+  `%recording-sink`, a file-local macro anaphoric on the enclosing test's
+  `seen-input` binding, matching the file's existing `assert-plan-rebuilds`
+  local-helper convention.
+
 ### Added
 
 - `run-tests.lisp` at the repository root, so the suite can be started with
