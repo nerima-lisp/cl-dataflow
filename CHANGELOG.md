@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   site loads before `core-conditions.lisp` in `cl-dataflow.asd`'s component
   list and stays a raw `error` call rather than reordering the system for it.
   No public API or observable behavior changed.
+- 22 call sites across 9 files repeated the same "resolve a node designator to
+  its name, then validate it exists in the graph" preamble, each resolving the
+  designator twice (`%ensure-graph-node` already resolves its own argument
+  internally). Added `%ensure-graph-node-name` (`graph-runtime-validation.lisp`)
+  to do both steps once and return the name every one of these callers
+  actually needed. No public API or observable behavior changed.
 
 Everything else in this section is repository-layout work: no other source
 file under `src/` changed, so no public API, behavior, or contract changed
