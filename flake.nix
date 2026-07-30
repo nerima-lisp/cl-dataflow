@@ -227,6 +227,11 @@
                 export XDG_CACHE_HOME="$TMPDIR/cache"
                 mkdir -p "$HOME" "$XDG_CACHE_HOME"
                 export CL_SOURCE_REGISTRY="${sourceRegistry}"
+                # cl-weave's own default is 100 samples per it-property test.
+                # Verified this repo's generators (graph/state-machine/stream
+                # property tests) stay well within budget at 50x that: the
+                # whole suite still compiles and runs in well under a minute.
+                export CL_WEAVE_PROPERTY_TESTS=5000
                 cl-weave ${pkgs.lib.escapeShellArgs arguments}
                 ${pkgs.lib.concatMapStringsSep "\n" (
                   artifact: "test -e ${pkgs.lib.escapeShellArg artifact}"
