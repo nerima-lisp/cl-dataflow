@@ -73,3 +73,15 @@ first."
     (dolist (level (%pipeline-execution-plan-levels plan))
       (%run-pipeline-level context level stage-plan-table input)))
   (%finalize-pipeline-run context sink-result-plans))
+
+(defun %map-pipeline-parallel (pipeline inputs)
+  "MAP-PIPELINE's :PARALLEL path: each INPUTS element gets its own fresh
+context (MAP-PIPELINE's own no-:CONTEXT behavior), so unlike a pipeline's
+own :PARALLEL levels, these runs share no state at all and need no lock --
+every run is spawned, then all are awaited back in INPUTS' order."
+  (cl-concurrent-kit:with-task-scope (scope)
+    (let ((promises
+          (mapcar
+            (lambda (input) (cl-concurrent-kit:spawn scope (lambda () (run-pipeline pipeline :input input))))
+            inputs)))
+      (mapcar #'cl-concurrent-kit:await promises))))

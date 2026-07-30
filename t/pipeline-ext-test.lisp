@@ -33,6 +33,38 @@
       (map-pipeline pipeline '(5 6) :context context)
       (is (context-p context)))))
 
+(deftest map-pipeline-parallel-matches-sequential-result
+  (let ((pipeline (%double-pipeline)))
+    (is (equal (map-pipeline pipeline '(1 2 3) :parallel t) '(2 4 6)))))
+
+(deftest map-pipeline-parallel-runs-independent-runs-concurrently
+  (let* ((lock (cl-concurrent-kit:make-lock :name "test"))
+         (start-times '())
+         (sleep-seconds 0.2)
+         (graph (make-graph))
+         (pipeline
+           (progn
+             (add-node graph
+                       (make-node "slow"
+                                  :handler (lambda (input context)
+                                             (declare (ignore context))
+                                             (cl-concurrent-kit:with-lock-held (lock)
+                                               (push (get-internal-real-time) start-times))
+                                             (sleep sleep-seconds)
+                                             input)))
+             (make-pipeline :graph graph))))
+    (map-pipeline pipeline '(1 2) :parallel t)
+    (is (= (length start-times) 2))
+    (let ((gap-seconds
+            (/ (abs (- (first start-times) (second start-times)))
+               internal-time-units-per-second)))
+      (is (< gap-seconds sleep-seconds)))))
+
+(deftest map-pipeline-rejects-parallel-with-a-shared-context
+  (let ((pipeline (%double-pipeline)))
+    (signals invalid-input-error
+      (map-pipeline pipeline '(1 2) :context (make-context) :parallel t))))
+
 (deftest pipeline->node-embeds-a-pipeline-as-a-stage
   (let* ((inner (%double-pipeline))
          (outer-graph (make-graph)))

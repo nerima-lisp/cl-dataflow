@@ -33,14 +33,27 @@ Signals the same conditions as VALIDATE-GRAPH on a malformed or cyclic graph."
   "Return the number of stages in PIPELINE."
   (length (%pipeline-stages-list pipeline)))
 
-(defun map-pipeline (pipeline inputs &key context)
+(defun map-pipeline (pipeline inputs &key context parallel)
   "Run PIPELINE once for each element of INPUTS and return the list of results in
 order. With no CONTEXT each run uses its own fresh context (independent runs); with
 a CONTEXT that single context is shared, so events, effects, and trace accumulate
-across every run."
-  (mapcar (lambda (input)
-            (run-pipeline pipeline :input input :context context))
-          inputs))
+across every run. PARALLEL runs the independent (no-CONTEXT) case concurrently via
+cl-concurrent-kit -- since each run already gets its own fresh context, there is no
+shared state to guard, unlike RUN-PIPELINE's own :PARALLEL. Combining PARALLEL with
+a shared CONTEXT is rejected with INVALID-INPUT-ERROR: concurrent runs against one
+context would race on it and silently break the documented in-order accumulation
+guarantee."
+  (cond
+    ((and parallel context)
+      (%signal-invalid-input-error
+        nil
+        context
+        "MAP-PIPELINE's :PARALLEL cannot be combined with a shared :CONTEXT."))
+    (parallel (%map-pipeline-parallel pipeline inputs))
+    (t
+      (mapcar (lambda (input)
+                (run-pipeline pipeline :input input :context context))
+              inputs))))
 
 (defun pipeline->node (pipeline name &key metadata)
   "Return a node named NAME whose handler runs PIPELINE on the node's input (in its

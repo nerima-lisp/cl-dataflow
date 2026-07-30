@@ -344,11 +344,17 @@ on top of the core pipeline runtime:
   (structural integrity plus acyclicity) and returns `t`, or signals the
   same conditions `validate-graph` would on a malformed or cyclic graph.
 - `pipeline-stage-count` returns the number of stages.
-- `map-pipeline` (`pipeline inputs &key context`) runs `pipeline` once per
-  element of `inputs` and returns the list of results in order. With no
-  `:context`, each run gets its own fresh context — independent runs; with
-  a shared `:context`, every run's events, effects, and trace accumulate
-  into that one context.
+- `map-pipeline` (`pipeline inputs &key context parallel`) runs `pipeline`
+  once per element of `inputs` and returns the list of results in order.
+  With no `:context`, each run gets its own fresh context — independent
+  runs; with a shared `:context`, every run's events, effects, and trace
+  accumulate into that one context. `:parallel` runs the independent
+  (no-`:context`) case concurrently, the same way as `run-pipeline`'s own
+  `:parallel` but simpler: since every run already has its own fresh
+  context, there is no shared state to guard at all. Combining `:parallel`
+  with a shared `:context` signals `invalid-input-error` — concurrent runs
+  writing into one context would race on it and silently break the
+  documented in-order accumulation guarantee.
 - `pipeline->node` (`pipeline name &key metadata`) returns a node whose
   handler runs `pipeline` on the node's input, in its own isolated
   context, and yields `pipeline`'s result — embedding a whole pipeline as

@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   either way. cl-concurrent-kit is a new runtime dependency of the main
   `cl-dataflow` system (previously only `cl-prolog`); see
   `cl-dataflow.asd`'s dependency comment.
+- `map-pipeline` accepts the same `:parallel` keyword, running each
+  independent (no-`:context`) run concurrently. Simpler than
+  `run-pipeline`'s own `:parallel`: every run already gets its own fresh
+  context, so there is no shared state to guard and no lock is needed.
+  Combining `:parallel` with a shared `:context` signals
+  `invalid-input-error` rather than silently racing on it.
 
 ### Changed (build)
 
