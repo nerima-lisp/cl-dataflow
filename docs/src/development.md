@@ -73,6 +73,13 @@ and dogfoods its advanced features:
   an independent reference transitive closure over random DAGs.
 - **Performance guards** — `:to-run-under-ms` keeps deep-graph topological
   sort and reachability from regressing into superlinear behavior.
+- **Soft assertions** — `with-soft-assertions` lets every `expect` in a block
+  run to completion and reports all failures together, instead of aborting at
+  the first. `t/helpers-assertions.lisp`'s multi-field assertion macros
+  (`assert-plist-entry`, `assert-graph-condition`,
+  `assert-state-machine-condition`, etc.) and the acyclic/topological-order
+  property test use it, so a failing run shows every mismatched field (or
+  every violated invariant on the same shrunk sample) in one report.
 
 It covers branching pipeline behavior, event emission, state-machine
 transitions, effect handling, the pipeline/state-machine workflow

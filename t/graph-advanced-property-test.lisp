@@ -81,8 +81,9 @@ Usage: (expect graph :to-reach from to)."
                                      (gen-integer :min 0 :max 40))
                           :min-length 0 :max-length 40)))
   (let ((graph (%build-dag node-count (%forward-edge-pairs node-count raw-pairs))))
-    (expect graph :to-be-acyclic)
-    (expect graph :to-have-valid-topological-order)))
+    (with-soft-assertions
+      (expect graph :to-be-acyclic)
+      (expect graph :to-have-valid-topological-order))))
 
 (it-property "graph-reachable-p agrees with a reference transitive closure"
     ((node-count (gen-integer :min 2 :max 10))

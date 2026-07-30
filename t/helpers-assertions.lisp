@@ -52,12 +52,11 @@ own sub-expression values."
       ,@assertions))
 
 (defmacro %assert-plist-pairs (entry-name &rest expected-pairs)
-  `(progn
+  `(with-soft-assertions
       ,@(mapcar (lambda (expected-pair)
                   (destructuring-bind (key expected-value) expected-pair
                     `(is (equal (getf ,entry-name ,key) ,expected-value))))
-                expected-pairs)
-      t))
+                expected-pairs)))
 
 (defmacro assert-plist-entry (entry &rest expected-pairs)
   (let ((entry-name (gensym "ENTRY-")))
@@ -109,12 +108,11 @@ own sub-expression values."
               ,expected-node-names)))
 
 (defmacro assert-distinct-snapshots (&rest pairs)
-  `(progn
+  `(with-soft-assertions
       ,@(mapcar (lambda (pair)
                   (destructuring-bind (left right) pair
                     `(is (not (eq ,left ,right)))))
-                pairs)
-      t))
+                pairs)))
 
 (defmacro with-copy-isolation ((copy original copy-form) &body body)
   `(let ((,copy ,copy-form))
@@ -122,26 +120,25 @@ own sub-expression values."
       ,@body))
 
 (defmacro assert-setter-roundtrips (&rest clauses)
-  `(progn
+  `(with-soft-assertions
       ,@(mapcar (lambda (clause)
                   (destructuring-bind (place value expected) clause
                     `(progn
                       (setf ,place ,value)
                       (is (equal ,place ,expected)
                           ,(format nil "Setter roundtrip failed for ~S" place)))))
-                clauses)
-      t))
+                clauses)))
 
 (defmacro assert-setter-copy-isolated (place value expected mutation-form)
   (let ((source-value (gensym "SOURCE-")))
     `(let ((,source-value ,value))
         (setf ,place ,source-value)
-        (is (equal ,place ,expected)
-            ,(format nil "Setter copy failed for ~S" place))
-        ,mutation-form
-        (is (equal ,place ,expected)
-            ,(format nil "Setter copy became mutable for ~S" place))
-        t)))
+        (with-soft-assertions
+          (is (equal ,place ,expected)
+              ,(format nil "Setter copy failed for ~S" place))
+          ,mutation-form
+          (is (equal ,place ,expected)
+              ,(format nil "Setter copy became mutable for ~S" place))))))
 
 (defmacro with-mutated-snapshot ((name form) mutation-form &body assertions)
   `(let ((,name ,form))
@@ -193,13 +190,14 @@ own sub-expression values."
 (defmacro assert-graph-condition (condition graph expected-detail &key type designator)
   `(progn
       (is (typep ,condition 'graph-error))
-      (is (eq (graph-error-graph ,condition) ,graph))
-      (is (equal (graph-error-detail ,condition) ,expected-detail))
-      (assert-condition-report ,condition ,expected-detail)
-      ,@(when type
-          `((is (typep ,condition ,type))))
-      ,@(when designator
-          `((is (equal (node-not-found-designator ,condition) ,designator))))))
+      (with-soft-assertions
+        (is (eq (graph-error-graph ,condition) ,graph))
+        (is (equal (graph-error-detail ,condition) ,expected-detail))
+        (assert-condition-report ,condition ,expected-detail)
+        ,@(when type
+            `((is (typep ,condition ,type))))
+        ,@(when designator
+            `((is (equal (node-not-found-designator ,condition) ,designator)))))))
 
 (defmacro assert-state-machine-condition (condition condition-class state event-type
                                           expected-detail &key transition)
@@ -207,23 +205,25 @@ own sub-expression values."
     (invalid-transition-error
       `(progn
         (is (typep ,condition 'invalid-transition-error))
-        (is (equal (invalid-transition-state ,condition) ,state))
-        (is (equal (invalid-transition-event-type ,condition) ,event-type))
-        (is (equal (invalid-transition-detail ,condition) ,expected-detail))
-        (assert-condition-report ,condition ,expected-detail)))
+        (with-soft-assertions
+          (is (equal (invalid-transition-state ,condition) ,state))
+          (is (equal (invalid-transition-event-type ,condition) ,event-type))
+          (is (equal (invalid-transition-detail ,condition) ,expected-detail))
+          (assert-condition-report ,condition ,expected-detail))))
     (guard-failed-error
       `(progn
         (is (typep ,condition 'guard-failed-error))
-        (is (equal (guard-failed-state ,condition) ,state))
-        (is (equal (guard-failed-event-type ,condition) ,event-type))
-        ,@(when transition
-            `((is (not (eq (guard-failed-transition ,condition) ,transition)))
-              (is (equal (transition-from (guard-failed-transition ,condition))
-                          (transition-from ,transition)))
-              (is (equal (transition-event-type (guard-failed-transition ,condition))
-                          (transition-event-type ,transition)))))
-        (is (equal (guard-failed-detail ,condition) ,expected-detail))
-        (assert-condition-report ,condition ,expected-detail)))))
+        (with-soft-assertions
+          (is (equal (guard-failed-state ,condition) ,state))
+          (is (equal (guard-failed-event-type ,condition) ,event-type))
+          ,@(when transition
+              `((is (not (eq (guard-failed-transition ,condition) ,transition)))
+                (is (equal (transition-from (guard-failed-transition ,condition))
+                            (transition-from ,transition)))
+                (is (equal (transition-event-type (guard-failed-transition ,condition))
+                            (transition-event-type ,transition)))))
+          (is (equal (guard-failed-detail ,condition) ,expected-detail))
+          (assert-condition-report ,condition ,expected-detail))))))
 
 (defun %public-api-symbol-defined-p (symbol kind)
   (ecase kind
@@ -254,23 +254,24 @@ own sub-expression values."
                 (loop for symbol in classified-symbols
                       when (> (count symbol classified-symbols) 1)
                         collect symbol)))
-          (is package)
-          (is (equal actual expected)
-              (format nil
-                      "Package ~A export surface drifted.~%Expected: ~S~%Actual: ~S"
-                      ,package-name
-                      expected
-                      actual))
-          (is (null duplicate-classifications)
-              (format nil "Public API symbols have duplicate classifications: ~S"
-                      duplicate-classifications))
-          (dolist (symbol ',documented-symbols)
-            (let ((kind (cond
-                          ((member symbol ',classes) :class)
-                          ((member symbol ',macros) :macro)
-                          ((member symbol ',variables) :variable)
-                          (t :function))))
-              (is (%public-api-symbol-defined-p symbol kind)
-                  (format nil "Public API symbol ~S is not defined as a ~A."
-                          symbol
-                          kind))))))))
+          (with-soft-assertions
+            (is package)
+            (is (equal actual expected)
+                (format nil
+                        "Package ~A export surface drifted.~%Expected: ~S~%Actual: ~S"
+                        ,package-name
+                        expected
+                        actual))
+            (is (null duplicate-classifications)
+                (format nil "Public API symbols have duplicate classifications: ~S"
+                        duplicate-classifications))
+            (dolist (symbol ',documented-symbols)
+              (let ((kind (cond
+                            ((member symbol ',classes) :class)
+                            ((member symbol ',macros) :macro)
+                            ((member symbol ',variables) :variable)
+                            (t :function))))
+                (is (%public-api-symbol-defined-p symbol kind)
+                    (format nil "Public API symbol ~S is not defined as a ~A."
+                            symbol
+                            kind)))))))))

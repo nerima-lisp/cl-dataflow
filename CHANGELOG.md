@@ -86,6 +86,26 @@ with it.
   `%recording-sink`, a file-local macro anaphoric on the enclosing test's
   `seen-input` binding, matching the file's existing `assert-plan-rebuilds`
   local-helper convention.
+- Adopted [cl-weave](https://github.com/nerima-lisp/cl-weave) `v1.1.0`'s new
+  `with-soft-assertions` (every `EXPECT` inside runs to completion and all
+  failures are aggregated into one report, instead of aborting at the first)
+  across `t/helpers-assertions.lisp`'s multi-field assertion macros
+  (`%assert-plist-pairs`, `assert-distinct-snapshots`,
+  `assert-setter-roundtrips`, `assert-setter-copy-isolated`,
+  `define-public-api-contract-test`) and the `assert-graph-condition`/
+  `assert-state-machine-condition` condition-shape checkers, plus the
+  `graph-advanced-property-test.lisp` acyclic/topological-order property
+  test. A failing run now reports every mismatched field (or, for a property
+  test, every violated invariant on the same shrunk sample) in one shot
+  instead of only the first. `assert-graph-condition`/
+  `assert-state-machine-condition` keep their leading `(typep condition ...)`
+  check as a hard (non-soft) gate, since later checks call type-specific
+  accessors that would error, not just fail, on the wrong condition type.
+  cl-weave's deterministic-replay feature (`*test-random-seed*`) was
+  evaluated and declined: this suite's `it-property` tests seed their own
+  generator RNG independently of `CL:*RANDOM-STATE*`, so it would not
+  actually make their randomness reproducible. No production code changed;
+  `flake.nix`/`cl-dataflow.asd` already pinned `cl-weave` to `v1.1.0`.
 
 ### Added
 

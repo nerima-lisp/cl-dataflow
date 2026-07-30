@@ -21,7 +21,8 @@
                 #:signals
                 #:*snapshot-directory*
                 #:mock-restore
-                #:spy-on)
+                #:spy-on
+                #:with-soft-assertions)
   (:import-from #:process-kit
                 #:run
                 #:process-result-exit-code
