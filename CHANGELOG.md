@@ -63,6 +63,11 @@ with it.
   stays opt-in and unused, as its docstring already warned). Until now
   nothing actually ran that opt-in path or any equivalent, so the examples
   had no automated verification at all.
+- `checks.default` and `checks.coverage` now run every `it-property` test at
+  5000 samples instead of `cl-weave`'s own 100-sample default. Verified this
+  doesn't hide anything the lower default was missing (515/515 still passes)
+  and costs nothing worth trading off (the whole suite still compiles and
+  runs in well under a minute).
 
 ### Changed
 
