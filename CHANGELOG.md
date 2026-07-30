@@ -29,6 +29,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cl-dataflow` system (previously only `cl-prolog`); see
   `cl-dataflow.asd`'s dependency comment.
 
+### Changed (build)
+
+- `flake.nix` now builds and checks through
+  [cl-nix-forge](https://github.com/nerima-lisp/cl-nix-forge) (`lispDerivation`/
+  `mkCommandCheck`/`mkDocsSite`/`mkDevShell`) instead of the hand-rolled
+  `sourceFor`/`mkWeaveCheck` functions and three separately hand-concatenated
+  `CL_SOURCE_REGISTRY` strings across `checks`/`apps`/`devShells`. Every raw,
+  `flake = false` sibling (`cl-prolog`, `cl-boundary-kit`, `cl-log-kit`,
+  `cl-process-kit`) and `cl-weave`'s own source output now get their own
+  `lispDerivation` build rather than a bare dependency wrap, since none of
+  them ship a complete set of their own compiled fasls and `lispDerivation`'s
+  identity `ASDF_OUTPUT_TRANSLATIONS` needs a writable source tree to compile
+  into. This surfaced one previously-invisible dependency edge the old flat,
+  shared registry silently satisfied without anyone modeling it explicitly:
+  `cl-boundary-kit`'s own base system also `:depends-on` `cl-log-kit`, not
+  only `cl-process-kit` depending on both. `checks.default`/`checks.coverage`
+  keep the exact same `cl-weave` CLI invocations (same `--reporter github`,
+  same `--coverage-min-branch 100` gate); every check now also gets a real,
+  `timeout --kill-after`-escalated time limit cl-nix-forge enforces natively.
+  No public API or observable test/coverage behavior changed. See
+  `flake.nix`'s own comments for the full reasoning.
+
 ### Changed (src)
 
 - 19 call sites across 12 files hand-wrote the identical `(error
