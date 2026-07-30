@@ -243,9 +243,21 @@
         {
           default = mkWeaveCheck {
             name = "cl-dataflow-tests";
+            # --reporter github costs nothing extra: this check already runs the
+            # suite once under `nix flake check`, and github-annotatable-event-p
+            # only emits `::error file=...::msg` lines for fail/error events, so a
+            # passing run's output is unaffected. It is scoped to this derivation
+            # alone -- apps.default/apps.test (nix run ., scripts/verify.sh) and
+            # the devShell keep cl-weave's plain :spec reporter for local dev.
+            # Nix prints a failed derivation's build log to the invoking
+            # terminal, which is where GitHub Actions scans for `::error::`, so
+            # a CI test failure surfaces as an inline PR annotation instead of
+            # requiring a second, annotation-only test run.
             arguments = [
               "run"
               "cl-dataflow/test"
+              "--reporter"
+              "github"
             ];
           };
 
@@ -254,6 +266,8 @@
             arguments = [
               "run"
               "cl-dataflow/test"
+              "--reporter"
+              "github"
               "--coverage"
               "--coverage-system"
               "cl-dataflow"

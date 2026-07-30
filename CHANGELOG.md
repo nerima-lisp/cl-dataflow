@@ -22,6 +22,12 @@ API, behavior, or contract changed with it.
 - `.github/workflows/flake-update.yml`, which opens a weekly pull request
   bumping every flake input, and `.github/actions/nix-setup/`, the shared
   composite action that pins the nix-installer and Cachix SHAs in one place.
+- `checks.default` and `checks.coverage` now pass `--reporter github` to
+  `cl-weave`, so a test failure in CI surfaces as an inline PR annotation
+  (`ci.yml`'s `nix flake check --print-build-logs` already streams the build
+  log GitHub scans for `::error::` markers). Scoped to those two derivations
+  only — `apps.default`/`apps.test` and the devShell keep the plain `:spec`
+  reporter for local dev, so this adds no second test run.
 
 ### Changed
 
