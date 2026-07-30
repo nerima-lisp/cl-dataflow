@@ -12,8 +12,8 @@
 # safe way to actually exercise every example on a schedule (CI/local),
 # rather than leaving them permanently unverified.
 #
-# CL_SOURCE_REGISTRY must already resolve cl-dataflow and cl-prolog; the
-# devShell and flake checks set it.
+# CL_SOURCE_REGISTRY must already resolve cl-dataflow, cl-prolog, and
+# cl-concurrent-kit; the devShell and flake checks set it.
 
 set -eu
 

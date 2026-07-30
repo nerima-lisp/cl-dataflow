@@ -1,14 +1,17 @@
 # Installation
 
 `cl-dataflow` depends on [`cl-prolog`](https://github.com/nerima-lisp/cl-prolog),
-which powers the graph reachability core. The test system additionally depends
-on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
+which powers the graph reachability core, and
+[`cl-concurrent-kit`](https://github.com/nerima-lisp/cl-concurrent-kit), which
+backs `run-pipeline`'s optional `:parallel` mode. The test system additionally
+depends on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 [`cl-process-kit`](https://github.com/nerima-lisp/cl-process-kit).
 
 === "Nix (recommended)"
 
-    The flake pins every dependency, including SBCL, `cl-prolog`, and `cl-weave`,
-    so `nix develop` reproduces the exact verified environment:
+    The flake pins every dependency, including SBCL, `cl-prolog`,
+    `cl-concurrent-kit`, and `cl-weave`, so `nix develop` reproduces the exact
+    verified environment:
 
     ```bash
     nix develop      # drop into a shell with everything on CL_SOURCE_REGISTRY
@@ -21,8 +24,8 @@ on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 
 === "ASDF local checkout"
 
-    Place this checkout, and `cl-prolog`, somewhere ASDF can see, then load the
-    system directly:
+    Place this checkout, `cl-prolog`, and `cl-concurrent-kit` somewhere ASDF
+    can see, then load the system directly:
 
     ```lisp
     (asdf:load-system :cl-dataflow)
@@ -33,12 +36,13 @@ on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 
 === "Quicklisp local-projects"
 
-    Clone the repository (and `cl-prolog`) under Quicklisp's `local-projects`
-    directory:
+    Clone the repository (and `cl-prolog`, `cl-concurrent-kit`) under
+    Quicklisp's `local-projects` directory:
 
     ```text
     ~/quicklisp/local-projects/cl-dataflow/
     ~/quicklisp/local-projects/cl-prolog/
+    ~/quicklisp/local-projects/cl-concurrent-kit/
     ```
 
     Then load it as usual:

@@ -33,6 +33,9 @@ concern, one file per topic:
   itself layered: `-core` holds construction and transition selection,
   `-cps` holds `step-state-machine`'s continuation-passing execution chain,
   and `-api` is the thin direct-style public surface over it.
+  `src/pipeline-parallel.lisp`, loaded right after `pipeline-runtime.lisp`,
+  holds `run-pipeline`'s `:parallel` mode in isolation, so it is the one file
+  that needs `cl-concurrent-kit`'s package.
 - `src/testing.lisp` contains deterministic test helpers, including
   state-machine assertions.
 - `cl-dataflow.asd` loads the library system and routes
@@ -55,6 +58,24 @@ Every algorithm in [Graph Algorithms](graph-algorithms.md) and
 [Graph Analysis](graph-analysis.md) — connectivity, centrality, criticality,
 flow — is built as an iterative, explicit queue/stack traversal over that
 same snapshot for the same reason.
+
+## Concurrent pipeline execution
+
+`run-pipeline`'s `:parallel` mode (see [Pipelines and Workflows](pipelines.md#running-independent-stages-concurrently-with-parallel))
+runs same-level node handlers concurrently via
+[`cl-concurrent-kit`](https://github.com/nerima-lisp/cl-concurrent-kit)'s
+structured concurrency (`with-task-scope`/`spawn`/`await`), while every write
+to the context stays on a single thread: a level's handlers are all spawned,
+then awaited back in a fixed order, then folded into the context
+sequentially. The one exception is `emit-event`/`perform-effect`, which a
+handler may call directly on the shared context; both now take a lock
+installed on the context the first time a pipeline runs with `:parallel`
+(`%ensure-context-lock`), so two same-level handlers calling either
+concurrently serialize correctly instead of racing on the context's internal
+lists. This mirrors the graph runtime's own philosophy of using an external
+library for exactly the primitive it is designed for (Prolog for relational
+queries, cl-concurrent-kit for structured concurrency) rather than
+reimplementing it.
 
 ## Snapshot semantics
 
@@ -104,6 +125,7 @@ what failed:
 | --- | --- | --- |
 | Graphs and nodes | Done | Node creation, edge construction, graph validation, and topological sort are implemented. |
 | Pipelines | Done | Sequential pipelines and simple branching pipelines run against graph-ordered stages. |
+| Concurrent pipeline execution | Done | `run-pipeline`'s `:parallel` mode runs same-level (no dependency path between them) node handlers concurrently via `cl-concurrent-kit`, with every context write kept single-threaded. |
 | Iterative pipelines | Done | Feedback execution: `run-pipeline-times`, `run-pipeline-until-fixpoint`, and `run-pipeline-while` feed a result back as the next input for recurrent/settling computations. |
 | Events | Done | Event creation, emission, and trace capture are implemented. |
 | Effects | Done | Effect creation, handler lookup, and test-friendly execution are implemented. |

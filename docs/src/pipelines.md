@@ -138,6 +138,43 @@ order — as shown here, where `"double"` and `"increment"` are both sinks.
 See [Combinators and Resilience](combinators.md) for `mapping-handler` and
 the other handler-wrapping helpers used above.
 
+## Running independent stages concurrently with `:parallel`
+
+`run-pipeline`, `run-pipeline-with-context`, and all three iterative runners
+(`run-pipeline-times`, `run-pipeline-until-fixpoint`, `run-pipeline-while`)
+accept `:parallel`. Every stage still runs in topological order, but stages
+that share a *level* — no dependency path between them, computed once as
+part of the cached execution plan — run their handlers concurrently, via
+[cl-concurrent-kit](https://github.com/nerima-lisp/cl-concurrent-kit)'s
+structured concurrency:
+
+```lisp
+(cl-dataflow:run-pipeline *branching* :input 10 :parallel t)
+;; => (("double" ("value" . 20)) ("increment" ("value" . 11))) -- same
+;; result as the sequential run above; "double" and "increment" share a
+;; level (both depend only on "ingest"), so their handlers ran concurrently.
+```
+
+`:parallel` defaults to `nil`, so every pipeline keeps its exact current
+behavior and performance unless a caller opts in. Every write to the
+context — stored values, and the node-result portion of the trace — still
+happens on a single thread (the level's handlers are spawned, awaited in a
+fixed order, and only then folded into the context), so a `:parallel` run
+produces byte-identical results to a sequential run of the same pipeline and
+input. The one exception: if two handlers that share a level *both* call
+`emit-event` or `perform-effect`, those two calls serialize correctly against
+each other (no lost or corrupted events/effects), but their relative order
+against each other is not guaranteed — they are, after all, independent
+work by construction. A handler error under `:parallel` propagates the same
+condition a sequential run would, once every sibling in that level has
+been awaited.
+
+`:parallel` is worth reaching for when a pipeline's independent stages do
+enough real work (I/O, heavy computation) that running them one at a time is
+the actual bottleneck; a purely linear pipeline (every level has exactly one
+stage) pays no thread-spawning cost under `:parallel` at all, since a
+single-stage level always runs directly, exactly like the sequential path.
+
 ## Inspecting a pipeline
 
 | Function | Returns |

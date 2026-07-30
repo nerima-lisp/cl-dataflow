@@ -7,10 +7,12 @@
 `cl-dataflow` is a Common Lisp library for composable computation graphs:
 pipelines, event-driven workflows, guarded state machines, effect boundaries,
 lazy streams, and their push-based reactive dual. It targets SBCL, exports a
-single package, and takes exactly one runtime dependency — `cl-prolog`, which
-backs the graph edge relation. Where a general-purpose graph library gives you
-data structures, `cl-dataflow` gives you a runtime: graphs that execute, carry a
-context, record a trace, and hand control to a state machine.
+single package, and takes two runtime dependencies: `cl-prolog`, which backs
+the graph edge relation, and `cl-concurrent-kit`, which backs
+`run-pipeline`'s optional `:parallel` mode. Where a general-purpose graph
+library gives you data structures, `cl-dataflow` gives you a runtime: graphs
+that execute, carry a context, record a trace, and hand control to a state
+machine.
 
 Full documentation is published at <https://nerima-lisp.github.io/cl-dataflow/>.
 The source for that site lives in [docs/src/](docs/src/).
@@ -49,10 +51,10 @@ inputs.cl-dataflow = {
 Note the pinned tag. Consumers inside this org pin a release tag rather than
 follow the default branch.
 
-Outside Nix, put this checkout and `cl-prolog` somewhere ASDF can see them —
-`~/quicklisp/local-projects/`, `asdf:*central-registry*`, or
-`CL_SOURCE_REGISTRY` — then add `"cl-dataflow"` to your system's
-`:depends-on`. Full instructions are in
+Outside Nix, put this checkout, `cl-prolog`, and `cl-concurrent-kit`
+somewhere ASDF can see them — `~/quicklisp/local-projects/`,
+`asdf:*central-registry*`, or `CL_SOURCE_REGISTRY` — then add
+`"cl-dataflow"` to your system's `:depends-on`. Full instructions are in
 [Installation](https://nerima-lisp.github.io/cl-dataflow/installation/).
 
 ## Documentation

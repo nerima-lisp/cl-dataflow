@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `run-pipeline`, `run-pipeline-with-context`, `run-pipeline-times`,
+  `run-pipeline-until-fixpoint`, and `run-pipeline-while` accept a new
+  `:parallel` keyword (default `nil`, fully backward compatible). With it,
+  stages that share a topological level — no dependency path between them,
+  computed once as part of the cached execution plan (`%pipeline-node-levels`,
+  `pipeline-runtime.lisp`) — run their handlers concurrently via
+  [cl-concurrent-kit](https://github.com/nerima-lisp/cl-concurrent-kit)'s
+  structured concurrency (`pipeline-parallel.lisp`). Every write to the
+  context still happens on one thread (a level's handlers are spawned,
+  awaited in a fixed order, then folded in sequentially), so a `:parallel`
+  run produces byte-identical results to a sequential run, except that two
+  same-level handlers both calling `emit-event`/`perform-effect` serialize
+  correctly against each other but without a guaranteed relative order (both
+  now take the context's lock for their whole read-then-push sequence; see
+  `events.lisp`/`effects.lisp`). A single-stage level always runs directly,
+  with no thread-spawning cost, so a purely linear pipeline is unaffected
+  either way. cl-concurrent-kit is a new runtime dependency of the main
+  `cl-dataflow` system (previously only `cl-prolog`); see
+  `cl-dataflow.asd`'s dependency comment.
+
 ### Changed (src)
 
 - 19 call sites across 12 files hand-wrote the identical `(error
