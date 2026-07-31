@@ -122,14 +122,20 @@
       cl-concurrent-kit,
     }:
     let
-      # Only what is verified: x86_64-linux by CI, aarch64-darwin by the
-      # maintainer's local `nix flake check`. aarch64-linux and x86_64-darwin
-      # are not declared because nothing runs them, and a platform no runner
-      # can build makes `nix flake check --all-systems` fail with "platform
-      # mismatch" rather than skip it. See ADR-0078.
+      # Only what is verified: x86_64-linux, which is what CI builds and tests.
+      # aarch64-darwin was dropped on 2026-08-01 -- its only gate was the
+      # maintainer remembering to run `nix flake check` locally, and a gate
+      # nobody can observe being skipped is not a gate. aarch64-linux and
+      # x86_64-darwin were never declared, because nothing runs them and a
+      # platform no runner can build makes `nix flake check --all-systems` fail
+      # with "platform mismatch" rather than skip it.
+      #
+      # Consequence, accepted deliberately: every per-system output -- packages,
+      # checks, apps and devShells alike -- comes from this one list, so
+      # `nix develop` and `nix build` no longer work on macOS. Development
+      # happens on Linux. See PACKAGE_STANDARD.md, section "systems".
       systems = [
         "x86_64-linux"
-        "aarch64-darwin"
       ];
       forAllSystems =
         function: nixpkgs.lib.genAttrs systems (system: function (import nixpkgs { inherit system; }));
@@ -304,18 +310,17 @@
         {
           default = cl-dataflow-drv;
 
-          # Rooted at the repository, not at ./docs, because
-          # docs/src/changelog.md is a single `--8<-- "CHANGELOG.md"` include
-          # and pymdownx.snippets resolves that relative to mkdocs' working
-          # directory. Keeping the changelog in one file is the point: a
-          # hand-maintained site copy drifts from the root one, which is how
-          # every other repo in the org ended up with two different histories.
+          # Rooted at the repository, not at ./docs, so `mkdocsYmlName` below
+          # keeps its repository-relative spelling. The fileset used to carry
+          # ./CHANGELOG.md as well, because docs/src/changelog.md was a
+          # `--8<-- "CHANGELOG.md"` snippet include; both the file and the
+          # include went away on 2026-08-01, when the GitHub Release
+          # description became the org's only canonical history.
           docs = cl.mkDocsSite {
             root = ./.;
             fileset = pkgs.lib.fileset.unions [
               ./docs/mkdocs.yml
               ./docs/src
-              ./CHANGELOG.md
             ];
             mkdocsYmlName = "docs/mkdocs.yml";
             pname = "cl-dataflow-docs";

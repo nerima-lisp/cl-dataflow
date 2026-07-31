@@ -4,9 +4,8 @@
 # Serve:   mkdocs serve  -f docs/mkdocs.yml
 # The Nix flake (`nix build .#docs`) drives the same config offline.
 #
-# Start from the repository root, not from docs/: pymdownx.snippets resolves
-# `--8<-- "CHANGELOG.md"` relative to the working directory. Use
-# `mkdocs serve --no-strict` while editing if warnings-as-errors get in the way.
+# Use `mkdocs serve --no-strict` while editing if warnings-as-errors get in the
+# way.
 
 site_name: cl-dataflow
 site_description: >-
@@ -101,13 +100,9 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  # base_path is relative to mkdocs' working directory, which is the repository
-  # root (see the header). check_paths turns a missing include into a build
-  # failure rather than a silently empty page.
-  - pymdownx.snippets:
-      base_path:
-        - "."
-      check_paths: true
+  # pymdownx.snippets is deliberately absent: its only use here was pulling the
+  # root CHANGELOG.md into docs/src/changelog.md, and neither file exists any
+  # more (2026-08-01 -- the GitHub Release description is the only changelog).
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -168,7 +163,6 @@ nav:
       - Architecture: architecture.md
   - Project:
       - Development: development.md
-      - Changelog: changelog.md
 
 # docs/notes/ holds long-lived measurement records that are not public
 # documentation. Declaring it here keeps `strict: true` from failing the build

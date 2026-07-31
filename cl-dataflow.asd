@@ -16,8 +16,8 @@ helpers, all behind a single public package."
   ;; release.yml refuses to publish a tag that disagrees with it.
   :version "1.1.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
-  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   ;; cl-prolog backs the graph edge relation (src/graph-runtime-prolog.lisp).
   ;; cl-concurrent-kit backs RUN-PIPELINE's :PARALLEL mode
   ;; (src/pipeline-parallel.lisp). Both are L1/L2 per DEPENDENCY_POLICY.md;
@@ -25,8 +25,8 @@ helpers, all behind a single public package."
   ;; go to the same layer or below), and depth stays at 1 for both -- neither
   ;; pulls in a further org-internal dependency of its own.
   :depends-on ("cl-prolog" "cl-concurrent-kit")
-  :serial t
   :pathname "src/"
+  :serial t
   :components ((:file "package")
                 (:file "core-normalization")
                 (:file "core-copying")
@@ -98,8 +98,8 @@ helpers, all behind a single public package."
   :license "MIT"
   :version "1.1.0"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
-  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
   :depends-on ("cl-dataflow"
                 ;; cl-weave is the org's test framework everywhere.
                 "cl-weave"
@@ -109,8 +109,8 @@ helpers, all behind a single public package."
                 ;; real process control. The shipped cl-dataflow system stays
                 ;; at its single cl-prolog dependency.
                 "cl-process-kit")
-  :serial t
   :pathname "t/"
+  :serial t
   :components ((:file "package")
                 (:file "helpers-assertions")
                 (:file "helpers-fixtures")

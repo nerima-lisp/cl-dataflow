@@ -13,7 +13,7 @@
 - [ ] `./scripts/verify.sh` passes locally (tests + example smoke checks)
 - [ ] New or changed public behavior is covered by the narrowest test that proves it
 - [ ] Exported symbols and the public API contract test are updated if the surface changed
-- [ ] `CHANGELOG.md` is updated for user-visible changes
+- [ ] User-visible changes are described well enough to land in the next GitHub Release description
 
 ## Notes
 

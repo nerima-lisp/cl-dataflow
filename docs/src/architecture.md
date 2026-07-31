@@ -167,7 +167,6 @@ what failed:
 ```text
 cl-dataflow/
   README.md
-  CHANGELOG.md
   LICENSE
   cl-dataflow.asd
   run-tests.lisp

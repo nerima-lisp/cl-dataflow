@@ -123,9 +123,14 @@ touches `docs/**`, `flake.nix`, or `flake.lock`.
 `flake-update.yml` opens a weekly pull request bumping every flake input.
 
 Pushing a `vX.Y.Z` tag triggers `release.yml`, which verifies the tag matches
-`cl-dataflow.asd`'s `:version`, extracts the matching
-[`CHANGELOG.md`](changelog.md) section, and publishes a GitHub release from
-it. The tag must equal the `.asd` version or the release job fails by design.
+`cl-dataflow.asd`'s `:version`, runs `nix flake check`, and opens a **draft**
+GitHub release with an empty body. The tag must equal the `.asd` version or the
+release job fails by design. The release description is written by hand and is
+this project's only changelog:
+
+```sh
+gh release edit vX.Y.Z --notes-file notes.md --draft=false
+```
 
 ## Editing this site
 
