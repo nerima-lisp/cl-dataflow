@@ -125,7 +125,7 @@ rather than just the trace:
 ```
 
 Here is a runnable example, adapted from the workflow in
-[Quick Start](quick-start.md#adding-events-and-a-state-machine), that drives
+[Getting Started](../getting-started.md#adding-events-and-a-state-machine), that drives
 a small workflow and then inspects it with both functions:
 
 ```lisp
@@ -363,6 +363,6 @@ reachable), comparing state names case-insensitively:
   functions (`state-machine-reachable-states`,
   `state-machine-unreachable-states`, ...) that `state-machine-reachable-p`
   builds on.
-- [Public API Reference](api-reference.md) lists every function on this page
+- [Public API Reference](../reference/api.md) lists every function on this page
   in one place, across its Observability, Context, Protocols, and
   serialization/equality groups.

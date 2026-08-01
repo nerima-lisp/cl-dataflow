@@ -18,33 +18,33 @@ a context, record a trace, and hand control to a state machine.
 
 ## Where to go next
 
-**New here?** [Installation](installation.md) →
-[Quick Start](quick-start.md) → [Core Concepts](core-concepts.md).
+**New here?** [Getting Started](getting-started.md) →
+[Core Concepts](guide/core-concepts.md).
 Those three pages get you from an empty REPL to a running pipeline, plus the
 vocabulary the rest of the site assumes.
 
-**Building graphs.** [Graphs](graphs.md) covers construction, validation,
-mutation, and export; [Graph Algorithms](graph-algorithms.md) and
-[Graph Analysis](graph-analysis.md) cover the thirty or so analyses on top —
+**Building graphs.** [Graphs](guide/graphs.md) covers construction, validation,
+mutation, and export; [Graph Algorithms](guide/graph-algorithms.md) and
+[Graph Analysis](guide/graph-analysis.md) cover the thirty or so analyses on top —
 connectivity, centrality, criticality, flow, and weighted shortest paths.
 
-**Running work through them.** [Pipelines and Workflows](pipelines.md) for
+**Running work through them.** [Pipelines and Workflows](guide/pipelines.md) for
 sequential, branching, and fixpoint execution;
-[State Machines](state-machines.md) for guarded transitions;
-[Events and Effects](events-and-effects.md) for the boundaries that let one
+[State Machines](guide/state-machines.md) for guarded transitions;
+[Events and Effects](guide/events-and-effects.md) for the boundaries that let one
 workflow drive another.
 
-**Processing sequences.** [Streams (Pull)](streams.md) is a lazy transducer
-layer, [Reactive Subjects (Push)](reactive.md) is its producer-driven dual, and
-[Combinators and Resilience](combinators.md) adds retry, fallback,
+**Processing sequences.** [Streams (Pull)](guide/streams.md) is a lazy transducer
+layer, [Reactive Subjects (Push)](guide/reactive.md) is its producer-driven dual, and
+[Combinators and Resilience](guide/combinators.md) adds retry, fallback,
 memoization, and contracts around handlers.
-[Observability and Serialization](observability.md) covers rendering and
+[Observability and Serialization](guide/observability.md) covers rendering and
 round-tripping what ran.
 
-**Looking something up.** [Public API Reference](api-reference.md) lists every
-exported symbol. [Architecture](architecture.md) explains how the runtime is
+**Looking something up.** [Public API Reference](reference/api.md) lists every
+exported symbol. [Architecture](reference/architecture.md) explains how the runtime is
 split and carries the feature-by-feature status table.
-[Development](development.md) has the build, test, and coverage commands.
+[Development](project/development.md) has the build, test, and coverage commands.
 
 ## Design non-goals
 

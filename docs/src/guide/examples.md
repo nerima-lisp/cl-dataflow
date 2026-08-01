@@ -9,7 +9,7 @@ restate the source-file list.
 
 `cl-prolog` itself must already be somewhere ASDF can find it; `nix develop`
 puts it on `CL_SOURCE_REGISTRY` for you (see
-[Installation](installation.md)).
+[Getting Started](../getting-started.md)).
 
 ```bash
 sbcl --script examples/simple-pipeline.lisp
@@ -28,7 +28,7 @@ sbcl --script examples/integration.lisp
 | Script | Demonstrates | Expected output |
 | --- | --- | --- |
 | `simple-pipeline.lisp` | A four-stage `make-pipeline` — parse, validate, transform, render — built from explicit `make-node` handlers. | `Simple pipeline result: rendered: 70` |
-| `event-workflow.lisp` | A pipeline stage emitting events and driving a state machine (see [Quick Start](quick-start.md#adding-events-and-a-state-machine)). | The final workflow state and event trace. |
+| `event-workflow.lisp` | A pipeline stage emitting events and driving a state machine (see [Getting Started](../getting-started.md#adding-events-and-a-state-machine)). | The final workflow state and event trace. |
 | `state-machine.lisp` | A standalone state-machine transition flow. | `Final state: completed`, the transition count, and the last transition record. |
 | `graph-analysis.lisp` | Reachability analysis — descendants, ancestors, shortest path, boundaries — over a dataflow graph. | The downstream/upstream node sets, the shortest `ingest -> load` path, and the graph's source and sink nodes. |
 | `graph-toolkit.lisp` | Strongly connected components, topological generations, transpose, distance, and DOT/Mermaid rendering. | Graph order/size, topological generations, `a -> d` distance, SCCs, and both diagrams. |
@@ -79,4 +79,4 @@ by setting `CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1`: spawning the example processes
 from inside the running test suite deadlocks it, confirmed by direct
 reproduction. It stays opt-in, and unused, for exactly that reason. Use
 `scripts/run-examples.sh` or run the scripts by hand instead — see
-[Development](development.md).
+[Development](../project/development.md).

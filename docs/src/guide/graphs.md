@@ -51,7 +51,7 @@ node) plus acyclicity, by calling `topological-sort` internally and letting
 its `graph-cycle-error` propagate. `topological-sort` returns nodes in a
 deterministic dependency order, computed with Kahn's algorithm over a single
 bulk-queried adjacency snapshot of the graph's `cl-prolog` edge relation —
-see [Architecture](architecture.md#the-graph-runtime) for the full
+see [Architecture](../reference/architecture.md#the-graph-runtime) for the full
 explanation of that runtime.
 
 ```lisp
@@ -154,7 +154,7 @@ derivations that always return a fresh graph.
 `copy-graph` returns an independent deep copy — nodes, edges, and metadata —
 so the original and the copy can be mutated without cross-talk. Structural
 equality between two graphs is `graph-equal-p`, covered alongside the other
-equality predicates in [Public API Reference](api-reference.md); it compares
+equality predicates in [Public API Reference](../reference/api.md); it compares
 graphs through their deterministic plist serialization rather than object
 identity.
 

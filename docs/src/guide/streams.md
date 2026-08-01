@@ -309,7 +309,7 @@ dividing by zero:
 ## Runnable examples
 
 The example scripts under `examples/` double as smoke tests (see
-[Examples](examples.md) and [Development](development.md)):
+[Examples](examples.md) and [Development](../project/development.md)):
 
 ```bash
 sbcl --script examples/streams.lisp
@@ -328,5 +328,5 @@ a whole-stream `stream-average`.
 - [Reactive Subjects (Push)](reactive.md) for the push-based dual of this API.
 - [Combinators and Resilience](combinators.md) for wrapping pipeline nodes
   with retry/fallback logic that composes with streams and subjects alike.
-- [Public API Reference](api-reference.md) for the complete, alphabetized
+- [Public API Reference](../reference/api.md) for the complete, alphabetized
   export list.

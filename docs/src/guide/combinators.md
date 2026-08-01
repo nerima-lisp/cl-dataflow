@@ -220,7 +220,7 @@ or both. When `before` fails, `invalid-input-error` carries
 carries `valid-node-output`. In both cases `invalid-input-value` holds the
 offending value (the raw input or the raw output) and `invalid-input-detail`
 holds a human-readable string — the standard triple documented under
-[Errors](api-reference.md#errors): `invalid-input-error`,
+[Errors](../reference/api.md#errors): `invalid-input-error`,
 `invalid-input-expected`, `invalid-input-value`, `invalid-input-detail`.
 
 ### `node-with-contract`
@@ -328,6 +328,6 @@ context when none is supplied and how an empty pipeline list is handled.
   input or output fails loudly, with the offending value attached to
   `invalid-input-error`, instead of drifting silently downstream.
 
-See the [Public API Reference](api-reference.md) for the full symbol list, and
+See the [Public API Reference](../reference/api.md) for the full symbol list, and
 [Pipelines and Workflows](pipelines.md) for how `run-pipeline-sequence` fits
 into pipeline-level composition.

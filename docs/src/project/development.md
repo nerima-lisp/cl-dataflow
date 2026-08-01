@@ -20,7 +20,7 @@ nix build .#docs # render this site, offline, with mkdocs --strict
 | --- | --- |
 | `checks.default` | the `cl-dataflow/test` suite under `cl-weave` |
 | `checks.coverage` | the coverage thresholds below, plus the report artifact |
-| `checks.examples` | every `examples/*.lisp` script runs to a clean exit, each under a hard timeout (see [Examples](examples.md#example-scripts-as-regression-tests)) |
+| `checks.examples` | every `examples/*.lisp` script runs to a clean exit, each under a hard timeout (see [Examples](../guide/examples.md#example-scripts-as-regression-tests)) |
 | `checks.paredit-lint` | every Lisp file parses under `paredit` |
 | `checks.formatting` | every Nix file is nixfmt-formatted |
 | `checks.docs` | this site builds under `mkdocs --strict` |
@@ -48,7 +48,7 @@ Either way, `cl-weave` and `cl-process-kit` must be on the ASDF source
 registry — and because `cl-process-kit`'s own system depends on them, so must
 [`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
 [`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). See
-[Installation](installation.md#verifying-the-install).
+[Getting Started](../getting-started.md#verifying-the-install).
 
 `./scripts/verify.sh` wraps the suite, and `./scripts/run-examples.sh` runs
 every `examples/*.lisp` script as its own process (the same check
@@ -177,5 +177,5 @@ Every assertion compares with `equal`, returns `t` on success, and signals a
 `simple-error` naming the expected and actual values on failure — so they
 compose with whatever test framework you already use.
 
-The [Public API Reference](api-reference.md#testing-helpers) lists these
+The [Public API Reference](../reference/api.md#testing-helpers) lists these
 alongside the rest of the exported surface.

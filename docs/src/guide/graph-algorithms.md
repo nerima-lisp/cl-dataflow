@@ -10,7 +10,7 @@ and flow, whole-graph metrics, set algebra, and criticality analysis.
 Every algorithm here shares one discipline: build the adjacency snapshot once
 (`%graph-adjacency-snapshot`/`%graph-adjacency`), then walk it with an
 explicit queue, stack, or work list — never per-node Prolog queries and never
-unbounded recursion. [Architecture](architecture.md#the-graph-runtime)
+unbounded recursion. [Architecture](../reference/architecture.md#the-graph-runtime)
 explains why: it keeps every traversal here linear (or low-degree polynomial)
 and stack-safe on deep chains and cyclic graphs, where a naive recursive
 implementation would overflow the control stack or blow up exponentially.
@@ -23,7 +23,7 @@ All of the examples below assume:
 ```
 
 and build up nodes/edges as shown per section. See the [Public API
-Reference](api-reference.md) for the complete, alphabetized export list, and
+Reference](../reference/api.md) for the complete, alphabetized export list, and
 [Observability and Serialization](observability.md) for rendering a graph as
 Graphviz DOT or Mermaid (`graph->dot`/`graph->mermaid`) once you've analyzed it.
 
@@ -187,10 +187,10 @@ share the directed convention that a node reaching nothing has eccentricity 0
   this page.
 - [Graphs](graphs.md) — construction, mutation, subgraphs, merging, and
   export/serialization (`graph-to-plist`, `graph->dot`, `graph->mermaid`).
-- [Architecture](architecture.md#the-graph-runtime) — why every algorithm on
+- [Architecture](../reference/architecture.md#the-graph-runtime) — why every algorithm on
   this page is an iterative, explicit queue/stack traversal over a
   once-built adjacency snapshot.
 - [Observability and Serialization](observability.md) — rendering graphs
   (and pipelines built from them) as Graphviz DOT or Mermaid diagrams.
-- [Public API Reference](api-reference.md) — the full alphabetized export
+- [Public API Reference](../reference/api.md) — the full alphabetized export
   list, including every function named on this page.

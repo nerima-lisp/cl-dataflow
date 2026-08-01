@@ -246,7 +246,7 @@ candidate's guard rejected the event (and exposes the rejected transition via
 `guard-failed-transition` for inspection). Both carry the offending
 `state`/`event-type` (`invalid-transition-state`/`invalid-transition-event-type`
 and `guard-failed-state`/`guard-failed-event-type`) plus a human-readable
-`detail`. See [Public API Reference](api-reference.md) for the full reader
+`detail`. See [Public API Reference](../reference/api.md) for the full reader
 list and every other condition type in the library.
 
 ## See also
@@ -256,5 +256,5 @@ list and every other condition type in the library.
 - [Graph Algorithms](graph-algorithms.md) and
   [Graph Analysis](graph-analysis.md) — the general graph toolkit that
   `state-machine->graph` bridges into.
-- [Public API Reference](api-reference.md) — the full alphabetized export
+- [Public API Reference](../reference/api.md) — the full alphabetized export
   list.

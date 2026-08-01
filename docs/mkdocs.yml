@@ -127,11 +127,19 @@ markdown_extensions:
       permalink: true
       title: On this page
 
-# Six fixed sections in this order, per the org docs standard: Home, Getting
-# Started, Guide, Reference, Internals, Project. They track the reader's state
-# — not yet running, running but new to the design, looking something up,
-# changing the internals, contributing — and readership drops at each step, so
-# reference and internals sit at the back.
+# Five fixed sections in this order, per the org docs standard: Home, Getting
+# Started, Guide, Reference, Project. They track the reader's state — not yet
+# running, running but new to the design, looking something up, contributing —
+# and readership drops at each step, so reference sits at the back.
+#
+# The section names match the directories under docs/src/, so the nav and the
+# tree give the same answer to "where does this page live". index.md and
+# getting-started.md stay at the root rather than under guide/: a reader who
+# has not run anything yet should not have to open the Guide first.
+#
+# architecture.md moved from a separate Internals section into reference/,
+# because it is a page readers consult to find which layer owns a behavior,
+# not one they read start to finish.
 #
 # Guide topics are ordered by dependency, not alphabetically: each page uses
 # vocabulary introduced by the ones above it.
@@ -140,29 +148,26 @@ markdown_extensions:
 # on an unlisted page, which is what keeps this list from falling behind.
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: installation.md
-      - Quick Start: quick-start.md
+  - Getting Started: getting-started.md
   - Guide:
-      - Core Concepts: core-concepts.md
-      - Graphs: graphs.md
-      - Graph Algorithms: graph-algorithms.md
-      - Graph Analysis: graph-analysis.md
-      - Pipelines and Workflows: pipelines.md
-      - State Machines: state-machines.md
-      - State Machine Analysis: state-machine-analysis.md
-      - Events and Effects: events-and-effects.md
-      - Streams (Pull): streams.md
-      - Reactive Subjects (Push): reactive.md
-      - Combinators and Resilience: combinators.md
-      - Observability and Serialization: observability.md
-      - Examples: examples.md
+      - Core Concepts: guide/core-concepts.md
+      - Graphs: guide/graphs.md
+      - Graph Algorithms: guide/graph-algorithms.md
+      - Graph Analysis: guide/graph-analysis.md
+      - Pipelines and Workflows: guide/pipelines.md
+      - State Machines: guide/state-machines.md
+      - State Machine Analysis: guide/state-machine-analysis.md
+      - Events and Effects: guide/events-and-effects.md
+      - Streams (Pull): guide/streams.md
+      - Reactive Subjects (Push): guide/reactive.md
+      - Combinators and Resilience: guide/combinators.md
+      - Observability and Serialization: guide/observability.md
+      - Examples: guide/examples.md
   - Reference:
-      - Public API Reference: api-reference.md
-  - Internals:
-      - Architecture: architecture.md
+      - API: reference/api.md
+      - Architecture: reference/architecture.md
   - Project:
-      - Development: development.md
+      - Development: project/development.md
 
 # docs/notes/ holds long-lived measurement records that are not public
 # documentation. Declaring it here keeps `strict: true` from failing the build

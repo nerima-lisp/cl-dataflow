@@ -1,7 +1,7 @@
 # Public API Reference
 
 `cl-dataflow` exports a single package, `cl-dataflow`. This page groups every
-exported symbol by area; the [Guide](pipelines.md) pages explain how the
+exported symbol by area; the [Guide](../guide/pipelines.md) pages explain how the
 groups fit together, with runnable examples.
 
 ## Errors
@@ -30,7 +30,7 @@ groups fit together, with runnable examples.
 - Edges: `edge-from`, `edge-from-port`, `edge-to`, `edge-to-port`,
   `edge-metadata`, `make-edge`
 
-## Graph APIs — see [Graphs](graphs.md)
+## Graph APIs — see [Graphs](../guide/graphs.md)
 
 - Construction/validation: `graph-nodes`, `graph-edges`, `graph-metadata`,
   `make-graph`, `copy-graph`, `add-node`, `add-edge`, `find-node`,
@@ -46,7 +46,7 @@ groups fit together, with runnable examples.
   `graph-to-plist`, `plist-to-graph`
 - Mutation: `remove-node`, `remove-edge`, `graph-subgraph`, `graph-merge`,
   `graph-relabel-node`, `graph-contract-edge`
-- Paths and order — see [Graph Analysis](graph-analysis.md#paths-and-order):
+- Paths and order — see [Graph Analysis](../guide/graph-analysis.md#paths-and-order):
   `graph-transitive-closure`, `graph-transitive-reduction`,
   `graph-topological-rank`, `graph-longest-path`, `graph-all-paths`,
   `graph-find-cycle`, `graph-eulerian-path`, `graph-weighted-distance`,
@@ -78,7 +78,7 @@ groups fit together, with runnable examples.
 `context-result`, `context-state`, `context-merge`, `context-trace-of-kind`,
 `context-equal-p`
 
-## Event and effect APIs — see [Events and Effects](events-and-effects.md)
+## Event and effect APIs — see [Events and Effects](../guide/events-and-effects.md)
 
 - Events: `make-event`, `copy-event`, `emit-event`, `event-type`,
   `event-payload`, `event-metadata`, `event-trace-index`
@@ -92,7 +92,7 @@ groups fit together, with runnable examples.
 - Serialization: `context-to-plist`, `plist-to-context`, `event-to-plist`,
   `plist-to-event`, `effect-to-plist`, `plist-to-effect`
 
-## State machine APIs — see [State Machines](state-machines.md) and [State Machine Analysis](state-machine-analysis.md)
+## State machine APIs — see [State Machines](../guide/state-machines.md) and [State Machine Analysis](../guide/state-machine-analysis.md)
 
 - Core (State Machines): `make-transition`, `define-state-machine`,
   `step-state-machine`, `run-state-machine`, `run-state-machine-with-context`,
@@ -118,7 +118,7 @@ groups fit together, with runnable examples.
 - Equality/reachability (State Machine Analysis): `state-machine-equal-p`,
   `state-machine-reachable-p`
 
-## Pipeline APIs — see [Pipelines and Workflows](pipelines.md)
+## Pipeline APIs — see [Pipelines and Workflows](../guide/pipelines.md)
 
 - Core: `make-pipeline`, `define-pipeline`, `define-workflow`,
   `copy-pipeline`, `run-pipeline`, `run-pipeline-with-context`,
@@ -130,21 +130,21 @@ groups fit together, with runnable examples.
   `run-pipeline-while`
 - Equality: `pipeline-equal-p`
 
-## Observability APIs — see [Observability and Serialization](observability.md)
+## Observability APIs — see [Observability and Serialization](../guide/observability.md)
 
 `pipeline->dot`, `pipeline->mermaid`, `pipeline-node-names`,
 `pipeline-stage-names`, `pipeline-source-names`, `pipeline-sink-names`,
 `format-trace`, `trace-summary`, `context-summary`, `flow-describe`,
 `flow-children`
 
-## Combinator and contract APIs — see [Combinators and Resilience](combinators.md)
+## Combinator and contract APIs — see [Combinators and Resilience](../guide/combinators.md)
 
 `mapping-handler`, `compose-handlers`, `retrying-handler`, `fallback-handler`,
 `memoizing-handler`, `tapping-handler`, `wrap-node`, `node-with-retry`,
 `node-with-fallback`, `node-with-memoization`, `node-with-tap`,
 `contract-handler`, `node-with-contract`
 
-## Stream APIs — see [Streams (Pull)](streams.md)
+## Stream APIs — see [Streams (Pull)](../guide/streams.md)
 
 - Core: `flow-stream-p`, `empty-stream`, `list->stream`, `stream-of`,
   `stream-range`, `stream-map`, `stream-filter`, `stream-scan`,
@@ -166,7 +166,7 @@ groups fit together, with runnable examples.
 - Search: `stream-find-index`, `stream-none-p`, `stream-mode`,
   `stream-cartesian`
 
-## Reactive subject APIs — see [Reactive Subjects (Push)](reactive.md)
+## Reactive subject APIs — see [Reactive Subjects (Push)](../guide/reactive.md)
 
 - Core: `make-subject`, `subject-p`, `subject-subscribe`,
   `subject-unsubscribe`, `subject-emit`, `subject-subscriber-count`,
@@ -211,4 +211,4 @@ pipelines.
   `make-context` and `perform-effect`.
 
 See [Architecture](architecture.md) for how these groups map onto source
-files, and [Core Concepts](core-concepts.md) for the vocabulary behind them.
+files, and [Core Concepts](../guide/core-concepts.md) for the vocabulary behind them.

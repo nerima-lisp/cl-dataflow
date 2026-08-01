@@ -15,7 +15,7 @@ graph. Most subject operators have a stream operator with matching semantics,
 just flipped from "pull the next value" to "react to the next emission"; this
 page frames each one as the push-side dual of its stream counterpart where one
 exists. See [Core Concepts](core-concepts.md) for the library's other
-primitives, and the [Public API Reference](api-reference.md) for the full
+primitives, and the [Public API Reference](../reference/api.md) for the full
 exported symbol list (`Reactive subject APIs` and `Reactive operator APIs`).
 
 ## What a subject is

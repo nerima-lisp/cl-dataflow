@@ -7,7 +7,7 @@ analysis families: weighted paths and flow, whole-graph metrics, set
 algebra, and criticality analysis. All of it shares that page's discipline
 of building the adjacency snapshot once and walking it with an explicit
 queue, stack, or work list — see
-[Architecture](architecture.md#the-graph-runtime) for why.
+[Architecture](../reference/architecture.md#the-graph-runtime) for why.
 
 The examples below reuse the dependency graph built in
 [Graph Algorithms](graph-algorithms.md):
@@ -21,7 +21,7 @@ The examples below reuse the dependency graph built in
   (cl-dataflow:add-edge *graph* (first edge) (second edge)))
 ```
 
-See the [Public API Reference](api-reference.md) for the complete,
+See the [Public API Reference](../reference/api.md) for the complete,
 alphabetized export list.
 
 ## Paths and order
@@ -252,10 +252,10 @@ before it and what must run after it — the same structural question
   continues from.
 - [Graphs](graphs.md) — construction, mutation, subgraphs, merging, and
   export/serialization (`graph-to-plist`, `graph->dot`, `graph->mermaid`).
-- [Architecture](architecture.md#the-graph-runtime) — why every algorithm on
+- [Architecture](../reference/architecture.md#the-graph-runtime) — why every algorithm on
   this page is an iterative, explicit queue/stack traversal over a
   once-built adjacency snapshot.
 - [Observability and Serialization](observability.md) — rendering graphs
   (and pipelines built from them) as Graphviz DOT or Mermaid diagrams.
-- [Public API Reference](api-reference.md) — the full alphabetized export
+- [Public API Reference](../reference/api.md) — the full alphabetized export
   list, including every function named on this page.

@@ -137,7 +137,7 @@ The condition carries three readers:
   handler registered for <type>"`), which is also what the condition's
   report function prints.
 
-See [Public API Reference](api-reference.md) for the full condition
+See [Public API Reference](../reference/api.md) for the full condition
 hierarchy.
 
 ### Batch execution with `perform-effects`
@@ -350,7 +350,7 @@ full pipeline run threads a context through every stage, and
 
 ## See also
 
-- [Public API Reference](api-reference.md) lists every event, effect, batch,
+- [Public API Reference](../reference/api.md) lists every event, effect, batch,
   and ergonomics symbol, plus the full `effect-handler-missing-error`
   condition hierarchy.
 - [Core Concepts](core-concepts.md) introduces `context` and its other

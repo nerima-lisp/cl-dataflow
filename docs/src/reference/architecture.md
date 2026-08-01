@@ -42,7 +42,7 @@ concern, one file per topic:
   `asdf:test-system :cl-dataflow` to `cl-dataflow/test`.
 - `examples/` contains eleven runnable scripts plus the shared
   `bootstrap.lisp` that loads the ASDF system for them (see
-  [Examples](examples.md)).
+  [Examples](../guide/examples.md)).
 
 ## The graph runtime
 
@@ -54,14 +54,14 @@ adjacency snapshot. This uses Prolog as the relational store while
 deliberately keeping the bounded graph algorithms in Lisp, so cyclic or
 adversarially deep graphs cannot trigger the non-termination or exponential
 path blow-ups that a naive recursive `reachable/2` Prolog rule would produce.
-Every algorithm in [Graph Algorithms](graph-algorithms.md) and
-[Graph Analysis](graph-analysis.md) — connectivity, centrality, criticality,
+Every algorithm in [Graph Algorithms](../guide/graph-algorithms.md) and
+[Graph Analysis](../guide/graph-analysis.md) — connectivity, centrality, criticality,
 flow — is built as an iterative, explicit queue/stack traversal over that
 same snapshot for the same reason.
 
 ## Concurrent pipeline execution
 
-`run-pipeline`'s `:parallel` mode (see [Pipelines and Workflows](pipelines.md#running-independent-stages-concurrently-with-parallel))
+`run-pipeline`'s `:parallel` mode (see [Pipelines and Workflows](../guide/pipelines.md#running-independent-stages-concurrently-with-parallel))
 runs same-level node handlers concurrently via
 [`cl-concurrent-kit`](https://github.com/nerima-lisp/cl-concurrent-kit)'s
 structured concurrency (`with-task-scope`/`spawn`/`await`), while every write

@@ -244,5 +244,5 @@ in one macro expansion.
   graph edges, transitions, and machine nodes in one macro expansion.
 - [Events and Effects](events-and-effects.md) — emitting events alongside a
   workflow's state transitions.
-- [Public API Reference](api-reference.md) — the full reader/predicate list
+- [Public API Reference](../reference/api.md) — the full reader/predicate list
   for `state-machine` and `state-transition`.
