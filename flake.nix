@@ -43,7 +43,7 @@
     # .asd at the repository root, and upstream ships Linux-only per-system
     # packages, so there is nothing to gain from evaluating its flake.
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.3.0";
+      url = "github:nerima-lisp/cl-prolog/v1.4.0";
       flake = false;
     };
 
@@ -52,7 +52,7 @@
     # needs its ASDF source tree (packages.cl-weave) -- both are packages
     # outputs, so only a flake input provides them.
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v1.1.4";
+      url = "github:nerima-lisp/cl-weave/v1.2.0";
       inputs.nixpkgs.follows = "nixpkgs";
       # cl-weave declares `github:takeokunn/paredit-cli` with no tag, so
       # without this override our lock would carry an untagged reference to a
@@ -73,7 +73,7 @@
     # example scripts as subprocesses through cl-process-kit. Its .asd sits at
     # the repository root, so the source tree is directly usable.
     cl-process-kit = {
-      url = "github:nerima-lisp/cl-process-kit/v3.1.0";
+      url = "github:nerima-lisp/cl-process-kit/v3.2.0";
       flake = false;
     };
 
@@ -84,11 +84,11 @@
     # cl-tty-kit is NOT a dependency here: it's only required by the optional
     # cl-process-kit/pty subsystem, which cl-dataflow never loads.
     cl-boundary-kit = {
-      url = "github:nerima-lisp/cl-boundary-kit/v2.0.1";
+      url = "github:nerima-lisp/cl-boundary-kit/v2.1.0";
       flake = false;
     };
     cl-log-kit = {
-      url = "github:nerima-lisp/cl-log-kit/v2.0.1";
+      url = "github:nerima-lisp/cl-log-kit/v2.1.0";
       flake = false;
     };
 
@@ -101,7 +101,7 @@
     # its outPath root alongside the compiled fasls, the same
     # source-tree-at-root shape as cl-weave's `packages.cl-weave`.
     cl-concurrent-kit = {
-      url = "github:nerima-lisp/cl-concurrent-kit/v0.3.0";
+      url = "github:nerima-lisp/cl-concurrent-kit/v0.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
