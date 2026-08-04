@@ -31,7 +31,7 @@
     # three-times-duplicated CL_SOURCE_REGISTRY string concatenation across
     # `checks`/`apps`/`devShells`.
     cl-nix-forge = {
-      url = "github:nerima-lisp/cl-nix-forge/v0.4.0";
+      url = "github:nerima-lisp/cl-nix-forge/v0.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
