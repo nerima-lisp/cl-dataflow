@@ -13,11 +13,13 @@ depends on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 
     The flake pins every dependency, including SBCL, `cl-prolog`,
     `cl-concurrent-kit`, and `cl-weave`, so `nix develop` reproduces the exact
-    verified environment:
+    verified environment. That pin set follows the latest release that passes
+    this repository's checks, which can intentionally lag a newer upstream tag:
 
     ```bash
     nix develop      # drop into a shell with everything on CL_SOURCE_REGISTRY
-    nix run          # run the cl-weave test app against cl-dataflow/test
+    nix run          # run the default test app against cl-dataflow/test
+    nix run .#test   # same test app, with the explicit attribute name
     nix flake check  # run the full check matrix -- see Development for what each check gates
     ```
 
@@ -55,9 +57,13 @@ Confirm the system loads and a trivial pipeline runs:
 If you want to run the full test suite locally, `cl-weave` and `cl-process-kit`
 must be on the source registry as well — and because `cl-process-kit`'s own
 system depends on them, so must
-[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
-[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). `nix develop` puts
-all of them on `CL_SOURCE_REGISTRY` for you. See
+[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit),
+[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit),
+[`cl-codec-kit`](https://github.com/nerima-lisp/cl-codec-kit),
+[`cl-date-kit`](https://github.com/nerima-lisp/cl-date-kit), and
+[`cl-host-kit`](https://github.com/nerima-lisp/cl-host-kit). `nix develop`
+puts all of them on `CL_SOURCE_REGISTRY` for you, and `nix run` / `nix run .#test`
+exercise that same pinned test environment. See
 [Development](project/development.md).
 
 ## A two-stage pipeline

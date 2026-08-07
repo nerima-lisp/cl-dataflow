@@ -43,6 +43,93 @@
     (is (equal transitions '(t1)))
     (is (equal nodes '(n1 n2)))
     (is (equal edges '(e1)))))
+(deftest
+  internal-dsl-expansion-contracts-preserve-data-and-logic-boundaries
+  (let* ((stage-expansion
+           (macroexpand-1
+            '(cl-dataflow::%resolve-pipeline-stage-designators
+              graph
+              stages)))
+         (io-expansion
+           (macroexpand-1
+            '(cl-dataflow::%with-pipeline-stage-io-plans
+              (incoming-index
+               stage-signatures
+               edge-signatures
+               input-binding-plans
+               input-key-plans
+               output-key-plans)
+              (graph stages)
+              (list incoming-index
+                    stage-signatures
+                    edge-signatures
+                    input-binding-plans
+                    input-key-plans
+                    output-key-plans))))
+         (derived-expansion
+           (macroexpand-1
+            '(cl-dataflow::%with-pipeline-derived-plans
+              (sinks sink-result-plans levels stage-plan-table)
+              (graph
+               stages
+               incoming-index
+               stage-signatures
+               input-key-plans
+               output-key-plans)
+              (list sinks sink-result-plans levels stage-plan-table))))
+         (pipeline-with-options
+           (macroexpand-1
+            '(cl-dataflow:define-pipeline
+              (:metadata '((:kind :pipeline))
+               :stages '("source"))
+              (:node "source"
+               :outputs '("value")
+               :handler #'identity))))
+         (pipeline-without-options
+           (macroexpand-1
+            '(cl-dataflow:define-pipeline ()
+              (:node "source"))))
+         (workflow-expansion
+           (macroexpand-1
+            '(cl-dataflow:define-workflow
+              (:initial-state "idle"
+               :machine-metadata '((:kind :machine))
+               :pipeline-metadata '((:kind :pipeline))
+               :stages '("machine-step"))
+              (:transition "idle" "start" "running"
+               :guard #'identity
+               :action #'identity
+               :metadata '((:kind :transition)))
+              (:machine-node :name "machine-step")))))
+    (is (eq 'mapcar (first stage-expansion)))
+    (is (equal
+          (second io-expansion)
+          '(incoming-index
+            stage-signatures
+            edge-signatures
+            input-binding-plans
+            input-key-plans
+            output-key-plans)))
+    (is (equal
+          (third io-expansion)
+          '(cl-dataflow::%pipeline-stage-io-plans graph stages)))
+    (is (equal
+          (second derived-expansion)
+          '(sinks sink-result-plans levels stage-plan-table)))
+    (is (equal
+          (third derived-expansion)
+          '(cl-dataflow::%pipeline-derived-plans
+            graph
+            stages
+            incoming-index
+            stage-signatures
+            input-key-plans
+            output-key-plans)))
+    (is (eq 'let* (first pipeline-with-options)))
+    (is (eq 'let* (first pipeline-without-options)))
+    (is (search "MAKE-STATE-MACHINE" (write-to-string workflow-expansion)))
+    (is (search "MAKE-PIPELINE" (write-to-string workflow-expansion)))
+    (is (search "MAKE-TRANSITION" (write-to-string workflow-expansion)))))
 
 (deftest define-pipeline-stages-accept-node-designators
   ;; :STAGES may name stages by NODE object as well as by string, exercising

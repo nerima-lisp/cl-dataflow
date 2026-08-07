@@ -165,9 +165,11 @@ input. The one exception: if two handlers that share a level *both* call
 `emit-event` or `perform-effect`, those two calls serialize correctly against
 each other (no lost or corrupted events/effects), but their relative order
 against each other is not guaranteed — they are, after all, independent
-work by construction. A handler error under `:parallel` propagates the same
-condition a sequential run would, once every sibling in that level has
-been awaited.
+work by construction. The implementation reuses one CCK fixed executor for
+the run and caps it at four workers, or the available level width when that is
+smaller, so a wide graph does not create one thread per stage. A handler error
+under `:parallel` propagates the same condition a sequential run would, once
+every sibling in that level has been awaited.
 
 `:parallel` is worth reaching for when a pipeline's independent stages do
 enough real work (I/O, heavy computation) that running them one at a time is
@@ -351,8 +353,9 @@ on top of the core pipeline runtime:
   accumulate into that one context. `:parallel` runs the independent
   (no-`:context`) case concurrently, the same way as `run-pipeline`'s own
   `:parallel` but simpler: since every run already has its own fresh
-  context, there is no shared state to guard at all. Combining `:parallel`
-  with a shared `:context` signals `invalid-input-error` — concurrent runs
+  context, there is no shared state to guard at all. The runs share a bounded
+  CCK executor capped at four workers, and results remain in input order.
+  Combining `:parallel` with a shared `:context` signals `invalid-input-error` — concurrent runs
   writing into one context would race on it and silently break the
   documented in-order accumulation guarantee.
 - `pipeline->node` (`pipeline name &key metadata`) returns a node whose

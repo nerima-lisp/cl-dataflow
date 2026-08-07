@@ -7,6 +7,7 @@ gate on exactly the same derivations:
 
 ```bash
 nix develop      # SBCL with CL_SOURCE_REGISTRY already set
+nix run          # default test app (same as `nix run .#test`)
 nix run .#test   # run the test suite
 nix run .#watch  # re-run the suite on every source change (cl-weave watch)
 nix flake check  # every check below, in parallel, with build caching
@@ -14,7 +15,7 @@ nix fmt          # format Nix sources (treefmt/nixfmt)
 nix build .#docs # render this site, offline, with mkdocs --strict
 ```
 
-`nix flake check` evaluates five checks:
+`nix flake check` evaluates six checks:
 
 | Check | What it gates |
 | --- | --- |
@@ -46,8 +47,11 @@ sbcl --script run-tests.lisp
 
 Either way, `cl-weave` and `cl-process-kit` must be on the ASDF source
 registry — and because `cl-process-kit`'s own system depends on them, so must
-[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit) and
-[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit). See
+[`cl-boundary-kit`](https://github.com/nerima-lisp/cl-boundary-kit),
+[`cl-log-kit`](https://github.com/nerima-lisp/cl-log-kit),
+[`cl-codec-kit`](https://github.com/nerima-lisp/cl-codec-kit),
+[`cl-date-kit`](https://github.com/nerima-lisp/cl-date-kit), and
+[`cl-host-kit`](https://github.com/nerima-lisp/cl-host-kit). See
 [Getting Started](../getting-started.md#verifying-the-install).
 
 `./scripts/verify.sh` wraps the suite, and `./scripts/run-examples.sh` runs
@@ -56,6 +60,8 @@ every `examples/*.lisp` script as its own process (the same check
 execution paths:
 
 ```bash
+nix run
+nix run .#test
 ./scripts/verify.sh
 ./scripts/run-examples.sh
 ```

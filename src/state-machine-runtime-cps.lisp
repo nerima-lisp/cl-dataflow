@@ -41,6 +41,16 @@
         (setf action-result result)))
     (funcall continuation previous-state next-state action-result)))
 
+(defstruct (%transition-handoff
+            (:constructor %make-transition-handoff
+                (transition event-type previous-state next-state action-result))
+            (:copier nil))
+  transition
+  event-type
+  previous-state
+  next-state
+  action-result)
+
 (defun %run-transition/cps (machine transition event context event-type continuation)
   (%run-transition-action/cps
    machine
@@ -49,11 +59,11 @@
    context
    (lambda (previous-state next-state action-result)
      (funcall continuation
-              transition
-              event-type
-              previous-state
-              next-state
-              action-result))))
+              (%make-transition-handoff transition
+                                        event-type
+                                        previous-state
+                                        next-state
+                                        action-result)))))
 
 (defun %make-transition-record (transition event-type previous-state next-state action-result)
   (list :from (transition-from transition)
@@ -80,17 +90,20 @@
   (when context
     (%push-context-trace-entry context (%copy-transition-record transition-record))))
 
-(defun %commit-transition/cps (machine context transition event-type previous-state
-                               next-state action-result continuation)
-  (let ((transition-record (%make-transition-record transition
-                                                   event-type
-                                                   previous-state
-                                                   next-state
-                                                   action-result)))
+(defun %commit-transition/cps (machine context handoff continuation)
+  (let ((transition-record
+          (%make-transition-record
+           (%transition-handoff-transition handoff)
+           (%transition-handoff-event-type handoff)
+           (%transition-handoff-previous-state handoff)
+           (%transition-handoff-next-state handoff)
+           (%transition-handoff-action-result handoff))))
     (%record-transition-history machine transition-record)
-    (setf (state-machine-state machine) next-state)
+    (setf (state-machine-state machine)
+          (%transition-handoff-next-state handoff))
     (when context
-      (setf (context-state context) next-state))
+      (setf (context-state context)
+            (%transition-handoff-next-state handoff)))
     (%record-context-trace context transition-record)
     (funcall continuation machine (%copy-transition-record transition-record))))
 
@@ -102,28 +115,26 @@
    event-type
    (lambda (transition)
      (%run-transition/cps
-      machine
+     machine
       transition
       event
       context
       event-type
-      (lambda (transition event-type previous-state next-state action-result)
-        (%commit-transition/cps machine
-                                context
-                                transition
-                                event-type
-                                previous-state
-                                next-state
-                                action-result
-                                continuation))))))
+      (lambda (handoff)
+        (%commit-transition/cps machine context handoff continuation))))))
 
 (defun %run-state-machine-events/cps (machine events context continuation)
-  (labels ((advance-events (remaining-events transition-records)
+  (labels ((advance-events (current-machine remaining-events transition-records)
              (if (endp remaining-events)
-                 (funcall continuation machine (nreverse transition-records))
-                 (multiple-value-bind (updated-machine transition-record)
-                     (step-state-machine machine (first remaining-events) :context context)
-                   (declare (ignore updated-machine))
-                   (advance-events (rest remaining-events)
-                                   (cons transition-record transition-records))))))
-    (advance-events events '())))
+                 (funcall continuation current-machine (nreverse transition-records))
+                 (let ((event (first remaining-events)))
+                   (%step-state-machine/cps
+                    current-machine
+                    event
+                    context
+                    (%event-type-designator event)
+                    (lambda (updated-machine transition-record)
+                      (advance-events updated-machine
+                                      (rest remaining-events)
+                                      (cons transition-record transition-records))))))))
+    (advance-events machine events (list))))

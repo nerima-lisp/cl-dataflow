@@ -139,3 +139,40 @@
     (is (= (run-pipeline-times pipeline 3 :input 0 :parallel t) 3))
     (is (= (run-pipeline-until-fixpoint pipeline :input 0 :max-iterations 5 :parallel t)
            5))))
+
+(deftest pipeline-parallel-bounds-fan-out-concurrency
+  (let* ((lock (cl-concurrent-kit:make-lock :name "test"))
+         (active-count 0)
+         (peak-active-count 0)
+         (graph (make-graph))
+         (source
+           (make-node "source"
+                      :outputs (list "value")
+                      :handler
+                      (lambda (input context)
+                        (declare (ignore context))
+                        input)))
+         (branches
+           (loop for index from 1 to 8
+                 collect
+                 (make-node
+                  (format nil "branch-~D" index)
+                  :inputs (list "value")
+                  :handler
+                  (lambda (input context)
+                    (declare (ignore context))
+                    (cl-concurrent-kit:with-lock-held (lock)
+                      (incf active-count)
+                      (setf peak-active-count
+                            (max peak-active-count active-count)))
+                    (sleep 0.02)
+                    (cl-concurrent-kit:with-lock-held (lock)
+                      (decf active-count))
+                    input)))))
+    (add-node graph source)
+    (dolist (branch branches)
+      (add-node graph branch)
+      (add-edge graph source branch))
+    (run-pipeline (make-pipeline :graph graph) :input 1 :parallel t)
+    (is (> peak-active-count 1))
+    (is (<= peak-active-count cl-dataflow::+parallel-worker-limit+))))

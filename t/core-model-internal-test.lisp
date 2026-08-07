@@ -18,12 +18,98 @@
       (equal
         (cl-dataflow::%node-output-bindings multi '(:left 1 :right 2))
         '(("LEFT" . 1) ("RIGHT" . 2))))))
-
 (deftest
-  internal-collect-node-inputs-prefers-edges-and-falls-back-to-structured-input
-  (let* ((graph (make-graph))
-          (source (make-node "source" :outputs '("left" "right")))
-          (single-sink (make-node "single-sink"))
+  internal-cps-handoff-and-macro-options-keep-boundaries-explicit
+  (is (equal
+        (cl-dataflow::%plist-option :state nil '(:state nil))
+        '(:state nil)))
+  (is (null
+        (cl-dataflow::%plist-option :state nil '())))
+  (is (equal
+        (cl-dataflow::%plist-option :state 42 '(:state 42))
+        '(:state 42)))
+  (let* ((transition (list :transition))
+         (handoff
+           (cl-dataflow::%make-transition-handoff
+            transition :advance :idle :ready 'done)))
+    (is (typep handoff 'cl-dataflow::%transition-handoff))
+    (is (eq transition
+            (cl-dataflow::%transition-handoff-transition handoff)))
+    (is (eq :advance
+            (cl-dataflow::%transition-handoff-event-type handoff)))
+    (is (eq :idle
+            (cl-dataflow::%transition-handoff-previous-state handoff)))
+    (is (eq :ready
+            (cl-dataflow::%transition-handoff-next-state handoff)))
+    (is (eq 'done
+            (cl-dataflow::%transition-handoff-action-result handoff)))
+    (is (not (listp handoff)))))
+(deftest
+  internal-accessor-and-model-macro-contracts-expand-all-data-driven-clauses
+  (let ((setf-forms
+          (list
+            (list (quote setf)
+                  (list (quote cl-dataflow::%graph-edges-list) (quote graph))
+                  (quote new-edges))
+            (list (quote setf)
+                  (list (quote cl-dataflow::%context-events-list) (quote context))
+                  (quote new-events))
+            (list (quote setf)
+                  (list (quote cl-dataflow::%context-effects-list) (quote context))
+                  (quote new-effects))
+            (list (quote setf)
+                  (list (quote cl-dataflow::%context-trace-list) (quote context))
+                  (quote new-trace))
+            (list (quote setf)
+                  (list (quote cl-dataflow::%state-machine-history-list) (quote machine))
+                  (quote new-history)))))
+    (dolist (form setf-forms)
+      (let* ((setf-expansion
+              (multiple-value-list
+               (get-setf-expansion (second form))))
+             (store-form (fourth setf-expansion))
+             (access-form (fifth setf-expansion)))
+        (is (equal (first store-form) (quote setf)))
+        (is (equal (first (second store-form))
+                   (quote cl-dataflow::%read-slot)))
+        (is (equal (first access-form)
+                   (first (second form)))))))
+  (let ((slot-apis
+          (macroexpand-1
+            (quote
+              (cl-dataflow::define-slot-apis
+                (:read-only sample-read object name)
+                (:copy sample-copy object values)
+                (:copy sample-copy-custom object values custom-copy)
+                (:mapcar-copy sample-map object values copy-value)
+                (:setter-transform sample-transform object value normalize-value)
+                (:transform sample-transform-full object values getter-form setter-form))))))
+    (is (equal (first slot-apis) (quote progn)))
+    (is (= (length (rest slot-apis)) 11)))
+  (let ((predicates
+          (macroexpand-1
+            (quote
+              (cl-dataflow::define-type-predicates
+                (sample-node-p node)
+                (sample-graph-p graph))))))
+    (is (equal (first predicates) (quote progn)))
+    (is (= (length (rest predicates)) 2)))
+  (let ((print-methods
+          (macroexpand-1
+            (quote
+              (cl-dataflow::define-print-object
+                (cl-dataflow::node
+                  (node stream)
+                  "~A"
+                  (cl-dataflow::node-name node)))))))
+    (is (equal (first print-methods) (quote progn)))
+    (is (= (length (rest print-methods)) 1))))
+
+  (deftest
+    internal-collect-node-inputs-prefers-edges-and-falls-back-to-structured-input
+    (let* ((graph (make-graph))
+           (source (make-node "source" :outputs '("left" "right")))
+           (single-sink (make-node "single-sink"))
           (join (make-node "join" :inputs '("left" "right")))
           (context (make-context)))
     (dolist (node (list source single-sink join))
@@ -44,17 +130,34 @@
     (add-node standalone-graph standalone)
     (is
       (equal
-        (cl-dataflow::%collect-node-inputs
-          (make-context)
-          standalone-graph
-          standalone
-          (list :left 1 :right 2))
-        (list (cons "LEFT" 1) (cons "RIGHT" 2))))))
+          (cl-dataflow::%collect-node-inputs
+            (make-context)
+            standalone-graph
+            standalone
+            (list :left 1 :right 2))
+          (list (cons "LEFT" 1) (cons "RIGHT" 2))))))
 
-(deftest internal-collect-node-inputs-resolves-multiple-producers-on-one-port-to-the-newest-edge
-  ;; The graph layer allows more than one edge into the same (node . port) --
-  ;; it is also used standalone for reachability/topology, where fan-in is
-  ;; ordinary in-degree, not a pipeline binding conflict (see add-edge). When
+(deftest
+  internal-resolve-node-input-handles-missing-and-disconnected-bindings
+  (let ((node (make-node "standalone" :inputs '("value"))))
+    (is (null
+          (cl-dataflow::%resolve-node-input
+            (make-context)
+            node
+            :ignored
+            (cons t nil))))
+    (is
+      (= (cl-dataflow::%resolve-node-input
+           (make-context)
+           node
+           '("value" 7)
+           (cons nil nil))
+         7))))
+
+  (deftest internal-collect-node-inputs-resolves-multiple-producers-on-one-port-to-the-newest-edge
+    ;; The graph layer allows more than one edge into the same (node . port) --
+    ;; it is also used standalone for reachability/topology, where fan-in is
+    ;; ordinary in-degree, not a pipeline binding conflict (see add-edge). When
   ;; such a graph is actually run as a pipeline, %edge-binding-table must
   ;; resolve the ambiguity deterministically: the most recently added edge
   ;; wins. This must hold both when %collect-node-inputs derives incoming
@@ -119,6 +222,10 @@
   (let* ((graph (make-graph))
           (context (make-context)))
     (is (null (cl-dataflow::%collect-sink-results graph context '())))))
+
+(deftest
+  internal-collect-cached-sink-results-return-nil-without-sink-plans
+  (is (null (cl-dataflow::%collect-cached-sink-results (make-context) nil))))
 
 (deftest
   internal-normalization-helpers-cover-scalar-plist-and-table-paths

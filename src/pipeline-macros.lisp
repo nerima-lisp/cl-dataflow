@@ -38,9 +38,9 @@
                             stage)))
             ,stages))
 
-(defun %plist-option (key value)
-  (when value
-    (list key value)))
+(defun %plist-option (option-key value options &optional (output-key option-key))
+  (when (member option-key options :test #'eq)
+    (list output-key value)))
 
 (defun %unsupported-structured-clause-error (macro-name expected clause)
   (%signal-invalid-input-error expected
@@ -181,11 +181,11 @@
         ;; cannot capture them, and PIPELINE-METADATA is evaluated once and
         ;; shared by the graph and the pipeline.
         `(let* ((,machine-var (make-state-machine
-                          ,@(%plist-option :state state)
-                          ,@(%plist-option :initial-state initial-state)
-                          ,@(%plist-option :history history)
-                          ,@(%plist-option :history-limit history-limit)
-                          ,@(%plist-option :metadata machine-metadata)
+                          ,@(%plist-option :state state options)
+                          ,@(%plist-option :initial-state initial-state options)
+                          ,@(%plist-option :history history options)
+                          ,@(%plist-option :history-limit history-limit options)
+                          ,@(%plist-option :machine-metadata machine-metadata options :metadata)
                           :transitions (list ,@transition-forms)))
                 ,@(when pipeline-metadata-var
                     `((,pipeline-metadata-var ,pipeline-metadata)))
