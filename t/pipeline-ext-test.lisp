@@ -37,6 +37,10 @@
   (let ((pipeline (%double-pipeline)))
     (is (equal (map-pipeline pipeline '(1 2 3) :parallel t) '(2 4 6)))))
 
+(deftest map-pipeline-parallel-returns-empty-for-no-inputs
+  (let ((pipeline (%double-pipeline)))
+    (is (null (map-pipeline pipeline '() :parallel t)))))
+
 (deftest map-pipeline-parallel-runs-independent-runs-concurrently
   (let* ((lock (cl-concurrent-kit:make-lock :name "test"))
          (start-times '())
