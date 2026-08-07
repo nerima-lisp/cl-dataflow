@@ -33,9 +33,11 @@ concern, one file per topic:
   itself layered: `-core` holds construction and transition selection,
   `-cps` holds `step-state-machine`'s continuation-passing execution chain,
   and `-api` is the thin direct-style public surface over it.
-  `src/pipeline-parallel.lisp`, loaded right after `pipeline-runtime.lisp`,
-  holds `run-pipeline`'s `:parallel` mode in isolation, so it is the one file
-  that needs `cl-concurrent-kit`'s package.
+  `src/pipeline-plan-runtime.lisp` is loaded before `pipeline-runtime.lisp` and
+  compiles the graph into reusable execution plans. `src/pipeline-parallel.lisp`,
+  loaded right after `pipeline-runtime.lisp`, holds `run-pipeline`'s `:parallel`
+  mode in isolation, so it is the one file that needs `cl-concurrent-kit`'s
+  package.
 - `src/testing.lisp` contains deterministic test helpers, including
   state-machine assertions.
 - `cl-dataflow.asd` loads the library system and routes
@@ -58,6 +60,20 @@ Every algorithm in [Graph Algorithms](../guide/graph-algorithms.md) and
 [Graph Analysis](../guide/graph-analysis.md) — connectivity, centrality, criticality,
 flow — is built as an iterative, explicit queue/stack traversal over that
 same snapshot for the same reason.
+
+## Pipeline execution plans
+
+Before a pipeline run, `src/pipeline-plan-runtime.lisp` compiles the graph,
+stages, and edges into an execution plan, while `src/pipeline-runtime.lisp`
+validates and rebuilds the cached plan when needed. The plan precomputes stage
+levels and input, output, and result bindings, and both sequential and
+`:parallel` execution consume that same plan.
+
+The plan cache is reused only while the graph identity and the stage and edge
+signatures remain current, including edge endpoints and ports. Pipeline
+setters and graph mutations invalidate the cached plan, which is rebuilt on
+the next run. This keeps graph analysis and repeated allocation out of the
+execution hot path without allowing stale topology to be executed.
 
 ## Concurrent pipeline execution
 

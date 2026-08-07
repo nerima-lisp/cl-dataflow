@@ -43,7 +43,7 @@ The source for that site lives in [docs/src/](docs/src/).
 ```nix
 # flake.nix
 inputs.cl-dataflow = {
-  url = "github:nerima-lisp/cl-dataflow/v1.1.1";
+  url = "github:nerima-lisp/cl-dataflow/v1.1.2";
   inputs.nixpkgs.follows = "nixpkgs";
 };
 ```

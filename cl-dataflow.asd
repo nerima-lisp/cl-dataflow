@@ -14,7 +14,7 @@ helpers, all behind a single public package."
   :license "MIT"
   ;; Single source of truth for the version: flake.nix reads this form and
   ;; release.yml refuses to publish a tag that disagrees with it.
-  :version "1.1.1"
+  :version "1.1.2"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
@@ -97,7 +97,7 @@ helpers, all behind a single public package."
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.1.1"
+  :version "1.1.2"
   :homepage "https://github.com/nerima-lisp/cl-dataflow"
   :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
