@@ -51,6 +51,7 @@ helpers, all behind a single public package."
                 (:file "state-machine-runtime-cps")
                 (:file "state-machine-runtime-api")
                 (:file "pipeline-macros")
+                (:file "pipeline-plan-runtime")
                 (:file "pipeline-runtime")
                 (:file "pipeline-parallel")
                 (:file "graph-structure")
@@ -106,8 +107,8 @@ helpers, all behind a single public package."
                 ;; Test-only: t/core-runtime-example-test.lisp runs each
                 ;; examples/*.lisp script as a subprocess under a timeout and
                 ;; asserts on its exit code and captured output, which needs
-                ;; real process control. The shipped cl-dataflow system stays
-                ;; at its single cl-prolog dependency.
+                ;; real process control. The shipped cl-dataflow system keeps
+                ;; only its two runtime dependencies.
                 "cl-process-kit")
   :pathname "t/"
   :serial t

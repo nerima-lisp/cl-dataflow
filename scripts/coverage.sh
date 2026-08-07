@@ -10,8 +10,8 @@ REPORT_DIR=${COVERAGE_REPORT_DIR:-coverage/}
 MIN_EXPRESSION=${COVERAGE_MIN_EXPRESSION:-84}
 MIN_BRANCH=${COVERAGE_MIN_BRANCH:-100}
 
-if command -v cl-weave >/dev/null 2>&1; then
-  exec cl-weave run cl-dataflow/test \
+if command -v nix >/dev/null 2>&1; then
+  exec nix run . -- \
     --coverage \
     --coverage-system cl-dataflow \
     --coverage-min-expression "$MIN_EXPRESSION" \
@@ -21,8 +21,8 @@ if command -v cl-weave >/dev/null 2>&1; then
     "$@"
 fi
 
-if command -v nix >/dev/null 2>&1; then
-  exec nix run . -- \
+if command -v cl-weave >/dev/null 2>&1; then
+  exec cl-weave run cl-dataflow/test \
     --coverage \
     --coverage-system cl-dataflow \
     --coverage-min-expression "$MIN_EXPRESSION" \

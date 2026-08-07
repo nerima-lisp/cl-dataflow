@@ -183,6 +183,20 @@ helper-macro convention (see ASSERT-PLAN-REBUILDS above)."
                     (cl-dataflow::%pipeline-execution-plan copy)))))))))
 
 (deftest
+  pipeline-stage-setter-clears-stages-and-invalidates-plan-when-set-to-nil
+  (with-linear-test-pipeline
+    (graph pipeline source sink)
+    (let ((original-plan (cl-dataflow::%pipeline-execution-plan pipeline)))
+      (setf (pipeline-stages pipeline) nil)
+      (is (null (pipeline-stages pipeline)))
+      (is (null (cl-dataflow::%pipeline-execution-plan pipeline)))
+      (is (= (hash-table-count (graph-nodes (pipeline-graph pipeline))) 2))
+      (is (null (run-pipeline pipeline)))
+      (is (not (eq original-plan (cl-dataflow::%pipeline-execution-plan pipeline))))
+      (is (null (cl-dataflow::%pipeline-execution-plan-stages
+                  (cl-dataflow::%pipeline-execution-plan pipeline)))))))
+
+(deftest
   pipeline-plan-caches-input-bindings-and-resolves-current-values
   (let* ((old-value 1)
           (new-value 2)

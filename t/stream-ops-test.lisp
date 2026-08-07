@@ -84,8 +84,13 @@
   ;; Keep the first element for each (mod x 3) key: 1(1),4(dup),2(2),5(dup),3(0).
   (is (equal (stream-collect (stream-distinct-by (lambda (x) (mod x 3))
                                                  (stream-of 1 4 2 5 3)))
-             '(1 2 3)))
-  (is (null (stream-collect (stream-distinct-by #'identity (empty-stream)))))
+             (quote (1 2 3))))
+  ;; Non-hashable keys use the configured equality predicate and retain first values.
+  (is (equal (stream-collect
+              (stream-distinct-by (lambda (x) (list (mod x 2)))
+                                  (stream-of 1 3 2 5 4)))
+             (quote (1 2))))
+  (is (null (stream-collect (stream-distinct-by (function identity) (empty-stream)))))
   (signals invalid-input-error
-    (stream-collect (stream-distinct-by #'identity (stream-of :a :b :c)
+    (stream-collect (stream-distinct-by (function identity) (stream-of :a :b :c)
                                         :max-distinct 2))))

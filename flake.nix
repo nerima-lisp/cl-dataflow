@@ -31,7 +31,7 @@
     # three-times-duplicated CL_SOURCE_REGISTRY string concatenation across
     # `checks`/`apps`/`devShells`.
     cl-nix-forge = {
-      url = "github:nerima-lisp/cl-nix-forge/v0.4.0";
+      url = "github:nerima-lisp/cl-nix-forge/v0.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
@@ -43,7 +43,7 @@
     # .asd at the repository root, and upstream ships Linux-only per-system
     # packages, so there is nothing to gain from evaluating its flake.
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.4.0";
+      url = "github:nerima-lisp/cl-prolog/v1.4.3";
       flake = false;
     };
 
@@ -52,7 +52,7 @@
     # needs its ASDF source tree (packages.cl-weave) -- both are packages
     # outputs, so only a flake input provides them.
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v1.2.0";
+      url = "github:nerima-lisp/cl-weave/v1.3.0";
       inputs.nixpkgs.follows = "nixpkgs";
       # cl-weave declares `github:takeokunn/paredit-cli` with no tag, so
       # without this override our lock would carry an untagged reference to a
@@ -64,7 +64,7 @@
     # paredit-cli stays `flake = true`: checks.paredit-lint calls its
     # `lib.<system>.mkLintCheck`, which is a flake output.
     paredit-cli = {
-      url = "github:nerima-lisp/paredit-cli/v1.4.0";
+      url = "github:nerima-lisp/paredit-cli/v1.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
@@ -77,18 +77,32 @@
       flake = false;
     };
 
-    # cl-process-kit's own base ASDF system (:depends-on (:asdf :cl-boundary-kit
-    # :cl-log-kit)) needs these two; they are never loaded or called directly by
+    # cl-process-kit's own base ASDF system depends on cl-boundary-kit,
+    # cl-log-kit, and cl-codec-kit. cl-log-kit's base system in turn depends
+    # on cl-date-kit, cl-concurrent-kit, and cl-host-kit. They are
+    # never loaded or called directly by
     # cl-dataflow (no API usage, no adapter) -- only their source trees need to
     # be on CL_SOURCE_REGISTRY so ASDF can resolve cl-process-kit's :depends-on.
     # cl-tty-kit is NOT a dependency here: it's only required by the optional
     # cl-process-kit/pty subsystem, which cl-dataflow never loads.
     cl-boundary-kit = {
-      url = "github:nerima-lisp/cl-boundary-kit/v2.1.0";
+      url = "github:nerima-lisp/cl-boundary-kit/v2.3.0";
       flake = false;
     };
     cl-log-kit = {
-      url = "github:nerima-lisp/cl-log-kit/v2.1.0";
+      url = "github:nerima-lisp/cl-log-kit/v2.2.0";
+      flake = false;
+    };
+    cl-date-kit = {
+      url = "github:nerima-lisp/cl-date-kit/v1.0.0";
+      flake = false;
+    };
+    cl-host-kit = {
+      url = "github:nerima-lisp/cl-host-kit/v0.3.1";
+      flake = false;
+    };
+    cl-codec-kit = {
+      url = "github:nerima-lisp/cl-codec-kit/v0.5.0";
       flake = false;
     };
 
@@ -100,8 +114,10 @@
     # it directly and inspecting the result: `cl-concurrent-kit.asd` sits at
     # its outPath root alongside the compiled fasls, the same
     # source-tree-at-root shape as cl-weave's `packages.cl-weave`.
+    # v0.6.1 adds a cl-boundary-kit dependency in its ASDF metadata, so the
+    # sibling lispDerivation graph below must expose that edge explicitly.
     cl-concurrent-kit = {
-      url = "github:nerima-lisp/cl-concurrent-kit/v0.5.0";
+      url = "github:nerima-lisp/cl-concurrent-kit/v0.6.1";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
@@ -119,6 +135,9 @@
       cl-process-kit,
       cl-boundary-kit,
       cl-log-kit,
+      cl-date-kit,
+      cl-host-kit,
+      cl-codec-kit,
       cl-concurrent-kit,
     }:
     let
@@ -175,26 +194,22 @@
           cl = cl-nix-forge.lib.${system};
           weave = cl-weave.packages.${system}.default;
           weaveSource = cl-weave.packages.${system}.cl-weave;
-          concurrentKit = cl-concurrent-kit.packages.${system}.cl-concurrent-kit;
-
-          # `fromDerivation` wraps an ALREADY-COMPILED foreign package (its own
-          # example wraps `pkgs.sbcl.pkgs.alexandria`): `lispDerivation`'s
-          # identity ASDF_OUTPUT_TRANSLATIONS lands a dependency's fasls
-          # beside its source, which only works when that source is writable
-          # -- fine for cl-concurrent-kit (built by `pkgs.sbcl.buildASDFSystem`,
-          # confirmed to ship .fasl files beside every .lisp file), but a raw
-          # `flake = false` source checkout like cl-prolog has no fasls and
-          # sits in an immutable Nix store path, so compiling it via a plain
-          # `fromDerivation` wrap tries to write a .fasl into a read-only
-          # directory and fails with SB-INT:SIMPLE-FILE-ERROR ("Permission
-          # denied") -- reproduced directly before landing this. The fix is to
-          # give each raw-source sibling its own `lispDerivation` build first
-          # (a real, compiled cl-nix-forge output, exactly like cl-dataflow's
-          # own), then depend on THAT -- not the raw source.
-          concurrentKitDep = cl.fromDerivation {
-            drv = concurrentKit;
-            recursive = true;
-            lispImplementation = "sbcl";
+          # v0.6.1 adds cl-boundary-kit and cl-date-kit dependencies in its
+          # ASDF metadata.
+          # Wrapping the foreign flake package with `fromDerivation` exposes
+          # cl-concurrent-kit's own files, but not that sibling ASDF edge on
+          # CL_SOURCE_REGISTRY, so downstream loads fail with
+          # "Component \"cl-boundary-kit\" not found". Build it through
+          # `lispDerivation` instead so the dependency graph is expressed in
+          # the same registry model cl-dataflow itself uses.
+          concurrentKitDep = cl.lispDerivation {
+            lispSystem = "cl-concurrent-kit";
+            version = cl.fromAsdSystem "${cl-concurrent-kit}/cl-concurrent-kit.asd";
+            src = cl-concurrent-kit;
+            lispDependencies = [
+              boundaryKitBuild
+              dateKitBuild
+            ];
           };
 
           prologBuild = cl.lispDerivation {
@@ -216,26 +231,46 @@
             version = cl.fromAsdSystem "${weaveSource}/cl-weave.asd";
             src = weaveSource;
           };
-          # cl-process-kit's base system :depends-on cl-boundary-kit and
-          # cl-log-kit, so both need their own lispDerivation build too --
-          # cl-dataflow itself never loads or calls either directly.
-          # cl-boundary-kit's OWN base system in turn :depends-on cl-log-kit
-          # (verified directly against the pinned v1.0.0 tag's .asd, not
-          # assumed from the old flat-registry comment, which only modeled
-          # the edges INTO cl-process-kit and never needed to model this one
-          # explicitly since every sibling shared one CL_SOURCE_REGISTRY).
-          # cl-log-kit's own base system depends on nothing beyond ASDF
-          # itself, so it is the one genuine leaf here.
+          # cl-process-kit's base system depends on cl-boundary-kit,
+          # cl-log-kit, and cl-codec-kit, so all three need their own
+          # lispDerivation build too -- cl-dataflow itself never loads or
+          # calls either directly. cl-boundary-kit's pinned .asd depends only
+          # on cl-host-kit, while cl-log-kit's pinned .asd depends on
+          # cl-date-kit, cl-concurrent-kit, and cl-host-kit; with
+          # cl-concurrent-kit v0.6.1 adding cl-boundary-kit, the
+          # lispDerivation graph has to make boundary visible from log-kit's
+          # build as well.
+          dateKitBuild = cl.lispDerivation {
+            lispSystem = "cl-date-kit";
+            version = cl.fromAsdSystem "${cl-date-kit}/cl-date-kit.asd";
+            src = cl-date-kit;
+          };
+          hostKitBuild = cl.lispDerivation {
+            lispSystem = "cl-host-kit";
+            version = cl.fromAsdSystem "${cl-host-kit}/cl-host-kit.asd";
+            src = cl-host-kit;
+          };
+          codecKitBuild = cl.lispDerivation {
+            lispSystem = "cl-codec-kit";
+            version = cl.fromAsdSystem "${cl-codec-kit}/cl-codec-kit.asd";
+            src = cl-codec-kit;
+          };
           logKitBuild = cl.lispDerivation {
             lispSystem = "cl-log-kit";
             version = cl.fromAsdSystem "${cl-log-kit}/cl-log-kit.asd";
             src = cl-log-kit;
+            lispDependencies = [
+              boundaryKitBuild
+              dateKitBuild
+              concurrentKitDep
+              hostKitBuild
+            ];
           };
           boundaryKitBuild = cl.lispDerivation {
             lispSystem = "cl-boundary-kit";
             version = cl.fromAsdSystem "${cl-boundary-kit}/cl-boundary-kit.asd";
             src = cl-boundary-kit;
-            lispDependencies = [ logKitBuild ];
+            lispDependencies = [ hostKitBuild ];
           };
           processKitBuild = cl.lispDerivation {
             lispSystem = "cl-process-kit";
@@ -244,6 +279,7 @@
             lispDependencies = [
               boundaryKitBuild
               logKitBuild
+              codecKitBuild
             ];
           };
 

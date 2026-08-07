@@ -48,5 +48,12 @@
     (multiple-value-bind (result context)
         (run-pipeline-with-context (make-pipeline :graph graph) :input 5)
       (declare (ignore result))
-      (let ((rebuilt (plist-to-context (context-to-plist context))))
+      (let ((values (context-values context)))
+        (setf (gethash (list "alpha" "value") values) 1
+              (context-values context) values))
+      (let* ((plist (context-to-plist context))
+             (rebuilt (plist-to-context plist)))
+        (is (equal (mapcar (lambda (entry) (getf entry :node))
+                           (getf plist :values))
+                   (quote ("alpha" "double"))))
         (is (= (context-value rebuilt "double") 10))))))

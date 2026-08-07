@@ -43,18 +43,22 @@ The source for that site lives in [docs/src/](docs/src/).
 ```nix
 # flake.nix
 inputs.cl-dataflow = {
-  url = "github:nerima-lisp/cl-dataflow/v1.0.0";
+  url = "github:nerima-lisp/cl-dataflow/v1.1.1";
   inputs.nixpkgs.follows = "nixpkgs";
 };
 ```
 
-Note the pinned tag. Consumers inside this org pin a release tag rather than
-follow the default branch.
+Note the pinned tag. Consumers inside this org pin the last verified release
+tag rather than follow the default branch, so this repo can hold a dependency
+one tag behind upstream until the newer release passes `nix flake check`.
 
 Outside Nix, put this checkout, `cl-prolog`, and `cl-concurrent-kit`
 somewhere ASDF can see them — `~/quicklisp/local-projects/`,
 `asdf:*central-registry*`, or `CL_SOURCE_REGISTRY` — then add
-`"cl-dataflow"` to your system's `:depends-on`. Full instructions are in
+`"cl-dataflow"` to your system's `:depends-on`. If you also want to run this
+repository's test suite without Nix, add `cl-weave`, `cl-process-kit`,
+`cl-boundary-kit`, `cl-log-kit`, `cl-codec-kit`, `cl-date-kit`, and
+`cl-host-kit` to the same source registry. Full instructions are in
 [Installation](https://nerima-lisp.github.io/cl-dataflow/installation/).
 
 ## Documentation
@@ -72,6 +76,7 @@ somewhere ASDF can see them — `~/quicklisp/local-projects/`,
 
 ```sh
 nix develop          # SBCL with CL_SOURCE_REGISTRY already set
+nix run              # default test app (same as `nix run .#test`)
 nix run .#test       # run the test suite
 nix run .#watch      # re-run the suite on every source change
 nix flake check      # tests + coverage + lint + formatting + docs, as CI runs it
@@ -79,7 +84,8 @@ nix fmt              # format Nix sources (treefmt)
 ```
 
 Without Nix, `sbcl --script run-tests.lisp` runs the same suite, given a
-`CL_SOURCE_REGISTRY` that resolves the dependencies.
+`CL_SOURCE_REGISTRY` that resolves the dependencies. `./scripts/verify.sh`
+wraps the same test entry point for local verification.
 
 Tests live in `t/` and run under
 [cl-weave](https://github.com/nerima-lisp/cl-weave), the org's test framework.

@@ -60,6 +60,32 @@
                internal-time-units-per-second)))
       (is (< gap-seconds sleep-seconds)))))
 
+(deftest map-pipeline-parallel-bounds-concurrency
+  (let* ((lock (cl-concurrent-kit:make-lock :name "test"))
+         (active-count 0)
+         (peak-active-count 0)
+         (inputs (loop for input from 1 to 8 collect input))
+         (graph (make-graph))
+         (pipeline
+           (progn
+             (add-node graph
+                       (make-node "bounded"
+                                  :handler
+                                  (lambda (input context)
+                                    (declare (ignore context))
+                                    (cl-concurrent-kit:with-lock-held (lock)
+                                      (incf active-count)
+                                      (setf peak-active-count
+                                            (max peak-active-count active-count)))
+                                    (sleep 0.02)
+                                    (cl-concurrent-kit:with-lock-held (lock)
+                                      (decf active-count))
+                                    input)))
+             (make-pipeline :graph graph))))
+    (is (equal (map-pipeline pipeline inputs :parallel t) inputs))
+    (is (> peak-active-count 1))
+    (is (<= peak-active-count cl-dataflow::+parallel-worker-limit+))))
+
 (deftest map-pipeline-rejects-parallel-with-a-shared-context
   (let ((pipeline (%double-pipeline)))
     (signals invalid-input-error
@@ -76,3 +102,32 @@
     (let ((outer (make-pipeline :graph outer-graph)))
       ;; (4 * 2) + 1
       (is (= (run-pipeline outer :input 4) 9)))))
+
+(deftest map-pipeline-parallel-propagates-handler-error-after-settling-and-cleans-up
+  (let* ((lock (cl-concurrent-kit:make-lock :name "test"))
+         (active-count 0)
+         (completed-count 0)
+         (graph (make-graph))
+         (pipeline
+           (progn
+             (add-node graph
+                       (make-node "fails"
+                                  :handler
+                                  (lambda (input context)
+                                    (declare (ignore context))
+                                    (cl-concurrent-kit:with-lock-held (lock)
+                                      (incf active-count))
+                                    (unwind-protect
+                                         (if (= input 1)
+                                             (error "expected map failure")
+                                             (progn
+                                               (sleep 0.02)
+                                               (cl-concurrent-kit:with-lock-held (lock)
+                                                 (incf completed-count))))
+                                      (cl-concurrent-kit:with-lock-held (lock)
+                                        (decf active-count))))))
+             (make-pipeline :graph graph))))
+    (signals error
+      (map-pipeline pipeline (list 1 2 3 4) :parallel t))
+    (is (= completed-count 3))
+    (is (= active-count 0))))
