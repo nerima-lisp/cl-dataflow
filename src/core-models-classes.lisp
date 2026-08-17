@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The CLOS class definitions behind every public data model (NODE, EDGE,
 ;;;; GRAPH, CONTEXT, EVENT, EFFECT, STATE-TRANSITION, STATE-MACHINE, PIPELINE)

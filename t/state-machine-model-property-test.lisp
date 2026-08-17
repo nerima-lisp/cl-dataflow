@@ -1,11 +1,11 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Model-based / stateful property testing of the state-machine runtime.
 ;;;;
 ;;;; `gen-state-machine` drives a reference transition model over a random event
 ;;;; trace and records the resulting states. The same trace is replayed through
 ;;;; the real `run-state-machine`, and the two final states must agree. This is a
-;;;; differential test: the cl-weave model and the cl-dataflow runtime are
+;;;; differential test: the cl-weave model and the cl-dataflow-kit runtime are
 ;;;; independent implementations of the same transition relation.
 ;;;;
 ;;;; The machine is TOTAL over the event alphabet {"fwd", "back"} across states

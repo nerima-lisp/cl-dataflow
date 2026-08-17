@@ -9,8 +9,8 @@
     #P"bootstrap.lisp"
     (make-pathname :name nil :type nil :defaults *load-truename*)))
 
-(defpackage #:cl-dataflow-integration (:use #:cl #:cl-dataflow))
-(in-package #:cl-dataflow-integration)
+(defpackage #:cl-dataflow-kit-integration (:use #:cl #:cl-dataflow-kit))
+(in-package #:cl-dataflow-kit-integration)
 
 ;;; 1. Model order processing as a pipeline: validate -> price -> ship.
 (defparameter *pipeline*

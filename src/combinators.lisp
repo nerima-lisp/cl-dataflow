@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Combinators over node handlers and pipelines. A node handler is an ordinary
 ;;;; (INPUT CONTEXT) -> OUTPUT closure, so behaviours like retry, fallback, and

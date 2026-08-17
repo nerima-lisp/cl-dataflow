@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; More stream operators and terminal collectors on top of the FLOW-STREAM core.
 ;;;; Operators stay lazy; the map-building consumers (group-by, frequencies,

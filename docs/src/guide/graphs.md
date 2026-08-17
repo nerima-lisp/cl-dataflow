@@ -16,16 +16,16 @@ an executable [Pipeline](pipelines.md).
 values `add-node` and `add-edge` insert:
 
 ```lisp
-(defparameter *graph* (cl-dataflow:make-graph))
+(defparameter *graph* (cl-dataflow-kit:make-graph))
 
-(cl-dataflow:add-node *graph* (cl-dataflow:make-node "ingest"))
-(cl-dataflow:add-node *graph* (cl-dataflow:make-node "parse"))
-(cl-dataflow:add-node *graph* (cl-dataflow:make-node "load"))
+(cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node "ingest"))
+(cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node "parse"))
+(cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node "load"))
 
-(cl-dataflow:add-edge *graph* "ingest" "parse")
-(cl-dataflow:add-edge *graph* "parse" "load")
+(cl-dataflow-kit:add-edge *graph* "ingest" "parse")
+(cl-dataflow-kit:add-edge *graph* "parse" "load")
 
-(cl-dataflow:find-node *graph* "parse")
+(cl-dataflow-kit:find-node *graph* "parse")
 ;; => #<NODE parse>
 ```
 
@@ -50,15 +50,15 @@ references an existing node and a declared port, no duplicate ports on a
 node) plus acyclicity, by calling `topological-sort` internally and letting
 its `graph-cycle-error` propagate. `topological-sort` returns nodes in a
 deterministic dependency order, computed with Kahn's algorithm over a single
-bulk-queried adjacency snapshot of the graph's `cl-prolog` edge relation —
+bulk-queried adjacency snapshot of the graph's `cl-prolog-kit` edge relation —
 see [Architecture](../reference/architecture.md#the-graph-runtime) for the full
 explanation of that runtime.
 
 ```lisp
-(cl-dataflow:validate-graph *graph*)
+(cl-dataflow-kit:validate-graph *graph*)
 ;; => T
 
-(mapcar #'cl-dataflow:node-name (cl-dataflow:topological-sort *graph*))
+(mapcar #'cl-dataflow-kit:node-name (cl-dataflow-kit:topological-sort *graph*))
 ;; => ("ingest" "parse" "load")
 ```
 
@@ -75,9 +75,9 @@ nodes — indegree-zero and no-successors, respectively — read from the same
 adjacency snapshot, name-ordered:
 
 ```lisp
-(mapcar #'cl-dataflow:node-name (cl-dataflow:graph-source-nodes *graph*))
+(mapcar #'cl-dataflow-kit:node-name (cl-dataflow-kit:graph-source-nodes *graph*))
 ;; => ("ingest")
-(mapcar #'cl-dataflow:node-name (cl-dataflow:graph-sink-nodes *graph*))
+(mapcar #'cl-dataflow-kit:node-name (cl-dataflow-kit:graph-sink-nodes *graph*))
 ;; => ("load")
 ```
 
@@ -85,16 +85,16 @@ adjacency snapshot, name-ordered:
 answer reachability questions over the same edge relation:
 
 ```lisp
-(cl-dataflow:graph-reachable-p *graph* "ingest" "load")
+(cl-dataflow-kit:graph-reachable-p *graph* "ingest" "load")
 ;; => T
 
-(mapcar #'cl-dataflow:node-name (cl-dataflow:graph-descendants *graph* "ingest"))
+(mapcar #'cl-dataflow-kit:node-name (cl-dataflow-kit:graph-descendants *graph* "ingest"))
 ;; => ("load" "parse")
 
-(mapcar #'cl-dataflow:node-name (cl-dataflow:graph-ancestors *graph* "load"))
+(mapcar #'cl-dataflow-kit:node-name (cl-dataflow-kit:graph-ancestors *graph* "load"))
 ;; => ("ingest" "parse")
 
-(cl-dataflow:graph-path *graph* "ingest" "load")
+(cl-dataflow-kit:graph-path *graph* "ingest" "load")
 ;; => ("ingest" "parse" "load")
 ```
 
@@ -124,25 +124,25 @@ removal and composition:
 | `graph-contract-edge` | Returns a **new** graph with two adjacent nodes merged into one: every edge incident to the absorbed node is redirected to the surviving node's first port, edges that become self-loops through the merge are dropped, and edges that become duplicates after redirecting collapse into one (the first edge's metadata wins). |
 
 ```lisp
-(cl-dataflow:remove-edge *graph* "parse" "load")
+(cl-dataflow-kit:remove-edge *graph* "parse" "load")
 ;; => T  (the parse -> load edge was removed)
 
-(cl-dataflow:remove-edge *graph* "parse" "load")
+(cl-dataflow-kit:remove-edge *graph* "parse" "load")
 ;; => nil  (already gone; no matching edge left to remove)
 
-(cl-dataflow:remove-node *graph* "ingest")
+(cl-dataflow-kit:remove-node *graph* "ingest")
 ;; => *graph*, now missing "ingest" and the "ingest" -> "parse" edge
 
-(defparameter *sub* (cl-dataflow:graph-subgraph *graph* '("parse" "load")))
+(defparameter *sub* (cl-dataflow-kit:graph-subgraph *graph* '("parse" "load")))
 
 (defparameter *merged*
-  (cl-dataflow:graph-merge *sub* (cl-dataflow:make-graph)))
+  (cl-dataflow-kit:graph-merge *sub* (cl-dataflow-kit:make-graph)))
 
 (defparameter *renamed*
-  (cl-dataflow:graph-relabel-node *merged* "parse" "transform"))
+  (cl-dataflow-kit:graph-relabel-node *merged* "parse" "transform"))
 
 (defparameter *contracted*
-  (cl-dataflow:graph-contract-edge *graph* "parse" "load"))
+  (cl-dataflow-kit:graph-contract-edge *graph* "parse" "load"))
 ```
 
 Only `remove-node` and `remove-edge` mutate their argument; `graph-subgraph`,
@@ -163,11 +163,11 @@ identity.
 The examples below use a four-node diamond:
 
 ```lisp
-(defparameter *dag* (cl-dataflow:make-graph))
+(defparameter *dag* (cl-dataflow-kit:make-graph))
 (dolist (name '("a" "b" "c" "d"))
-  (cl-dataflow:add-node *dag* (cl-dataflow:make-node name)))
+  (cl-dataflow-kit:add-node *dag* (cl-dataflow-kit:make-node name)))
 (dolist (edge '(("a" "b") ("a" "c") ("b" "d") ("c" "d")))
-  (cl-dataflow:add-edge *dag* (first edge) (second edge)))
+  (cl-dataflow-kit:add-edge *dag* (first edge) (second edge)))
 ```
 
 `graph->dot` and `graph->mermaid` render a graph for visualization, walking
@@ -176,10 +176,10 @@ a deterministic snapshot — nodes name-sorted, edges sorted by
 text:
 
 ```lisp
-(cl-dataflow:graph->dot *dag* :name "deps")
+(cl-dataflow-kit:graph->dot *dag* :name "deps")
 ;; => "digraph deps {\n  \"a\";\n  ...\n}\n"
 
-(cl-dataflow:graph->mermaid *dag* :direction "LR")
+(cl-dataflow-kit:graph->mermaid *dag* :direction "LR")
 ;; => "flowchart LR\n  n0[\"a\"]\n  ...\n"
 ```
 
@@ -191,7 +191,7 @@ layout to their own engines — and, like `topological-sort`, it signals
 `graph-cycle-error` on a cyclic graph:
 
 ```lisp
-(cl-dataflow:graph-layout *dag*)
+(cl-dataflow-kit:graph-layout *dag*)
 ;; => (("a" 0 . 0) ("b" 1 . 0) ("c" 1 . 1) ("d" 2 . 0))
 ```
 
@@ -199,10 +199,10 @@ layout to their own engines — and, like `topological-sort`, it signals
 a plain plist of `:metadata`, `:nodes`, and `:edges`:
 
 ```lisp
-(defparameter *plist* (cl-dataflow:graph-to-plist *dag*))
-(defparameter *restored* (cl-dataflow:plist-to-graph *plist*))
+(defparameter *plist* (cl-dataflow-kit:graph-to-plist *dag*))
+(defparameter *restored* (cl-dataflow-kit:plist-to-graph *plist*))
 
-(cl-dataflow:graph-equal-p *dag* *restored*)
+(cl-dataflow-kit:graph-equal-p *dag* *restored*)
 ;; => T
 ```
 

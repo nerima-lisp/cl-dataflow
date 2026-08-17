@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest event-and-effect-plist-round-trip
   (let* ((event (make-event :ready :payload 42 :metadata '((:k :v)) :trace-index 3))

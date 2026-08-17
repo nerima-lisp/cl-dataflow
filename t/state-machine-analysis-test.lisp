@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defmacro with-traffic-light ((machine) &body body)
   "A small cyclic machine: green -> yellow -> red -> green, plus an unreachable

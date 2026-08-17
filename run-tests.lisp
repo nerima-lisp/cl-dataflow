@@ -1,11 +1,11 @@
-;;;; Lisp-level entry point for the cl-dataflow test suite.
+;;;; Lisp-level entry point for the cl-dataflow-kit test suite.
 ;;;;
 ;;;;     sbcl --script run-tests.lisp
 ;;;;     nix run .#test
 ;;;;
 ;;;; This is the single entry point the org standard asks for, so that the
 ;;;; suite can be started without the cl-weave CLI on PATH. CL_SOURCE_REGISTRY
-;;;; must already resolve cl-dataflow and its dependencies; flake.nix sets it
+;;;; must already resolve cl-dataflow-kit and its dependencies; flake.nix sets it
 ;;;; for `nix flake check`, `nix run .#test` and `nix develop`.
 
 (require :asdf)
@@ -19,10 +19,10 @@
 
 (handler-case
     (progn
-      (asdf:load-system "cl-dataflow/test")
-      (uiop:symbol-call '#:cl-dataflow.test '#:run-tests))
+      (asdf:load-system "cl-dataflow-kit/test")
+      (uiop:symbol-call '#:cl-dataflow-kit.test '#:run-tests))
   (error (condition)
-    (format *error-output* "~&cl-dataflow test suite failed:~%~A~%" condition)
+    (format *error-output* "~&cl-dataflow-kit test suite failed:~%~A~%" condition)
     (uiop:quit 1)))
 
 (uiop:quit 0)

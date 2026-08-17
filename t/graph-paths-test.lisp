@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Simple-path enumeration and cycle discovery, mirroring src/graph-paths.lisp.
 
@@ -33,12 +33,12 @@
           (gethash "a" successors) '("shared")
           (gethash "b" successors) '("shared")
           (gethash "shared" successors) '("a"))
-    (is (not (cl-dataflow::%reachable-through-successors-p
+    (is (not (cl-dataflow-kit::%reachable-through-successors-p
               successors "start" "missing"))))
   (let ((successors (make-hash-table :test #'equal)))
     (setf (gethash "start" successors) '("shared" "shared")
           (gethash "shared" successors) '("start"))
-    (is (not (cl-dataflow::%reachable-through-successors-p
+    (is (not (cl-dataflow-kit::%reachable-through-successors-p
               successors "start" "missing")))))
 
 (deftest graph-prolog-traversal-dedups-parallel-edges-and-converging-paths

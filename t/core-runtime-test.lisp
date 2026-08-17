@@ -1,9 +1,9 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (define-public-api-contract-test public-api-exports-match-documentation
-  "CL-DATAFLOW"
+  "CL-DATAFLOW-KIT"
   (:classes
-    (cl-dataflow-error
+    (cl-dataflow-kit-error
       invalid-input-error
       graph-error
       node-not-found-error
@@ -26,7 +26,7 @@
       define-workflow
       with-effect-handler-scope))
   (:errors
-    cl-dataflow-error
+    cl-dataflow-kit-error
     invalid-input-error
     invalid-input-expected
     invalid-input-value

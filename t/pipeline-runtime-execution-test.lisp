@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest
  pipeline-copies-mutable-node-results-into-context-and-trace
@@ -38,7 +38,7 @@
        (setf handler-input input)
        :ok))
     (declare (ignore stage pipeline))
-    (let ((raw-trace (first (cl-dataflow::%context-trace-list context))))
+    (let ((raw-trace (first (cl-dataflow-kit::%context-trace-list context))))
       (is (eq handler-input pipeline-input))
       (is (eq (getf raw-trace :input) handler-input))))))
 
@@ -197,15 +197,15 @@
                         7))
       (declare (ignore stage context))
       (let* ((live-node (find-node (pipeline-graph pipeline) "source"))
-             (original-plan (cl-dataflow::%pipeline-execution-plan pipeline)))
+             (original-plan (cl-dataflow-kit::%pipeline-execution-plan pipeline)))
         (setf (node-outputs live-node) (list setter-port))
         (is (= (run-pipeline pipeline) 7))
-        (let* ((setter-plan (cl-dataflow::%pipeline-execution-plan pipeline))
+        (let* ((setter-plan (cl-dataflow-kit::%pipeline-execution-plan pipeline))
                (planned-name
                  (caaar
-                   (cl-dataflow::%pipeline-execution-plan-output-key-plans
+                   (cl-dataflow-kit::%pipeline-execution-plan-output-key-plans
                      setter-plan)))
-               (live-name (first (cl-dataflow::%node-outputs-list live-node))))
+               (live-name (first (cl-dataflow-kit::%node-outputs-list live-node))))
           (is (not (eq original-plan setter-plan)))
           (is (string= planned-name "right"))
           (is (not (eq planned-name live-name)))
@@ -214,12 +214,12 @@
           (is (= (run-pipeline pipeline) 7))
           (is
             (not
-              (eq setter-plan (cl-dataflow::%pipeline-execution-plan pipeline))))
+              (eq setter-plan (cl-dataflow-kit::%pipeline-execution-plan pipeline))))
           (is
             (string=
               (caaar
-                (cl-dataflow::%pipeline-execution-plan-output-key-plans
-                  (cl-dataflow::%pipeline-execution-plan pipeline)))
+                (cl-dataflow-kit::%pipeline-execution-plan-output-key-plans
+                  (cl-dataflow-kit::%pipeline-execution-plan pipeline)))
               "light")))))))
 
 (deftest pipeline-fan-in-node-resolves-multiple-cached-input-bindings
@@ -268,7 +268,7 @@
     (add-node graph sink)
     (add-edge graph source sink :from-port "value" :to-port "declared")
     (let* ((pipeline (make-pipeline :graph graph :stages (list source sink)))
-           (live-edge (first (cl-dataflow::%graph-edges-list (pipeline-graph pipeline)))))
+           (live-edge (first (cl-dataflow-kit::%graph-edges-list (pipeline-graph pipeline)))))
       (is (eq (run-pipeline pipeline :input :pipeline-input) :done))
       (is (= seen-input 42))
       (setf (edge-to-port live-edge) "undeclared"
@@ -281,7 +281,7 @@
   ;; empty sink-plan branch itself is easiest to pin down directly.
   (is
    (null
-    (cl-dataflow::%collect-cached-sink-results (make-context) '()))))
+    (cl-dataflow-kit::%collect-cached-sink-results (make-context) '()))))
 
 (deftest pipeline-empty-pipeline-run-yields-no-sink-result
   ;; With no stages the plan has no sink-result plans, exercising the empty-sinks
@@ -299,10 +299,10 @@
               (declare (ignore input context))
               :ok)))
          (pipeline (single-node-pipeline stage)))
-    (is (cl-dataflow::%pipeline-execution-plan pipeline))
+    (is (cl-dataflow-kit::%pipeline-execution-plan pipeline))
     (setf (pipeline-stages pipeline) nil)
     (is (null (pipeline-stages pipeline)))
-    (is (null (cl-dataflow::%pipeline-execution-plan pipeline)))
+    (is (null (cl-dataflow-kit::%pipeline-execution-plan pipeline)))
     (is (null (run-pipeline pipeline)))))
 
 (deftest pipeline-signature-currency-checks-detect-length-mismatch
@@ -313,37 +313,37 @@
          (node (make-node "n"))
          (edge (make-edge "a" "b" :from-port "out" :to-port "in"))
          (stage-signature
-          (make-instance 'cl-dataflow::pipeline-stage-signature
+          (make-instance 'cl-dataflow-kit::pipeline-stage-signature
                          :node node
                          :name "n"
                          :inputs '()
                          :outputs '()))
          (edge-signature
-          (make-instance 'cl-dataflow::pipeline-edge-signature
+          (make-instance 'cl-dataflow-kit::pipeline-edge-signature
                          :edge edge
                          :from (edge-from edge)
                          :from-port (edge-from-port edge)
                          :to (edge-to edge)
                          :to-port (edge-to-port edge))))
     (add-node graph node)
-    (is (cl-dataflow::%pipeline-stage-signatures-current-p graph '() '()))
-    (is (not (cl-dataflow::%pipeline-stage-signatures-current-p graph (list node) '())))
-    (is (not (cl-dataflow::%pipeline-stage-signatures-current-p graph '() (list stage-signature))))
-    (is (not (cl-dataflow::%pipeline-stage-signatures-current-p
+    (is (cl-dataflow-kit::%pipeline-stage-signatures-current-p graph '() '()))
+    (is (not (cl-dataflow-kit::%pipeline-stage-signatures-current-p graph (list node) '())))
+    (is (not (cl-dataflow-kit::%pipeline-stage-signatures-current-p graph '() (list stage-signature))))
+    (is (not (cl-dataflow-kit::%pipeline-stage-signatures-current-p
               graph
               (list node node)
               (list stage-signature))))
-    (is (not (cl-dataflow::%pipeline-stage-signatures-current-p
+    (is (not (cl-dataflow-kit::%pipeline-stage-signatures-current-p
               graph
               (list node)
               (list stage-signature stage-signature))))
-    (is (cl-dataflow::%pipeline-edge-signatures-current-p '() '()))
-    (is (not (cl-dataflow::%pipeline-edge-signatures-current-p (list :edge) '())))
-    (is (not (cl-dataflow::%pipeline-edge-signatures-current-p '() (list edge-signature))))
-    (is (not (cl-dataflow::%pipeline-edge-signatures-current-p
+    (is (cl-dataflow-kit::%pipeline-edge-signatures-current-p '() '()))
+    (is (not (cl-dataflow-kit::%pipeline-edge-signatures-current-p (list :edge) '())))
+    (is (not (cl-dataflow-kit::%pipeline-edge-signatures-current-p '() (list edge-signature))))
+    (is (not (cl-dataflow-kit::%pipeline-edge-signatures-current-p
               (list edge edge)
               (list edge-signature))))
-    (is (not (cl-dataflow::%pipeline-edge-signatures-current-p
+    (is (not (cl-dataflow-kit::%pipeline-edge-signatures-current-p
               (list edge)
               (list edge-signature edge-signature))))))
 

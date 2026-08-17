@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest state-machine-to-plist-round-trips-structure
   (with-state-machine-fixture (machine

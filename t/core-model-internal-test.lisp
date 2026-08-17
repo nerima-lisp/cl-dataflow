@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest
   internal-output-binding-helpers-normalize-node-results
@@ -6,62 +6,62 @@
         (disconnected (make-node "disconnected"))
         (single (make-node "single" :outputs '("value")))
         (multi (make-node "multi" :outputs '("left" "right"))))
-    (setf (slot-value disconnected 'cl-dataflow::outputs) nil)
-    (is (equal (cl-dataflow::%node-output-bindings disconnected 42) '()))
-    (is (equal (cl-dataflow::%node-output-bindings silent 42) '(("value" . 42))))
-    (is (equal (cl-dataflow::%node-output-bindings single 42) '(("value" . 42))))
+    (setf (slot-value disconnected 'cl-dataflow-kit::outputs) nil)
+    (is (equal (cl-dataflow-kit::%node-output-bindings disconnected 42) '()))
+    (is (equal (cl-dataflow-kit::%node-output-bindings silent 42) '(("value" . 42))))
+    (is (equal (cl-dataflow-kit::%node-output-bindings single 42) '(("value" . 42))))
     (is
       (equal
-        (cl-dataflow::%node-output-bindings single '(("value" . 42)))
+        (cl-dataflow-kit::%node-output-bindings single '(("value" . 42)))
         '(("value" . 42))))
     (is
       (equal
-        (cl-dataflow::%node-output-bindings multi '(:left 1 :right 2))
+        (cl-dataflow-kit::%node-output-bindings multi '(:left 1 :right 2))
         '(("LEFT" . 1) ("RIGHT" . 2))))))
 (deftest
   internal-cps-handoff-and-macro-options-keep-boundaries-explicit
   (is (equal
-        (cl-dataflow::%plist-option :state nil '(:state nil))
+        (cl-dataflow-kit::%plist-option :state nil '(:state nil))
         '(:state nil)))
   (is (null
-        (cl-dataflow::%plist-option :state nil '())))
+        (cl-dataflow-kit::%plist-option :state nil '())))
   (is (equal
-        (cl-dataflow::%plist-option :state 42 '(:state 42))
+        (cl-dataflow-kit::%plist-option :state 42 '(:state 42))
         '(:state 42)))
   (let* ((transition (list :transition))
          (handoff
-           (cl-dataflow::%make-transition-handoff
+           (cl-dataflow-kit::%make-transition-handoff
             transition :advance :idle :ready 'done)))
-    (is (typep handoff 'cl-dataflow::%transition-handoff))
+    (is (typep handoff 'cl-dataflow-kit::%transition-handoff))
     (is (eq transition
-            (cl-dataflow::%transition-handoff-transition handoff)))
+            (cl-dataflow-kit::%transition-handoff-transition handoff)))
     (is (eq :advance
-            (cl-dataflow::%transition-handoff-event-type handoff)))
+            (cl-dataflow-kit::%transition-handoff-event-type handoff)))
     (is (eq :idle
-            (cl-dataflow::%transition-handoff-previous-state handoff)))
+            (cl-dataflow-kit::%transition-handoff-previous-state handoff)))
     (is (eq :ready
-            (cl-dataflow::%transition-handoff-next-state handoff)))
+            (cl-dataflow-kit::%transition-handoff-next-state handoff)))
     (is (eq 'done
-            (cl-dataflow::%transition-handoff-action-result handoff)))
+            (cl-dataflow-kit::%transition-handoff-action-result handoff)))
     (is (not (listp handoff)))))
 (deftest
   internal-accessor-and-model-macro-contracts-expand-all-data-driven-clauses
   (let ((setf-forms
           (list
             (list (quote setf)
-                  (list (quote cl-dataflow::%graph-edges-list) (quote graph))
+                  (list (quote cl-dataflow-kit::%graph-edges-list) (quote graph))
                   (quote new-edges))
             (list (quote setf)
-                  (list (quote cl-dataflow::%context-events-list) (quote context))
+                  (list (quote cl-dataflow-kit::%context-events-list) (quote context))
                   (quote new-events))
             (list (quote setf)
-                  (list (quote cl-dataflow::%context-effects-list) (quote context))
+                  (list (quote cl-dataflow-kit::%context-effects-list) (quote context))
                   (quote new-effects))
             (list (quote setf)
-                  (list (quote cl-dataflow::%context-trace-list) (quote context))
+                  (list (quote cl-dataflow-kit::%context-trace-list) (quote context))
                   (quote new-trace))
             (list (quote setf)
-                  (list (quote cl-dataflow::%state-machine-history-list) (quote machine))
+                  (list (quote cl-dataflow-kit::%state-machine-history-list) (quote machine))
                   (quote new-history)))))
     (dolist (form setf-forms)
       (let* ((setf-expansion
@@ -71,13 +71,13 @@
              (access-form (fifth setf-expansion)))
         (is (equal (first store-form) (quote setf)))
         (is (equal (first (second store-form))
-                   (quote cl-dataflow::%read-slot)))
+                   (quote cl-dataflow-kit::%read-slot)))
         (is (equal (first access-form)
                    (first (second form)))))))
   (let ((slot-apis
           (macroexpand-1
             (quote
-              (cl-dataflow::define-slot-apis
+              (cl-dataflow-kit::define-slot-apis
                 (:read-only sample-read object name)
                 (:copy sample-copy object values)
                 (:copy sample-copy-custom object values custom-copy)
@@ -89,7 +89,7 @@
   (let ((predicates
           (macroexpand-1
             (quote
-              (cl-dataflow::define-type-predicates
+              (cl-dataflow-kit::define-type-predicates
                 (sample-node-p node)
                 (sample-graph-p graph))))))
     (is (equal (first predicates) (quote progn)))
@@ -97,11 +97,11 @@
   (let ((print-methods
           (macroexpand-1
             (quote
-              (cl-dataflow::define-print-object
-                (cl-dataflow::node
+              (cl-dataflow-kit::define-print-object
+                (cl-dataflow-kit::node
                   (node stream)
                   "~A"
-                  (cl-dataflow::node-name node)))))))
+                  (cl-dataflow-kit::node-name node)))))))
     (is (equal (first print-methods) (quote progn)))
     (is (= (length (rest print-methods)) 1))))
 
@@ -117,20 +117,20 @@
     (add-edge graph source single-sink :from-port "left")
     (add-edge graph source join :from-port "left" :to-port "left")
     (add-edge graph source join :from-port "right" :to-port "right")
-    (cl-dataflow::%store-value context (node-name source) "left" 10)
-    (cl-dataflow::%store-value context (node-name source) "right" 20)
+    (cl-dataflow-kit::%store-value context (node-name source) "left" 10)
+    (cl-dataflow-kit::%store-value context (node-name source) "right" 20)
     (is
-      (= (cl-dataflow::%collect-node-inputs context graph single-sink :ignored) 10))
+      (= (cl-dataflow-kit::%collect-node-inputs context graph single-sink :ignored) 10))
     (is
       (equal
-        (cl-dataflow::%collect-node-inputs context graph join :ignored)
+        (cl-dataflow-kit::%collect-node-inputs context graph join :ignored)
         (list (cons "left" 10) (cons "right" 20)))))
   (let ((standalone-graph (make-graph))
         (standalone (make-node "standalone" :inputs '("left" "right"))))
     (add-node standalone-graph standalone)
     (is
       (equal
-          (cl-dataflow::%collect-node-inputs
+          (cl-dataflow-kit::%collect-node-inputs
             (make-context)
             standalone-graph
             standalone
@@ -141,13 +141,13 @@
   internal-resolve-node-input-handles-missing-and-disconnected-bindings
   (let ((node (make-node "standalone" :inputs '("value"))))
     (is (null
-          (cl-dataflow::%resolve-node-input
+          (cl-dataflow-kit::%resolve-node-input
             (make-context)
             node
             :ignored
             (cons t nil))))
     (is
-      (= (cl-dataflow::%resolve-node-input
+      (= (cl-dataflow-kit::%resolve-node-input
            (make-context)
            node
            '("value" 7)
@@ -171,13 +171,13 @@
       (add-node graph node))
     (add-edge graph a sink)
     (add-edge graph b sink)
-    (cl-dataflow::%store-value context (node-name a) "value" 1)
-    (cl-dataflow::%store-value context (node-name b) "value" 2)
-    (is (= (cl-dataflow::%collect-node-inputs context graph sink :ignored)
+    (cl-dataflow-kit::%store-value context (node-name a) "value" 1)
+    (cl-dataflow-kit::%store-value context (node-name b) "value" 2)
+    (is (= (cl-dataflow-kit::%collect-node-inputs context graph sink :ignored)
             2))
-    (is (= (cl-dataflow::%collect-node-inputs
+    (is (= (cl-dataflow-kit::%collect-node-inputs
             context graph sink :ignored
-            (cl-dataflow::%incoming-edges-index graph))
+            (cl-dataflow-kit::%incoming-edges-index graph))
             2))))
 
 (deftest
@@ -191,74 +191,74 @@
       (add-node graph node))
     (add-edge graph source left :from-port "left")
     (add-edge graph source right :from-port "right")
-    (cl-dataflow::%store-value context (node-name left) "value" 16)
-    (cl-dataflow::%store-value context (node-name right) "value" 30)
+    (cl-dataflow-kit::%store-value context (node-name left) "value" 16)
+    (cl-dataflow-kit::%store-value context (node-name right) "value" 30)
     (is
       (equal
-        (cl-dataflow::%collect-sink-results graph context (topological-sort graph))
+        (cl-dataflow-kit::%collect-sink-results graph context (topological-sort graph))
         '(("left" ("value" . 16)) ("right" ("value" . 30))))))
   (let* ((graph (make-graph))
           (sink (make-node "sink" :outputs '("left" "right")))
           (context (make-context)))
     (add-node graph sink)
-    (cl-dataflow::%store-value context (node-name sink) "left" 6)
-    (cl-dataflow::%store-value context (node-name sink) "right" 10)
+    (cl-dataflow-kit::%store-value context (node-name sink) "left" 6)
+    (cl-dataflow-kit::%store-value context (node-name sink) "right" 10)
     (is
       (equal
-        (cl-dataflow::%collect-sink-results graph context (topological-sort graph))
+        (cl-dataflow-kit::%collect-sink-results graph context (topological-sort graph))
         '(("left" . 6) ("right" . 10)))))
   (let* ((graph (make-graph))
           (sink (make-node "sink"))
           (context (make-context)))
     (add-node graph sink)
-    (cl-dataflow::%store-value context (node-name sink) "value" 16)
+    (cl-dataflow-kit::%store-value context (node-name sink) "value" 16)
     (is
       (=
-        (cl-dataflow::%collect-sink-results graph context (topological-sort graph))
+        (cl-dataflow-kit::%collect-sink-results graph context (topological-sort graph))
         16))))
 
 (deftest
   internal-collect-sink-results-return-nil-without-execution-order
   (let* ((graph (make-graph))
           (context (make-context)))
-    (is (null (cl-dataflow::%collect-sink-results graph context '())))))
+    (is (null (cl-dataflow-kit::%collect-sink-results graph context '())))))
 
 (deftest
   internal-collect-cached-sink-results-return-nil-without-sink-plans
-  (is (null (cl-dataflow::%collect-cached-sink-results (make-context) nil))))
+  (is (null (cl-dataflow-kit::%collect-cached-sink-results (make-context) nil))))
 
 (deftest
   internal-normalization-helpers-cover-scalar-plist-and-table-paths
   (with-test-table
     (table "value" 10 "other" 20)
-    (let ((public-copy (cl-dataflow::%copy-structured-value table)))
+    (let ((public-copy (cl-dataflow-kit::%copy-structured-value table)))
       (setf (gethash "value" public-copy) 99)
       (is (= (gethash "value" table) 10)))
-    (is (equal (cl-dataflow::%normalize-name :state) "STATE"))
-    (is (equal (cl-dataflow::%normalize-name 42) "42"))
+    (is (equal (cl-dataflow-kit::%normalize-name :state) "STATE"))
+    (is (equal (cl-dataflow-kit::%normalize-name 42) "42"))
     (let ((circular (list "loop")))
       (setf (cdr circular) circular)
-      (is (search "#1=" (cl-dataflow::%normalize-name circular))))
-    (is (equal (cl-dataflow::%normalize-port-list :value) '("VALUE")))
-    (is (= (cl-dataflow::%plist-value '("value" 1 "other" 2) "other") 2))
-    (is (null (cl-dataflow::%plist-value '("value" 1) "missing")))
-    (is (= (cl-dataflow::%normalize-structured-input table '("value")) 10))
+      (is (search "#1=" (cl-dataflow-kit::%normalize-name circular))))
+    (is (equal (cl-dataflow-kit::%normalize-port-list :value) '("VALUE")))
+    (is (= (cl-dataflow-kit::%plist-value '("value" 1 "other" 2) "other") 2))
+    (is (null (cl-dataflow-kit::%plist-value '("value" 1) "missing")))
+    (is (= (cl-dataflow-kit::%normalize-structured-input table '("value")) 10))
     (is
-      (= (cl-dataflow::%normalize-structured-input '(("value" . 11)) '("value")) 11))
+      (= (cl-dataflow-kit::%normalize-structured-input '(("value" . 11)) '("value")) 11))
     (is
       (equal
-        (cl-dataflow::%normalize-structured-input '("value" 1 "other" 2) '("value"))
+        (cl-dataflow-kit::%normalize-structured-input '("value" 1 "other" 2) '("value"))
         1))
-    (is (equal (cl-dataflow::%normalize-output-structure 7 nil) 7))
-    (is (equal (cl-dataflow::%normalize-output-structure 7 '("value"))
+    (is (equal (cl-dataflow-kit::%normalize-output-structure 7 nil) 7))
+    (is (equal (cl-dataflow-kit::%normalize-output-structure 7 '("value"))
                '(("value" . 7))))
-    (is (equal (cl-dataflow::%hash-table-keys table)
+    (is (equal (cl-dataflow-kit::%hash-table-keys table)
                '("value" "other")))
     ;; An odd-length, non-alist list is neither a plist nor an alist, so
     ;; %CLASSIFY-STRUCTURED-VALUE falls through to :SCALAR -- exercising
     ;; EVENP's false outcome, which every other structured-value fixture here
     ;; is even-length and so never reaches.
-    (is (not (cl-dataflow::%structured-value-p '(:odd-length))))))
+    (is (not (cl-dataflow-kit::%structured-value-p '(:odd-length))))))
 
 (it-fuzz "%normalize-name never errors and always returns a string on arbitrary input"
     ((value (gen-sexp :max-depth 4 :max-list-length 6)))
@@ -268,36 +268,36 @@
   ;; value (see its own comment on binding *PRINT-CIRCLE*), so this fuzzes
   ;; broader, unanticipated shapes GEN-SEXP produces rather than re-checking
   ;; those three known cases.
-  (is (stringp (cl-dataflow::%normalize-name value))))
+  (is (stringp (cl-dataflow-kit::%normalize-name value))))
 
 (deftest
   internal-copy-structured-value-preserves-circular-structures
   (dolist (value (list 42 #\x :keyword #'car))
-    (is (eql (cl-dataflow::%copy-structured-value value) value)))
+    (is (eql (cl-dataflow-kit::%copy-structured-value value) value)))
   (let ((function #'identity))
-    (is (eq (cl-dataflow::%copy-structured-value function) function)))
+    (is (eq (cl-dataflow-kit::%copy-structured-value function) function)))
   (let ((value (list "loop")))
     (setf (cdr value) value)
-    (let ((copy (cl-dataflow::%copy-structured-value value)))
+    (let ((copy (cl-dataflow-kit::%copy-structured-value value)))
       (is (not (eq copy value)))
       (is (not (eq (car copy) (car value))))
       (is (equal (car copy) "loop"))
       (is (eq (cdr copy) copy))))
   (let ((value (make-array 1)))
     (setf (aref value 0) value)
-    (let ((copy (cl-dataflow::%copy-structured-value value)))
+    (let ((copy (cl-dataflow-kit::%copy-structured-value value)))
       (is (not (eq copy value)))
       (is (eq (aref copy 0) copy))))
   (let ((table (make-hash-table :test #'equal)))
     (setf (gethash "self" table) table
           (gethash "value" table) 7)
-    (let ((copy (cl-dataflow::%copy-structured-value table)))
+    (let ((copy (cl-dataflow-kit::%copy-structured-value table)))
       (is (not (eq copy table)))
       (is (= (gethash (copy-seq "value") copy) 7))
       (is (eq (gethash "self" copy) copy))))
   (let* ((shared (list :shared))
           (value (list shared shared))
-          (copy (cl-dataflow::%copy-structured-value value)))
+          (copy (cl-dataflow-kit::%copy-structured-value value)))
     (is (not (eq copy value)))
     (is (not (eq (first copy) shared)))
     (is (eq (first copy) (second copy)))))
@@ -309,7 +309,7 @@
   ;; exhaustion error.
   (let* ((length 500000)
          (value (loop for i below length collect i))
-         (copy (cl-dataflow::%copy-structured-value value)))
+         (copy (cl-dataflow-kit::%copy-structured-value value)))
     (is (equal copy value))
     (is (not (eq copy value)))
     (is (= (length copy) length))))
@@ -326,9 +326,9 @@
          (graph (make-graph :metadata '((:kind :graph)))))
     (add-node graph node)
     (setf (graph-edges graph) (list edge))
-    (let* ((graph-copy (cl-dataflow::%copy-error-value graph))
-            (copied-node (gethash "source" (slot-value graph-copy 'cl-dataflow::nodes)))
-            (copied-edge (first (slot-value graph-copy 'cl-dataflow::edges))))
+    (let* ((graph-copy (cl-dataflow-kit::%copy-error-value graph))
+            (copied-node (gethash "source" (slot-value graph-copy 'cl-dataflow-kit::nodes)))
+            (copied-edge (first (slot-value graph-copy 'cl-dataflow-kit::edges))))
       (is (not (eq graph-copy graph)))
       (is (not (eq copied-node node)))
       (is (not (eq copied-edge edge)))
@@ -340,11 +340,11 @@
       (is (equal (edge-metadata edge) '((:kind :edge))))
       (is (equal (graph-metadata graph) '((:kind :graph)))))
     (let* ((event (make-event "started" :payload '(:n 1)))
-           (event-copy (cl-dataflow::%copy-error-value event)))
+           (event-copy (cl-dataflow-kit::%copy-error-value event)))
       (is (not (eq event-copy event)))
       (is (equal (event-payload event-copy) (event-payload event))))
     (let* ((effect (make-effect "log" :payload '(:msg "hi")))
-           (effect-copy (cl-dataflow::%copy-error-value effect)))
+           (effect-copy (cl-dataflow-kit::%copy-error-value effect)))
       (is (not (eq effect-copy effect)))
       (is (equal (effect-payload effect-copy) (effect-payload effect))))))
 
@@ -353,10 +353,10 @@
   ;; even when construction left a slot unbound; %SLOT-VALUE-OR must fall back
   ;; to its default rather than signalling UNBOUND-SLOT in that case.
   (let ((node (make-node "partial" :inputs '("in"))))
-    (slot-makunbound node 'cl-dataflow::outputs)
-    (let ((snapshot (cl-dataflow::%copy-node-error-snapshot node)))
+    (slot-makunbound node 'cl-dataflow-kit::outputs)
+    (let ((snapshot (cl-dataflow-kit::%copy-node-error-snapshot node)))
       (is (equal (node-name snapshot) "partial"))
       (is (equal (node-inputs snapshot) '("in")))
       ;; NODE-OUTPUTS normalizes NIL back to the default ("value") port on
       ;; read, so check the raw slot to confirm %SLOT-VALUE-OR's fallback.
-      (is (null (slot-value snapshot 'cl-dataflow::outputs))))))
+      (is (null (slot-value snapshot 'cl-dataflow-kit::outputs))))))

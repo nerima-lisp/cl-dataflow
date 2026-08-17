@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph->dot-renders-deterministic-digraph
   (with-graph-fixture (graph
@@ -23,7 +23,7 @@
   ;; which some invocations of this suite (e.g. a saved executable image)
   ;; leave unbound.
   (let ((*snapshot-directory*
-          (merge-pathnames #P"__snapshots__/" (asdf:system-source-directory "cl-dataflow/test"))))
+          (merge-pathnames #P"__snapshots__/" (asdf:system-source-directory "cl-dataflow-kit/test"))))
     (with-graph-fixture (graph
                          ((a "a") (b "b") (c "c"))
                          :edges ((a b) (a c)))

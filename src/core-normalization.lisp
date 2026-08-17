@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Normalization helpers shared across the model and runtime layers: name
 ;;;; and metadata canonicalization, port-list dedup/defaulting, and the

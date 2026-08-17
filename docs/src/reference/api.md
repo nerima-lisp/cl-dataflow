@@ -1,12 +1,12 @@
 # Public API Reference
 
-`cl-dataflow` exports a single package, `cl-dataflow`. This page groups every
+`cl-dataflow-kit` exports a single package, `cl-dataflow-kit`. This page groups every
 exported symbol by area; the [Guide](../guide/pipelines.md) pages explain how the
 groups fit together, with runnable examples.
 
 ## Errors
 
-`cl-dataflow-error`, `graph-error`, `graph-error-graph`, `graph-error-detail`,
+`cl-dataflow-kit-error`, `graph-error`, `graph-error-graph`, `graph-error-detail`,
 `node-not-found-error`, `node-not-found-designator`, `graph-cycle-error`,
 `graph-cycle-nodes`, `effect-handler-missing-error`, `missing-effect-type`,
 `effect-handler-missing-effect`, `effect-handler-missing-detail`,

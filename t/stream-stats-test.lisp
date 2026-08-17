@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest stream-flatten-concatenates-lists
   (is (equal (stream-collect (stream-flatten (stream-of '(1 2) '(3) '() '(4 5))))

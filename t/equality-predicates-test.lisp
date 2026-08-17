@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %tiny-pipeline (metadata)
   (let ((graph (make-graph)))

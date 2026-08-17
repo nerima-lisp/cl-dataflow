@@ -10,24 +10,24 @@
 ;; An order lifecycle with a dead-end "cancelled" state and an unreachable
 ;; "archived" state that nothing transitions into.
 (defparameter *machine*
-  (cl-dataflow:make-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "draft"
     :transitions (list
-                   (cl-dataflow:make-transition "draft" "submit" "review")
-                   (cl-dataflow:make-transition "review" "approve" "shipped")
-                   (cl-dataflow:make-transition "review" "reject" "cancelled")
-                   (cl-dataflow:make-transition "archived" "restore" "draft"))))
+                   (cl-dataflow-kit:make-transition "draft" "submit" "review")
+                   (cl-dataflow-kit:make-transition "review" "approve" "shipped")
+                   (cl-dataflow-kit:make-transition "review" "reject" "cancelled")
+                   (cl-dataflow-kit:make-transition "archived" "restore" "draft"))))
 
-(format t "~&States: ~S~%" (cl-dataflow:state-machine-states *machine*))
-(format t "~&Events: ~S~%" (cl-dataflow:state-machine-event-types *machine*))
+(format t "~&States: ~S~%" (cl-dataflow-kit:state-machine-states *machine*))
+(format t "~&Events: ~S~%" (cl-dataflow-kit:state-machine-event-types *machine*))
 (format t "~&Reachable from draft: ~S~%"
-        (cl-dataflow:state-machine-reachable-states *machine*))
+        (cl-dataflow-kit:state-machine-reachable-states *machine*))
 (format t "~&Unreachable states: ~S~%"
-        (cl-dataflow:state-machine-unreachable-states *machine*))
+        (cl-dataflow-kit:state-machine-unreachable-states *machine*))
 (format t "~&Terminal states: ~S~%"
-        (cl-dataflow:state-machine-terminal-states *machine*))
+        (cl-dataflow-kit:state-machine-terminal-states *machine*))
 (format t "~&Deterministic? ~A~%"
-        (cl-dataflow:state-machine-deterministic-p *machine*))
+        (cl-dataflow-kit:state-machine-deterministic-p *machine*))
 
-(format t "~&--- DOT ---~%~A" (cl-dataflow:state-machine->dot *machine* :name "order"))
-(format t "~&--- Mermaid ---~%~A" (cl-dataflow:state-machine->mermaid *machine*))
+(format t "~&--- DOT ---~%~A" (cl-dataflow-kit:state-machine->dot *machine* :name "order"))
+(format t "~&--- Mermaid ---~%~A" (cl-dataflow-kit:state-machine->mermaid *machine*))

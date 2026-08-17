@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Extended stream vocabulary layered on the FLOW-STREAM core in streams.lisp:
 ;;;; generators (finite and infinite), windowing/grouping operators, and eager

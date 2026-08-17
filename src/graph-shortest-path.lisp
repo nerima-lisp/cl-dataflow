@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Weighted shortest-path algorithms over edge-metadata weights: Dijkstra's
 ;;;; single-target distance, all-destinations distances, and path

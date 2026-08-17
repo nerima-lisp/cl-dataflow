@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Component analysis: Kosaraju's strongly-connected-components algorithm,
 ;;;; weakly (undirected) connected components, and the single/multi-component

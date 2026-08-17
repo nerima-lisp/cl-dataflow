@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest remove-node-drops-node-and-incident-edges
   ;; b has an incoming edge (a->b), an outgoing edge (b->c), and a->d is unrelated.

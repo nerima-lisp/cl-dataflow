@@ -43,10 +43,10 @@ The basic constructors turn ordinary data into a stream:
 | `stream-range` | Numbers from `start` (inclusive) toward `end` (exclusive) by `:step` (default 1; must be non-zero, may be negative). |
 
 ```lisp
-(cl-dataflow:stream-collect (cl-dataflow:stream-of 1 2 3))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-of 1 2 3))
 ;; => (1 2 3)
 
-(cl-dataflow:stream-collect (cl-dataflow:stream-range 0 10 :step 2))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-range 0 10 :step 2))
 ;; => (0 2 4 6 8)
 ```
 
@@ -87,19 +87,19 @@ bounded consumer forces it:
 
 ```lisp
 ;; Only the first 3 even squares are ever computed, out of a million-element range.
-(cl-dataflow:stream-collect
-  (cl-dataflow:stream-take 3
-    (cl-dataflow:stream-filter #'evenp
-      (cl-dataflow:stream-map (lambda (x) (* x x))
-        (cl-dataflow:stream-range 1 1000000)))))
+(cl-dataflow-kit:stream-collect
+  (cl-dataflow-kit:stream-take 3
+    (cl-dataflow-kit:stream-filter #'evenp
+      (cl-dataflow-kit:stream-map (lambda (x) (* x x))
+        (cl-dataflow-kit:stream-range 1 1000000)))))
 ;; => (4 16 36)
 ```
 
 `stream-scan` keeps a running total, with the seed emitted first:
 
 ```lisp
-(cl-dataflow:stream-collect
-  (cl-dataflow:stream-scan #'+ 0 (cl-dataflow:stream-of 1 2 3 4)))
+(cl-dataflow-kit:stream-collect
+  (cl-dataflow-kit:stream-scan #'+ 0 (cl-dataflow-kit:stream-of 1 2 3 4)))
 ;; => (0 1 3 6 10)
 ```
 
@@ -107,14 +107,14 @@ bounded consumer forces it:
 the results, and composes naturally with `stream-distinct`/`stream-reduce`:
 
 ```lisp
-(cl-dataflow:stream-collect
-  (cl-dataflow:stream-flat-map
-    (lambda (x) (cl-dataflow:stream-of x (* x 10)))
-    (cl-dataflow:stream-of 1 2 3)))
+(cl-dataflow-kit:stream-collect
+  (cl-dataflow-kit:stream-flat-map
+    (lambda (x) (cl-dataflow-kit:stream-of x (* x 10)))
+    (cl-dataflow-kit:stream-of 1 2 3)))
 ;; => (1 10 2 20 3 30)
 
-(cl-dataflow:stream-reduce #'+ 0
-  (cl-dataflow:stream-distinct (cl-dataflow:stream-of 1 2 2 3 3 3 4)))
+(cl-dataflow-kit:stream-reduce #'+ 0
+  (cl-dataflow-kit:stream-distinct (cl-dataflow-kit:stream-of 1 2 2 3 3 3 4)))
 ;; => 10
 ```
 
@@ -135,7 +135,7 @@ long (or infinite) source.
 | `stream-empty-p` | True when the stream has no elements. Forces exactly one step. |
 
 ```lisp
-(cl-dataflow:stream-collect (cl-dataflow:stream-of 1 2 3) :limit 2 :on-limit :truncate)
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-of 1 2 3) :limit 2 :on-limit :truncate)
 ;; => (1 2)
 ```
 
@@ -157,13 +157,13 @@ them; nothing forces an infinite generator eagerly.
 
 ```lisp
 ;; Powers of two, taken lazily from an infinite generator.
-(cl-dataflow:stream-collect
-  (cl-dataflow:stream-take 5 (cl-dataflow:stream-iterate (lambda (x) (* x 2)) 1)))
+(cl-dataflow-kit:stream-collect
+  (cl-dataflow-kit:stream-take 5 (cl-dataflow-kit:stream-iterate (lambda (x) (* x 2)) 1)))
 ;; => (1 2 4 8 16)
 
 ;; stream-cycle never ends on its own -- stream-take bounds it.
-(cl-dataflow:stream-collect
-  (cl-dataflow:stream-take 7 (cl-dataflow:stream-cycle '(:a :b :c))))
+(cl-dataflow-kit:stream-collect
+  (cl-dataflow-kit:stream-take 7 (cl-dataflow-kit:stream-cycle '(:a :b :c))))
 ;; => (:a :b :c :a :b :c :a)
 ```
 
@@ -178,10 +178,10 @@ These slice a stream into sub-lists lazily:
 | `stream-partition-by` | Lists grouping each maximal run of consecutive elements sharing the same `(function element)` key (compared with `equal`). |
 
 ```lisp
-(cl-dataflow:stream-collect (cl-dataflow:stream-chunk 3 (cl-dataflow:stream-range 1 8)))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-chunk 3 (cl-dataflow-kit:stream-range 1 8)))
 ;; => ((1 2 3) (4 5 6) (7))
 
-(cl-dataflow:stream-collect (cl-dataflow:stream-window 3 (cl-dataflow:stream-range 1 6)))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-window 3 (cl-dataflow-kit:stream-range 1 6)))
 ;; => ((1 2 3) (2 3 4) (3 4 5))
 ```
 
@@ -210,16 +210,16 @@ checking which family a function belongs to before calling it:
   `:limit`. `(stream-min s :default 0)`.
 
 ```lisp
-(cl-dataflow:stream-sum (cl-dataflow:stream-of 1 2 3 4))
+(cl-dataflow-kit:stream-sum (cl-dataflow-kit:stream-of 1 2 3 4))
 ;; => 10
 
-(cl-dataflow:stream-find #'evenp (cl-dataflow:stream-of 1 3 5 6 7))
+(cl-dataflow-kit:stream-find #'evenp (cl-dataflow-kit:stream-of 1 3 5 6 7))
 ;; => 6
 
-(cl-dataflow:stream-find #'oddp (cl-dataflow:stream-of 2 4) :none)
+(cl-dataflow-kit:stream-find #'oddp (cl-dataflow-kit:stream-of 2 4) :none)
 ;; => :NONE
 
-(cl-dataflow:stream-min (cl-dataflow:empty-stream) :default 0)
+(cl-dataflow-kit:stream-min (cl-dataflow-kit:empty-stream) :default 0)
 ;; => 0
 ```
 
@@ -245,12 +245,12 @@ useful for data-shaping pipelines. Grouping collectors (`stream-group-by`,
 | `stream-average` | Arithmetic mean of `(key element)`, or `nil` for an empty stream. |
 
 ```lisp
-(cl-dataflow:stream-frequencies
-  (cl-dataflow:stream-of :click :view :click :click :view :purchase :view))
+(cl-dataflow-kit:stream-frequencies
+  (cl-dataflow-kit:stream-of :click :view :click :click :view :purchase :view))
 ;; => ((:CLICK . 3) (:VIEW . 3) (:PURCHASE . 1))
 
 (multiple-value-bind (evens odds)
-    (cl-dataflow:stream-partition #'evenp (cl-dataflow:stream-of 1 2 3 4 5 6))
+    (cl-dataflow-kit:stream-partition #'evenp (cl-dataflow-kit:stream-of 1 2 3 4 5 6))
   (list evens odds))
 ;; => ((2 4 6) (1 3 5))
 ```
@@ -278,14 +278,14 @@ dividing by zero:
 | `stream-median` | The median (mean of the two middle values for an even count). |
 
 ```lisp
-(cl-dataflow:stream-collect (cl-dataflow:stream-scan1 #'+ (cl-dataflow:stream-of 1 2 3 4)))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-scan1 #'+ (cl-dataflow-kit:stream-of 1 2 3 4)))
 ;; => (1 3 6 10)
 
 
-(cl-dataflow:stream-variance (cl-dataflow:stream-of 2 4 4 4 5 5 7 9))
+(cl-dataflow-kit:stream-variance (cl-dataflow-kit:stream-of 2 4 4 4 5 5 7 9))
 ;; => 4
 
-(cl-dataflow:stream-median (cl-dataflow:stream-of 1 2 3 4))
+(cl-dataflow-kit:stream-median (cl-dataflow-kit:stream-of 1 2 3 4))
 ;; => 5/2
 ```
 
@@ -299,10 +299,10 @@ dividing by zero:
 | `stream-cartesian` | The stream of `(a . b)` conses for every pair drawn from two streams, `b` varying fastest. The second stream is re-consumed once per element of the first — safe because streams are pure. |
 
 ```lisp
-(cl-dataflow:stream-find-index #'evenp (cl-dataflow:stream-of 1 3 5 6 7))
+(cl-dataflow-kit:stream-find-index #'evenp (cl-dataflow-kit:stream-of 1 3 5 6 7))
 ;; => 3
 
-(cl-dataflow:stream-collect (cl-dataflow:stream-cartesian (cl-dataflow:stream-of 1 2) (cl-dataflow:stream-of :a :b)))
+(cl-dataflow-kit:stream-collect (cl-dataflow-kit:stream-cartesian (cl-dataflow-kit:stream-of 1 2) (cl-dataflow-kit:stream-of :a :b)))
 ;; => ((1 . :a) (1 . :b) (2 . :a) (2 . :b))
 ```
 

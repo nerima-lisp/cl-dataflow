@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Stateful and combining operators over reactive subjects, bringing the
 ;;;; push-based side toward parity with the pull-based stream operators. Each

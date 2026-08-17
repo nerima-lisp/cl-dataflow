@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest protocol-generics-expose-public-flow-introspection
   (let* ((node (make-node 'source :metadata '((:kind :stage))))

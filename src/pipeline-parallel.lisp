@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 (defparameter +parallel-worker-limit+ 4 "Bound CCK-backed parallel work to a small fixed executor.")
 
@@ -26,7 +26,7 @@ call them. Idempotent, and only ever called by RUN-PIPELINE before any task is
 spawned, so there is no race in creating it."
   (unless (slot-value context 'lock)
     (setf (slot-value context 'lock)
-          (cl-concurrent-kit:make-lock :name "cl-dataflow context")))
+          (cl-concurrent-kit:make-lock :name "cl-dataflow-kit context")))
   context)
 
 (defun %run-pipeline-level-sequentially (context node plan input)

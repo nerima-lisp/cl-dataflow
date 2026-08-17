@@ -17,14 +17,14 @@ unreachable `"archived"` state that nothing transitions into (adapted from
 
 ```lisp
 (defparameter *order-machine*
-  (cl-dataflow:make-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "draft"
     :transitions
     (list
-      (cl-dataflow:make-transition "draft" "submit" "review")
-      (cl-dataflow:make-transition "review" "approve" "shipped")
-      (cl-dataflow:make-transition "review" "reject" "cancelled")
-      (cl-dataflow:make-transition "archived" "restore" "draft"))))
+      (cl-dataflow-kit:make-transition "draft" "submit" "review")
+      (cl-dataflow-kit:make-transition "review" "approve" "shipped")
+      (cl-dataflow-kit:make-transition "review" "reject" "cancelled")
+      (cl-dataflow-kit:make-transition "archived" "restore" "draft"))))
 ```
 
 `state-machine-states` and `state-machine-event-types` enumerate every
@@ -32,9 +32,9 @@ distinct state and event type the machine mentions (including the initial
 and current state, even if no transition touches them):
 
 ```lisp
-(cl-dataflow:state-machine-states *order-machine*)
+(cl-dataflow-kit:state-machine-states *order-machine*)
 ;; => ("archived" "cancelled" "draft" "review" "shipped")
-(cl-dataflow:state-machine-event-types *order-machine*)
+(cl-dataflow-kit:state-machine-event-types *order-machine*)
 ;; => ("approve" "reject" "restore" "submit")
 ```
 
@@ -45,9 +45,9 @@ complement over all known states, always measured from the initial state — thi
 is how `"archived"` shows up as unreachable:
 
 ```lisp
-(cl-dataflow:state-machine-reachable-states *order-machine*)
+(cl-dataflow-kit:state-machine-reachable-states *order-machine*)
 ;; => ("cancelled" "draft" "review" "shipped")
-(cl-dataflow:state-machine-unreachable-states *order-machine*)
+(cl-dataflow-kit:state-machine-unreachable-states *order-machine*)
 ;; => ("archived")
 ```
 
@@ -56,9 +56,9 @@ comparing state names case-insensitively — so a known state is always reachabl
 from itself, and an unknown endpoint is never reachable:
 
 ```lisp
-(cl-dataflow:state-machine-reachable-p *order-machine* "draft" "cancelled")
+(cl-dataflow-kit:state-machine-reachable-p *order-machine* "draft" "cancelled")
 ;; => T
-(cl-dataflow:state-machine-reachable-p *order-machine* "draft" "archived")
+(cl-dataflow-kit:state-machine-reachable-p *order-machine* "draft" "archived")
 ;; => NIL
 ```
 
@@ -70,9 +70,9 @@ guard-independent, so `nil` doesn't mean the machine is broken, only that
 resolving that event requires a guard to pick among candidates:
 
 ```lisp
-(cl-dataflow:state-machine-terminal-states *order-machine*)
+(cl-dataflow-kit:state-machine-terminal-states *order-machine*)
 ;; => ("cancelled" "shipped")
-(cl-dataflow:state-machine-deterministic-p *order-machine*)
+(cl-dataflow-kit:state-machine-deterministic-p *order-machine*)
 ;; => T
 ```
 
@@ -85,7 +85,7 @@ Both DOT entry points take a `:name` for the generated digraph, defaulting to
 `"S"`:
 
 ```lisp
-(format t "~A" (cl-dataflow:state-machine->mermaid *order-machine*))
+(format t "~A" (cl-dataflow-kit:state-machine->mermaid *order-machine*))
 ```
 
 ```mermaid
@@ -116,9 +116,9 @@ states, starting state included, stopping (without erroring) at the first
 event that has no available or guard-passing transition:
 
 ```lisp
-(cl-dataflow:state-machine-run-states *order-machine* '("submit" "approve"))
+(cl-dataflow-kit:state-machine-run-states *order-machine* '("submit" "approve"))
 ;; => ("draft" "review" "shipped")
-(cl-dataflow:state-machine-run-states *order-machine* '("submit" "bogus-event"))
+(cl-dataflow-kit:state-machine-run-states *order-machine* '("submit" "bogus-event"))
 ;; => ("draft" "review")
 ```
 
@@ -127,7 +127,7 @@ event in the sequence steps successfully and the machine lands in one of the
 named `accepting` states:
 
 ```lisp
-(cl-dataflow:state-machine-accepts-p
+(cl-dataflow-kit:state-machine-accepts-p
   *order-machine* '("submit" "approve") '("shipped"))
 ;; => T
 ```
@@ -140,7 +140,7 @@ driving the machine from one state to another, the empty list when `from` and
 either endpoint is unknown):
 
 ```lisp
-(cl-dataflow:state-machine-event-path *order-machine* "draft" "cancelled")
+(cl-dataflow-kit:state-machine-event-path *order-machine* "draft" "cancelled")
 ;; => ("submit" "reject")
 ```
 
@@ -156,18 +156,18 @@ have no guard or action and the rebuilt machine starts with empty, unbounded
 history:
 
 ```lisp
-(cl-dataflow:plist-to-state-machine
-  (cl-dataflow:state-machine-to-plist *order-machine*))
+(cl-dataflow-kit:plist-to-state-machine
+  (cl-dataflow-kit:state-machine-to-plist *order-machine*))
 ```
 
 `state-machine-equal-p` compares two machines through exactly that plist, so it
 is structural equality that deliberately ignores guards, actions, and history:
 
 ```lisp
-(cl-dataflow:state-machine-equal-p
+(cl-dataflow-kit:state-machine-equal-p
   *order-machine*
-  (cl-dataflow:plist-to-state-machine
-    (cl-dataflow:state-machine-to-plist *order-machine*)))
+  (cl-dataflow-kit:plist-to-state-machine
+    (cl-dataflow-kit:state-machine-to-plist *order-machine*)))
 ;; => T
 ```
 
@@ -177,7 +177,7 @@ every `(state, event-type)` pair drawn from `state-machine-states` and
 events is vacuously complete:
 
 ```lisp
-(cl-dataflow:state-machine-complete-p *order-machine*)
+(cl-dataflow-kit:state-machine-complete-p *order-machine*)
 ;; => NIL  ; e.g. no transition from "draft" on "approve"
 ```
 
@@ -185,7 +185,7 @@ events is vacuously complete:
 an event type (guards ignored), returning an independent copy or `nil`:
 
 ```lisp
-(cl-dataflow:state-machine-transition-for *order-machine* "review" "approve")
+(cl-dataflow-kit:state-machine-transition-for *order-machine* "review" "approve")
 ;; => #<STATE-TRANSITION review --approve--> shipped>
 ```
 
@@ -199,10 +199,10 @@ leave `*order-machine*` itself untouched for the next section:
 
 ```lisp
 (defparameter *order-machine-copy*
-  (cl-dataflow:copy-state-machine *order-machine*))
+  (cl-dataflow-kit:copy-state-machine *order-machine*))
 
-(cl-dataflow:add-transition *order-machine-copy* "cancelled" "restore" "draft")
-(cl-dataflow:remove-transition *order-machine-copy* "archived" "restore" "draft")
+(cl-dataflow-kit:add-transition *order-machine-copy* "cancelled" "restore" "draft")
+(cl-dataflow-kit:remove-transition *order-machine-copy* "archived" "restore" "draft")
 ```
 
 `state-machine-relabel-state` instead returns a **new** machine with a state
@@ -211,10 +211,10 @@ transition endpoint — carrying guards, actions, and metadata over unchanged.
 Like the plist round trip, it does not carry history over:
 
 ```lisp
-(cl-dataflow:state-machine-relabel-state *order-machine* "shipped" "delivered")
+(cl-dataflow-kit:state-machine-relabel-state *order-machine* "shipped" "delivered")
 ;; states => ("archived" "cancelled" "delivered" "draft" "review")
 
-(cl-dataflow:state-machine-states *order-machine*)
+(cl-dataflow-kit:state-machine-states *order-machine*)
 ;; => ("archived" "cancelled" "draft" "review" "shipped")  ; original untouched
 ```
 
@@ -229,11 +229,11 @@ entire [graph-analysis toolkit](graph-algorithms.md) applies — cycles,
 strongly connected components, distances, condensation, and more:
 
 ```lisp
-(defparameter *order-graph* (cl-dataflow:state-machine->graph *order-machine*))
+(defparameter *order-graph* (cl-dataflow-kit:state-machine->graph *order-machine*))
 
-(cl-dataflow:graph-node-names *order-graph*)
+(cl-dataflow-kit:graph-node-names *order-graph*)
 ;; => ("archived" "cancelled" "draft" "review" "shipped")
-(cl-dataflow:graph-acyclic-p *order-graph*)
+(cl-dataflow-kit:graph-acyclic-p *order-graph*)
 ;; => T
 ```
 

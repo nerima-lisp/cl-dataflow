@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defmacro define-copy-rejects-non-value-test (name call expected-type invalid-value)
   `(deftest ,name

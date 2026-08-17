@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %weighted-graph (node-names edges)
   "EDGES: list of (from to weight &optional from-port to-port)."

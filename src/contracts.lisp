@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Design-by-contract wrappers for node handlers. A contract is a pair of
 ;;;; predicates: BEFORE checks the handler's input, AFTER checks its output. A

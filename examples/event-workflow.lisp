@@ -6,35 +6,35 @@
     (make-pathname :name nil :type nil :defaults *load-truename*)))
 
 (let* ((machine
-      (cl-dataflow:make-state-machine
+      (cl-dataflow-kit:make-state-machine
         :state
         "idle"
         :transitions
         (list
-          (cl-dataflow:make-transition "idle" "order-created" "order-created")
-          (cl-dataflow:make-transition
+          (cl-dataflow-kit:make-transition "idle" "order-created" "order-created")
+          (cl-dataflow-kit:make-transition
             "order-created"
             "reserve-inventory"
             "inventory-reserved")
-          (cl-dataflow:make-transition
+          (cl-dataflow-kit:make-transition
             "inventory-reserved"
             "payment-requested"
             "payment-requested")
-          (cl-dataflow:make-transition
+          (cl-dataflow-kit:make-transition
             "payment-requested"
             "order-confirmed"
             "order-confirmed"))))
        (stage
       (lambda (name event)
-        (cl-dataflow:make-node
+        (cl-dataflow-kit:make-node
           name
           :handler
           (lambda (input context)
-            (cl-dataflow:emit-event context event :payload input)
-            (cl-dataflow:step-state-machine machine event :context context)
+            (cl-dataflow-kit:emit-event context event :payload input)
+            (cl-dataflow-kit:step-state-machine machine event :context context)
             input))))
        (pipeline
-      (cl-dataflow:make-pipeline
+      (cl-dataflow-kit:make-pipeline
         :stages
         (list
           (funcall stage "create-order" "order-created")
@@ -42,16 +42,16 @@
           (funcall stage "request-payment" "payment-requested")
           (funcall stage "confirm-order" "order-confirmed"))))
        (context
-      (cl-dataflow:run-pipeline-with-test-context
+      (cl-dataflow-kit:run-pipeline-with-test-context
         pipeline
         :input
         '(:order-id "A-100")
         :state
-        (cl-dataflow:state-machine-state machine))))
-  (format t "~&Workflow state: ~A~%" (cl-dataflow:context-state context))
+        (cl-dataflow-kit:state-machine-state machine))))
+  (format t "~&Workflow state: ~A~%" (cl-dataflow-kit:context-state context))
   (format
     t
     "~&Workflow events: ~S~%"
     (mapcar
-      #'cl-dataflow:event-type
-      (nreverse (cl-dataflow:context-events context)))))
+      #'cl-dataflow-kit:event-type
+      (nreverse (cl-dataflow-kit:context-events context)))))

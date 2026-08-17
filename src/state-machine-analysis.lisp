@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Structural analysis and rendering for state machines. A state machine is a
 ;;;; labelled directed graph over states, so these mirror the graph analysis and

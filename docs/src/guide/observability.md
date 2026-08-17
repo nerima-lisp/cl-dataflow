@@ -1,6 +1,6 @@
 # Observability and Serialization
 
-Once a pipeline or workflow has run, `cl-dataflow` gives you three
+Once a pipeline or workflow has run, `cl-dataflow-kit` gives you three
 complementary ways to look back at it: **render** its structure as a
 diagram, **read** its recorded trace as text or roll-up counts, and
 **serialize** its context to a plain plist for storage, comparison, or
@@ -30,7 +30,7 @@ for visualization. They are thin wrappers over `graph->dot`/`graph->mermaid`
 sort order and rendering details) applied to `pipeline-graph`:
 
 ```lisp
-(cl-dataflow:pipeline->dot *pipeline* :name "ingest-pipeline")
+(cl-dataflow-kit:pipeline->dot *pipeline* :name "ingest-pipeline")
 ;; => "digraph ingest-pipeline {
 ;;      \"finish\";
 ;;      \"start\";
@@ -38,7 +38,7 @@ sort order and rendering details) applied to `pipeline-graph`:
 ;;    }
 ;;    "
 
-(cl-dataflow:pipeline->mermaid *pipeline* :direction "LR")
+(cl-dataflow-kit:pipeline->mermaid *pipeline* :direction "LR")
 ;; => "flowchart LR
 ;;      n0[\"finish\"]
 ;;      n1[\"start\"]
@@ -67,16 +67,16 @@ node play" without walking the graph by hand:
 | `pipeline-sink-names` | Names of sink nodes — no successors — name-ordered. |
 
 ```lisp
-(cl-dataflow:pipeline-node-names *pipeline*)
+(cl-dataflow-kit:pipeline-node-names *pipeline*)
 ;; => ("finish" "start")
 
-(cl-dataflow:pipeline-stage-names *pipeline*)
+(cl-dataflow-kit:pipeline-stage-names *pipeline*)
 ;; => ("start" "finish")
 
-(cl-dataflow:pipeline-source-names *pipeline*)
+(cl-dataflow-kit:pipeline-source-names *pipeline*)
 ;; => ("start")
 
-(cl-dataflow:pipeline-sink-names *pipeline*)
+(cl-dataflow-kit:pipeline-sink-names *pipeline*)
 ;; => ("finish")
 ```
 
@@ -96,7 +96,7 @@ or report on.
 `format-trace` renders the whole trace as numbered, human-readable lines:
 
 ```lisp
-(princ (cl-dataflow:format-trace *context*))
+(princ (cl-dataflow-kit:format-trace *context*))
 ;; 0. event order-created
 ;; 1. transition idle --order-created--> order-created
 ;; 2. node start
@@ -111,7 +111,7 @@ stepped the state machine, so both precede `node start`.
 `trace-summary` counts trace entries by kind:
 
 ```lisp
-(cl-dataflow:trace-summary *context*)
+(cl-dataflow-kit:trace-summary *context*)
 ;; => (:total 4 :nodes 2 :events 1 :effects 0 :transitions 1)
 ```
 
@@ -120,7 +120,7 @@ effect, and stored-value counts, the trace length, and the current state —
 rather than just the trace:
 
 ```lisp
-(cl-dataflow:context-summary *context*)
+(cl-dataflow-kit:context-summary *context*)
 ;; => (:events 1 :effects 0 :values 2 :trace 4 :state "order-created")
 ```
 
@@ -130,35 +130,35 @@ a small workflow and then inspects it with both functions:
 
 ```lisp
 (defparameter *machine*
-  (cl-dataflow:make-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "idle"
     :transitions
-    (list (cl-dataflow:make-transition "idle" "order-created" "order-created"))))
+    (list (cl-dataflow-kit:make-transition "idle" "order-created" "order-created"))))
 
 (defparameter *workflow*
-  (cl-dataflow:make-pipeline
+  (cl-dataflow-kit:make-pipeline
     :stages
-    (list (cl-dataflow:make-node
+    (list (cl-dataflow-kit:make-node
             "create-order"
             :handler (lambda (input context)
-                       (cl-dataflow:emit-event context "order-created" :payload input)
-                       (cl-dataflow:step-state-machine
+                       (cl-dataflow-kit:emit-event context "order-created" :payload input)
+                       (cl-dataflow-kit:step-state-machine
                          *machine* "order-created" :context context)
                        input)))))
 
 (defparameter *context*
-  (cl-dataflow:run-pipeline-with-test-context
+  (cl-dataflow-kit:run-pipeline-with-test-context
     *workflow* :input "A-100" :state "idle"))
 
-(princ (cl-dataflow:format-trace *context*))
+(princ (cl-dataflow-kit:format-trace *context*))
 ;; 0. event order-created
 ;; 1. transition idle --order-created--> order-created
 ;; 2. node create-order
 
-(cl-dataflow:trace-summary *context*)
+(cl-dataflow-kit:trace-summary *context*)
 ;; => (:total 3 :nodes 1 :events 1 :effects 0 :transitions 1)
 
-(cl-dataflow:context-summary *context*)
+(cl-dataflow-kit:context-summary *context*)
 ;; => (:events 1 :effects 0 :values 1 :trace 3 :state "order-created")
 ```
 
@@ -175,7 +175,7 @@ when a workflow forks into parallel branches and you need to reassemble a
 single observable record:
 
 ```lisp
-(cl-dataflow:context-merge *context-a* *context-b*)
+(cl-dataflow-kit:context-merge *context-a* *context-b*)
 ```
 
 The merge rules:
@@ -201,7 +201,7 @@ so the merge builds its tables without touching either input.
 which is handy when `format-trace`'s combined view is too broad:
 
 ```lisp
-(cl-dataflow:context-trace-of-kind *context* :transition)
+(cl-dataflow-kit:context-trace-of-kind *context* :transition)
 ;; => ((:from "idle" :event-type "order-created" :to "order-created"
 ;;      :state-before "idle" :guard-passed t :action-result nil))
 ```
@@ -223,10 +223,10 @@ giving generic tooling a single call that works the same way regardless of
 what kind of object it's handed:
 
 ```lisp
-(cl-dataflow:flow-describe *pipeline*)
+(cl-dataflow-kit:flow-describe *pipeline*)
 ;; => (:kind :pipeline :name :pipeline :metadata () :children 2)
 
-(cl-dataflow:flow-describe (cl-dataflow:find-node (cl-dataflow:pipeline-graph *pipeline*) "start"))
+(cl-dataflow-kit:flow-describe (cl-dataflow-kit:find-node (cl-dataflow-kit:pipeline-graph *pipeline*) "start"))
 ;; => (:kind :node :name "start" :metadata () :children 0)
 ```
 
@@ -253,10 +253,10 @@ passing something unsupported gets a clear failure rather than silent
 `nil`.
 
 ```lisp
-(cl-dataflow:flow-kind *pipeline*)
+(cl-dataflow-kit:flow-kind *pipeline*)
 ;; => :pipeline
 
-(cl-dataflow:flow-name (cl-dataflow:make-edge "start" "finish"))
+(cl-dataflow-kit:flow-name (cl-dataflow-kit:make-edge "start" "finish"))
 ;; => ("start" "finish")
 ```
 
@@ -271,10 +271,10 @@ and [State Machine Analysis](state-machine-analysis.md)) already have.
 round-trip a single event or effect:
 
 ```lisp
-(cl-dataflow:event-to-plist (cl-dataflow:make-event "order-created" :payload '(:order-id "A-100")))
+(cl-dataflow-kit:event-to-plist (cl-dataflow-kit:make-event "order-created" :payload '(:order-id "A-100")))
 ;; => (:type "order-created" :payload (:order-id "A-100") :metadata nil :trace-index nil)
 
-(cl-dataflow:effect-to-plist (cl-dataflow:make-effect "charge-card" :payload 4200 :result :ok))
+(cl-dataflow-kit:effect-to-plist (cl-dataflow-kit:make-effect "charge-card" :payload 4200 :result :ok))
 ;; => (:type "charge-card" :payload 4200 :metadata nil :trace-index nil :result :ok)
 ```
 
@@ -286,21 +286,21 @@ trip over the `*context*` from the workflow example above, showing what
 survives:
 
 ```lisp
-(defparameter *plist* (cl-dataflow:context-to-plist *context*))
+(defparameter *plist* (cl-dataflow-kit:context-to-plist *context*))
 
 (getf *plist* :state)
 ;; => "order-created"
 (getf *plist* :events)
 ;; => ((:type "order-created" :payload "A-100" :metadata nil :trace-index 0))
 
-(defparameter *restored* (cl-dataflow:plist-to-context *plist*))
+(defparameter *restored* (cl-dataflow-kit:plist-to-context *plist*))
 
-(cl-dataflow:context-state *restored*)
+(cl-dataflow-kit:context-state *restored*)
 ;; => "order-created"
-(mapcar #'cl-dataflow:event-type (cl-dataflow:context-events-in-order *restored*))
+(mapcar #'cl-dataflow-kit:event-type (cl-dataflow-kit:context-events-in-order *restored*))
 ;; => ("order-created")
 
-(cl-dataflow:context-equal-p *context* *restored*)
+(cl-dataflow-kit:context-equal-p *context* *restored*)
 ;; => T
 ```
 
@@ -311,7 +311,7 @@ rebuilds nodes with the default identity handler rather than preserving
 the original closures:
 
 ```lisp
-(cl-dataflow:context-effect-handlers *restored*)
+(cl-dataflow-kit:context-effect-handlers *restored*)
 ;; => #<HASH-TABLE :TEST EQUAL :COUNT 0> (empty — handlers are not serialized)
 ```
 
@@ -334,10 +334,10 @@ guards and actions) never affect the comparison.
 | `context-equal-p` | Stored values, events, effects, trace, metadata, state, and result (via `context-to-plist`). Effect handlers are ignored. |
 
 ```lisp
-(cl-dataflow:pipeline-equal-p *pipeline* (cl-dataflow:copy-pipeline *pipeline*))
+(cl-dataflow-kit:pipeline-equal-p *pipeline* (cl-dataflow-kit:copy-pipeline *pipeline*))
 ;; => T
 
-(cl-dataflow:context-equal-p *context* *restored*)
+(cl-dataflow-kit:context-equal-p *context* *restored*)
 ;; => T
 ```
 
@@ -347,7 +347,7 @@ by following zero or more transitions (so `from` = `to` is trivially
 reachable), comparing state names case-insensitively:
 
 ```lisp
-(cl-dataflow:state-machine-reachable-p *machine* "idle" "order-created")
+(cl-dataflow-kit:state-machine-reachable-p *machine* "idle" "order-created")
 ;; => T
 ```
 

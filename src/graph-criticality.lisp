@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Critical-node and critical-connection analysis over the undirected view of a
 ;;;; graph: articulation points (cut vertices) and bridges (cut connections) --

@@ -1,12 +1,12 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %repository-root ()
   "The checkout root, resolved through ASDF's own system location rather than
 *LOAD-TRUENAME*/*LOAD-PATHNAME* -- those are only bound during a LOAD's dynamic
 extent, so a reflection-based lookup breaks once tests actually run instead of
-load. ASDF:SYSTEM-SOURCE-DIRECTORY returns the directory holding cl-dataflow.asd
+load. ASDF:SYSTEM-SOURCE-DIRECTORY returns the directory holding cl-dataflow-kit.asd
 itself (the checkout root), since both systems are declared there."
-  (asdf:system-source-directory "cl-dataflow/test"))
+  (asdf:system-source-directory "cl-dataflow-kit/test"))
 
 (defparameter *example-script-timeout-seconds* 30)
 (defparameter *program-probe-timeout-seconds* 10)
@@ -22,7 +22,7 @@ avoid -- spawning examples through cl-process-kit's `run` from inside the
 running cl-weave test process entangles with its own process management in
 a way a plain shell loop does not. Leave this off; it is not a maintained
 verification path."
-  (string= (uiop:getenv "CL_DATAFLOW_RUN_EXAMPLE_SMOKE") "1"))
+  (string= (uiop:getenv "CL_DATAFLOW_KIT_RUN_EXAMPLE_SMOKE") "1"))
 
 (defun %program-available-p (program)
   "Return true when PROGRAM can be launched on this machine.

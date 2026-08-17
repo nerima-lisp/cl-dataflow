@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest
   effect-performance-uses-handler
@@ -112,7 +112,7 @@
             (loop for (key) on (first trace) by #'cddr
                   thereis (eq key :handled-p))))
         (is (equal (getf (first trace) :result) '(:outer 0)))
-        (is (= (cl-dataflow::%context-trace-count context) 3)))))
+        (is (= (cl-dataflow-kit::%context-trace-count context) 3)))))
   (let ((context (make-context)))
     (register-effect-handler
       context
@@ -130,7 +130,7 @@
                 thereis (eq key :handled-p)))
         (is (null (getf (first trace) :handled-p))))
       (is (null (getf (first trace) :result)))
-      (is (= (cl-dataflow::%context-trace-count context) 1)))))
+      (is (= (cl-dataflow-kit::%context-trace-count context) 1)))))
 
 (deftest
   effect-constructor-and-performer-support-empty-values-and_existing_trace

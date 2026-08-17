@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Batch event/effect emission and result/predicate helpers over a context.
 ;;;; A spec is either a bare type designator or a (TYPE &KEY PAYLOAD METADATA)

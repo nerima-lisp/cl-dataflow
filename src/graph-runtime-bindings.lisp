@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Resolves how values flow along pipeline edges at run time: turning a
 ;;;; node's raw result into per-output-port bindings, collecting a node's

@@ -28,11 +28,11 @@ trace index it was recorded at.
   `event-trace-index`.
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:emit-event context "order-created" :payload '(:order-id "A-100"))
-  (cl-dataflow:emit-event context :inventory-reserved :payload '(:sku "WIDGET-1"))
-  (mapcar #'cl-dataflow:event-type
-          (cl-dataflow:context-events-in-order context)))
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:emit-event context "order-created" :payload '(:order-id "A-100"))
+  (cl-dataflow-kit:emit-event context :inventory-reserved :payload '(:sku "WIDGET-1"))
+  (mapcar #'cl-dataflow-kit:event-type
+          (cl-dataflow-kit:context-events-in-order context)))
 ;; => ("order-created" "INVENTORY-RESERVED")
 ```
 
@@ -66,7 +66,7 @@ spec in order and returning the list of resulting events. Each spec is
 either a bare type designator or a `(type &key payload metadata)` list:
 
 ```lisp
-(cl-dataflow:emit-events
+(cl-dataflow-kit:emit-events
   context
   '("order-created"
     ("inventory-reserved" :payload (:sku "WIDGET-1"))
@@ -83,8 +83,8 @@ case-insensitively, so callers need neither normalize nor case-match the type
 they are testing against:
 
 ```lisp
-(let ((event (cl-dataflow:make-event :order-created)))
-  (cl-dataflow:event-of-type-p event "ORDER-CREATED"))
+(let ((event (cl-dataflow-kit:make-event :order-created)))
+  (cl-dataflow-kit:event-of-type-p event "ORDER-CREATED"))
 ;; => T
 ```
 
@@ -106,15 +106,15 @@ index — plus one more field: `effect-result`, filled in once a handler runs.
   `effect-trace-index`, `effect-result`.
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:register-effect-handler
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:register-effect-handler
     context "charge-card"
     (lambda (effect context)
       (declare (ignore context))
-      (list :charged (getf (cl-dataflow:effect-payload effect) :amount))))
-  (let ((effect (cl-dataflow:perform-effect
+      (list :charged (getf (cl-dataflow-kit:effect-payload effect) :amount))))
+  (let ((effect (cl-dataflow-kit:perform-effect
                   context "charge-card" :payload '(:amount 42))))
-    (cl-dataflow:effect-result effect)))
+    (cl-dataflow-kit:effect-result effect)))
 ;; => (:charged 42)
 ```
 
@@ -149,7 +149,7 @@ type in the list must already have a registered handler, or the batch stops
 at the first `effect-handler-missing-error`.
 
 ```lisp
-(cl-dataflow:perform-effects
+(cl-dataflow-kit:perform-effects
   context
   '(("charge-card" :payload (:amount 42))
     ("send-receipt" :payload (:to "buyer@example.com"))))
@@ -165,7 +165,7 @@ helpers read results back off a context after a run:
 - `context-effect-results-of-type` — the same, filtered to one effect type.
 
 ```lisp
-(cl-dataflow:context-effect-results-of-type context "charge-card")
+(cl-dataflow-kit:context-effect-results-of-type context "charge-card")
 ;; => ((:charged 42))
 ```
 
@@ -197,14 +197,14 @@ that reach the context's real table:
   fully wired before running a pipeline.
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:register-effect-handler
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:register-effect-handler
     context :log (lambda (effect context)
                    (declare (ignore context))
-                   (format nil "LOG: ~A" (cl-dataflow:effect-payload effect))))
-  (cl-dataflow:effect-handled-p context "log")
+                   (format nil "LOG: ~A" (cl-dataflow-kit:effect-payload effect))))
+  (cl-dataflow-kit:effect-handled-p context "log")
   ;; => T
-  (cl-dataflow:context-effect-handler-types context))
+  (cl-dataflow-kit:context-effect-handler-types context))
 ;; => ("log")
 ```
 
@@ -216,12 +216,12 @@ mechanism `perform-effect` uses to resolve a handler, so `:log`, `'LOG`, and
 perform with another, and it still resolves:
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:register-effect-handler
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:register-effect-handler
     context 'LOG (lambda (effect context)
                    (declare (ignore context))
-                   (cl-dataflow:effect-payload effect)))
-  (cl-dataflow:perform-effect context "log" :payload "booted"))
+                   (cl-dataflow-kit:effect-payload effect)))
+  (cl-dataflow-kit:perform-effect context "log" :payload "booted"))
 ;; effect-result => "booted"
 ```
 
@@ -241,29 +241,29 @@ before the scope — even on a non-local exit (a thrown condition, a
 `return-from`, etc.) — via `unwind-protect`.
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:register-effect-handler
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:register-effect-handler
     context "log" (lambda (effect context)
                     (declare (ignore context))
-                    (list :production-log (cl-dataflow:effect-payload effect))))
+                    (list :production-log (cl-dataflow-kit:effect-payload effect))))
   (let ((result
-          (cl-dataflow:with-effect-handler-scope
+          (cl-dataflow-kit:with-effect-handler-scope
               (context
                 ("log" (lambda (effect context)
                          (declare (ignore context))
-                         (list :test-log (cl-dataflow:effect-payload effect))))
+                         (list :test-log (cl-dataflow-kit:effect-payload effect))))
                 ("notify" (lambda (effect context)
                             (declare (ignore context))
-                            (list :notified (cl-dataflow:effect-payload effect)))))
-            (list (cl-dataflow:effect-result
-                    (cl-dataflow:perform-effect context "log" :payload "inside scope"))
-                  (cl-dataflow:effect-result
-                    (cl-dataflow:perform-effect context "notify" :payload "hello"))))))
+                            (list :notified (cl-dataflow-kit:effect-payload effect)))))
+            (list (cl-dataflow-kit:effect-result
+                    (cl-dataflow-kit:perform-effect context "log" :payload "inside scope"))
+                  (cl-dataflow-kit:effect-result
+                    (cl-dataflow-kit:perform-effect context "notify" :payload "hello"))))))
     (list :inside-scope result
           ;; Outside the scope, "log" is back to the production handler and
           ;; "notify" has no handler at all again.
-          :after-scope (cl-dataflow:effect-result
-                         (cl-dataflow:perform-effect context "log" :payload "after scope")))))
+          :after-scope (cl-dataflow-kit:effect-result
+                         (cl-dataflow-kit:perform-effect context "log" :payload "after scope")))))
 ;; :inside-scope  => ((:test-log "inside scope") (:notified "hello"))
 ;; :after-scope   => (:production-log "after scope")
 ```
@@ -285,18 +285,18 @@ one shared point, so an event's and an effect's indices are positions in the
 *same* sequence. That is what makes the two logs re-interleavable:
 
 ```lisp
-(let ((context (cl-dataflow:make-context)))
-  (cl-dataflow:register-effect-handler
+(let ((context (cl-dataflow-kit:make-context)))
+  (cl-dataflow-kit:register-effect-handler
     context "fx" (lambda (effect context)
                    (declare (ignore effect context))
                    :ok))
-  (cl-dataflow:emit-event context "a")
-  (cl-dataflow:perform-effect context "fx")
-  (cl-dataflow:emit-event context "b")
-  (list :events (mapcar #'cl-dataflow:event-trace-index
-                        (cl-dataflow:context-events-in-order context))
-        :effects (mapcar #'cl-dataflow:effect-trace-index
-                         (cl-dataflow:context-effects-in-order context))))
+  (cl-dataflow-kit:emit-event context "a")
+  (cl-dataflow-kit:perform-effect context "fx")
+  (cl-dataflow-kit:emit-event context "b")
+  (list :events (mapcar #'cl-dataflow-kit:event-trace-index
+                        (cl-dataflow-kit:context-events-in-order context))
+        :effects (mapcar #'cl-dataflow-kit:effect-trace-index
+                         (cl-dataflow-kit:context-effects-in-order context))))
 ;; => (:events (0 2) :effects (1))
 ```
 
@@ -304,7 +304,7 @@ one shared point, so an event's and an effect's indices are positions in the
 plist tagged with its kind:
 
 ```lisp
-(cl-dataflow:context-trace-in-order context)
+(cl-dataflow-kit:context-trace-in-order context)
 ;; => ((:event  "a"  :payload nil :trace-index 0)
 ;;     (:effect "fx" :payload nil :result :ok :trace-index 1)
 ;;     (:event  "b"  :payload nil :trace-index 2))
@@ -329,11 +329,11 @@ and event log stay in lockstep with the pipeline's progress:
 
 ```lisp
 (defun make-workflow-stage (name event-type machine)
-  (cl-dataflow:make-node
+  (cl-dataflow-kit:make-node
     name
     :handler (lambda (input context)
-               (cl-dataflow:emit-event context event-type :payload input)
-               (cl-dataflow:step-state-machine machine event-type :context context)
+               (cl-dataflow-kit:emit-event context event-type :payload input)
+               (cl-dataflow-kit:step-state-machine machine event-type :context context)
                input)))
 ```
 

@@ -2,7 +2,7 @@
 
 A node handler is an ordinary `(input context)` function, so behaviours like
 retry, fallback, and memoisation are expressed the same way any Lisp function
-transformation is expressed: as **handler → handler** wrappers. `cl-dataflow`
+transformation is expressed: as **handler → handler** wrappers. `cl-dataflow-kit`
 builds two layers on this idea:
 
 - **Handler combinators** operate on a bare handler function. Use them when
@@ -27,7 +27,7 @@ new handler — a closure of `(input context)`.
 Adapts a unary function into a handler that ignores the context:
 
 ```lisp
-(cl-dataflow:mapping-handler (lambda (x) (* x 2)))
+(cl-dataflow-kit:mapping-handler (lambda (x) (* x 2)))
 ;; => a handler equivalent to (lambda (input context) (declare (ignore context)) (* input 2))
 ```
 
@@ -40,10 +40,10 @@ Threads a single input through a sequence of handlers, left to right, passing
 the same context to each step:
 
 ```lisp
-(defparameter *double* (cl-dataflow:mapping-handler (lambda (x) (* x 2))))
-(defparameter *increment* (cl-dataflow:mapping-handler (lambda (x) (+ x 1))))
+(defparameter *double* (cl-dataflow-kit:mapping-handler (lambda (x) (* x 2))))
+(defparameter *increment* (cl-dataflow-kit:mapping-handler (lambda (x) (+ x 1))))
 
-(funcall (cl-dataflow:compose-handlers *double* *increment*) 20 nil)
+(funcall (cl-dataflow-kit:compose-handlers *double* *increment*) 20 nil)
 ;; => 41
 ```
 
@@ -68,7 +68,7 @@ number of total invocations:
         (error "transient failure")
         (* input 10))))
 
-(funcall (cl-dataflow:retrying-handler *flaky* :attempts 5) 7 nil)
+(funcall (cl-dataflow-kit:retrying-handler *flaky* :attempts 5) 7 nil)
 ;; => 70, after 3 attempts
 ```
 
@@ -90,8 +90,8 @@ Turns a signalled condition into a safe result instead of propagating it:
     (declare (ignore context))
     (if (evenp input) (* input 100) (error "odd input"))))
 
-(funcall (cl-dataflow:fallback-handler *risky* -1) 4 nil)  ;; => 400
-(funcall (cl-dataflow:fallback-handler *risky* -1) 3 nil)  ;; => -1
+(funcall (cl-dataflow-kit:fallback-handler *risky* -1) 4 nil)  ;; => 400
+(funcall (cl-dataflow-kit:fallback-handler *risky* -1) 3 nil)  ;; => -1
 ```
 
 `fallback` can be a plain value (returned verbatim) or a function called with
@@ -108,7 +108,7 @@ the cached result without re-invoking the handler:
 ```lisp
 (defparameter *calls* 0)
 (defparameter *memoized*
-  (cl-dataflow:memoizing-handler
+  (cl-dataflow-kit:memoizing-handler
    (lambda (input context)
      (declare (ignore context))
      (incf *calls*)
@@ -130,8 +130,8 @@ Runs a side effect after the wrapped handler, without altering the data flow:
 ```lisp
 (defparameter *log* nil)
 (defparameter *logging-double*
-  (cl-dataflow:tapping-handler
-   (cl-dataflow:mapping-handler (lambda (x) (* x 2)))
+  (cl-dataflow-kit:tapping-handler
+   (cl-dataflow-kit:mapping-handler (lambda (x) (* x 2)))
    (lambda (input output context)
      (declare (ignore context))
      (push (list input output) *log*))))
@@ -158,9 +158,9 @@ resilience onto its existing behaviour.
 The general building block underneath every other node wrapper:
 
 ```lisp
-(cl-dataflow:wrap-node node
+(cl-dataflow-kit:wrap-node node
                        (lambda (handler)
-                         (cl-dataflow:retrying-handler handler :attempts 3)))
+                         (cl-dataflow-kit:retrying-handler handler :attempts 3)))
 ```
 
 `wrap-node` calls `wrapper` with `(node-handler node)` and installs the result
@@ -183,10 +183,10 @@ handler combinator:
 | `node-with-tap` | `tapping-handler` |
 
 ```lisp
-(cl-dataflow:node-with-retry node :attempts 5 :condition-type 'error)
-(cl-dataflow:node-with-fallback node -1 :condition-type 'error)
-(cl-dataflow:node-with-memoization node :test 'equal :key #'identity)
-(cl-dataflow:node-with-tap node (lambda (input output context)
+(cl-dataflow-kit:node-with-retry node :attempts 5 :condition-type 'error)
+(cl-dataflow-kit:node-with-fallback node -1 :condition-type 'error)
+(cl-dataflow-kit:node-with-memoization node :test 'equal :key #'identity)
+(cl-dataflow-kit:node-with-tap node (lambda (input output context)
                                   (declare (ignore context))
                                   (format t "~D -> ~D~%" input output)))
 ```
@@ -205,8 +205,8 @@ bad value flow silently into the rest of the pipeline.
 
 ```lisp
 (defparameter *guarded*
-  (cl-dataflow:contract-handler
-   (cl-dataflow:mapping-handler #'sqrt)
+  (cl-dataflow-kit:contract-handler
+   (cl-dataflow-kit:mapping-handler #'sqrt)
    :before (lambda (input) (and (numberp input) (>= input 0)))
    :after (lambda (output) (realp output))))
 
@@ -230,7 +230,7 @@ resilience wrappers above:
 
 ```lisp
 (defparameter *contracted-node*
-  (cl-dataflow:node-with-contract node
+  (cl-dataflow-kit:node-with-contract node
                                   :before #'plusp
                                   :after #'realp))
 ```
@@ -251,7 +251,7 @@ A flaky handler fails on its first two invocations, then succeeds.
 ```lisp
 (defparameter *attempts* 0)
 (defparameter *flaky*
-  (cl-dataflow:make-node "fetch"
+  (cl-dataflow-kit:make-node "fetch"
     :handler (lambda (input context)
                (declare (ignore context))
                (incf *attempts*)
@@ -259,11 +259,11 @@ A flaky handler fails on its first two invocations, then succeeds.
                    (error "transient failure")
                    (* input 10)))))
 
-(defparameter *retry-graph* (cl-dataflow:make-graph))
-(cl-dataflow:add-node *retry-graph*
-                      (cl-dataflow:node-with-retry *flaky* :attempts 5))
+(defparameter *retry-graph* (cl-dataflow-kit:make-graph))
+(cl-dataflow-kit:add-node *retry-graph*
+                      (cl-dataflow-kit:node-with-retry *flaky* :attempts 5))
 
-(cl-dataflow:run-pipeline (cl-dataflow:make-pipeline :graph *retry-graph*)
+(cl-dataflow-kit:run-pipeline (cl-dataflow-kit:make-pipeline :graph *retry-graph*)
                           :input 7)
 ;; => 70, after 3 attempts
 ```
@@ -273,18 +273,18 @@ failure into a safe default instead of propagating it:
 
 ```lisp
 (defparameter *risky*
-  (cl-dataflow:make-node "risky"
+  (cl-dataflow-kit:make-node "risky"
     :handler (lambda (input context)
                (declare (ignore context))
                (if (evenp input) (* input 100) (error "odd input")))))
 
-(defparameter *fallback-graph* (cl-dataflow:make-graph))
-(cl-dataflow:add-node *fallback-graph*
-                      (cl-dataflow:node-with-fallback *risky* -1))
+(defparameter *fallback-graph* (cl-dataflow-kit:make-graph))
+(cl-dataflow-kit:add-node *fallback-graph*
+                      (cl-dataflow-kit:node-with-fallback *risky* -1))
 
-(let ((pipeline (cl-dataflow:make-pipeline :graph *fallback-graph*)))
-  (cl-dataflow:run-pipeline pipeline :input 4)   ;; => 400
-  (cl-dataflow:run-pipeline pipeline :input 3))  ;; => -1
+(let ((pipeline (cl-dataflow-kit:make-pipeline :graph *fallback-graph*)))
+  (cl-dataflow-kit:run-pipeline pipeline :input 4)   ;; => 400
+  (cl-dataflow-kit:run-pipeline pipeline :input 3))  ;; => -1
 ```
 
 Finally, two single-node pipelines are threaded together with
@@ -293,15 +293,15 @@ its input and accumulates events, effects, and trace onto one shared context:
 
 ```lisp
 (defun single-node-pipeline (name function)
-  (let ((graph (cl-dataflow:make-graph)))
-    (cl-dataflow:add-node graph
-                          (cl-dataflow:make-node name
-                            :handler (cl-dataflow:mapping-handler function)))
-    (cl-dataflow:make-pipeline :graph graph)))
+  (let ((graph (cl-dataflow-kit:make-graph)))
+    (cl-dataflow-kit:add-node graph
+                          (cl-dataflow-kit:make-node name
+                            :handler (cl-dataflow-kit:mapping-handler function)))
+    (cl-dataflow-kit:make-pipeline :graph graph)))
 
 (let ((double (single-node-pipeline "double" (lambda (x) (* x 2))))
       (increment (single-node-pipeline "increment" (lambda (x) (+ x 1)))))
-  (cl-dataflow:run-pipeline-sequence (list double increment) :input 20))
+  (cl-dataflow-kit:run-pipeline-sequence (list double increment) :input 20))
 ;; => (VALUES 41 #<CONTEXT ...>)
 ```
 

@@ -1,6 +1,6 @@
 # Getting Started
 
-`cl-dataflow` depends on [`cl-prolog`](https://github.com/nerima-lisp/cl-prolog),
+`cl-dataflow-kit` depends on [`cl-prolog-kit`](https://github.com/nerima-lisp/cl-prolog-kit),
 which powers the graph reachability core, and
 [`cl-concurrent-kit`](https://github.com/nerima-lisp/cl-concurrent-kit), which
 backs `run-pipeline`'s optional `:parallel` mode. The test system additionally
@@ -11,14 +11,14 @@ depends on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 
 === "Nix (recommended)"
 
-    The flake pins every dependency, including SBCL, `cl-prolog`,
+    The flake pins every dependency, including SBCL, `cl-prolog-kit`,
     `cl-concurrent-kit`, and `cl-weave`, so `nix develop` reproduces the exact
     verified environment. That pin set follows the latest release that passes
     this repository's checks, which can intentionally lag a newer upstream tag:
 
     ```bash
     nix develop      # drop into a shell with everything on CL_SOURCE_REGISTRY
-    nix run          # run the default test app against cl-dataflow/test
+    nix run          # run the default test app against cl-dataflow-kit/test
     nix run .#test   # same test app, with the explicit attribute name
     nix flake check  # run the full check matrix -- see Development for what each check gates
     ```
@@ -28,11 +28,11 @@ depends on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 
 === "ASDF local checkout"
 
-    Place this checkout, `cl-prolog`, and `cl-concurrent-kit` somewhere ASDF
+    Place this checkout, `cl-prolog-kit`, and `cl-concurrent-kit` somewhere ASDF
     can see, then load the system directly:
 
     ```lisp
-    (asdf:load-system :cl-dataflow)
+    (asdf:load-system :cl-dataflow-kit)
     ```
 
     Register the repository directory in `asdf:*central-registry*` first if it
@@ -43,10 +43,10 @@ depends on [`cl-weave`](https://github.com/nerima-lisp/cl-weave) and
 Confirm the system loads and a trivial pipeline runs:
 
 ```lisp
-(asdf:load-system :cl-dataflow)
+(asdf:load-system :cl-dataflow-kit)
 
-(cl-dataflow:run-pipeline
-  (cl-dataflow:define-pipeline ()
+(cl-dataflow-kit:run-pipeline
+  (cl-dataflow-kit:define-pipeline ()
     (:node "double" :handler (lambda (input context)
                                 (declare (ignore context))
                                 (* 2 input))))
@@ -73,7 +73,7 @@ exercise that same pinned test environment. See
 
 ```lisp
 (defparameter *pipeline*
-  (cl-dataflow:define-pipeline ()
+  (cl-dataflow-kit:define-pipeline ()
     (:node "start"
      :handler (lambda (input context)
                 (declare (ignore context))
@@ -84,7 +84,7 @@ exercise that same pinned test environment. See
                 (* input 2)))
     (:edge "start" "finish")))
 
-(cl-dataflow:run-pipeline *pipeline* :input 10)
+(cl-dataflow-kit:run-pipeline *pipeline* :input 10)
 ;; => 22
 ```
 
@@ -95,46 +95,46 @@ through the graph in topological order and returns the sink's result.
 ## Adding events and a state machine
 
 A pipeline stage can emit events and step a state machine in the same
-handler, which is how `cl-dataflow` models an end-to-end workflow. This is
+handler, which is how `cl-dataflow-kit` models an end-to-end workflow. This is
 adapted from `examples/event-workflow.lisp`:
 
 ```lisp
 (defparameter *machine*
-  (cl-dataflow:make-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "idle"
     :transitions
     (list
-      (cl-dataflow:make-transition "idle" "order-created" "order-created")
-      (cl-dataflow:make-transition "order-created" "reserve-inventory" "inventory-reserved")
-      (cl-dataflow:make-transition "inventory-reserved" "payment-requested" "payment-requested")
-      (cl-dataflow:make-transition "payment-requested" "order-confirmed" "order-confirmed"))))
+      (cl-dataflow-kit:make-transition "idle" "order-created" "order-created")
+      (cl-dataflow-kit:make-transition "order-created" "reserve-inventory" "inventory-reserved")
+      (cl-dataflow-kit:make-transition "inventory-reserved" "payment-requested" "payment-requested")
+      (cl-dataflow-kit:make-transition "payment-requested" "order-confirmed" "order-confirmed"))))
 
 (defun make-workflow-stage (name event)
-  (cl-dataflow:make-node
+  (cl-dataflow-kit:make-node
     name
     :handler (lambda (input context)
-               (cl-dataflow:emit-event context event :payload input)
-               (cl-dataflow:step-state-machine *machine* event :context context)
+               (cl-dataflow-kit:emit-event context event :payload input)
+               (cl-dataflow-kit:step-state-machine *machine* event :context context)
                input)))
 
 (defparameter *workflow*
-  (cl-dataflow:make-pipeline
+  (cl-dataflow-kit:make-pipeline
     :stages (list (make-workflow-stage "create-order" "order-created")
                   (make-workflow-stage "reserve-inventory" "reserve-inventory")
                   (make-workflow-stage "request-payment" "payment-requested")
                   (make-workflow-stage "confirm-order" "order-confirmed"))))
 
 (defparameter *context*
-  (cl-dataflow:run-pipeline-with-test-context
+  (cl-dataflow-kit:run-pipeline-with-test-context
     *workflow*
     :input '(:order-id "A-100")
-    :state (cl-dataflow:state-machine-state *machine*)))
+    :state (cl-dataflow-kit:state-machine-state *machine*)))
 
-(cl-dataflow:context-state *context*)
+(cl-dataflow-kit:context-state *context*)
 ;; => "order-confirmed"
 
-(mapcar #'cl-dataflow:event-type
-        (nreverse (cl-dataflow:context-events *context*)))
+(mapcar #'cl-dataflow-kit:event-type
+        (nreverse (cl-dataflow-kit:context-events *context*)))
 ;; => ("order-created" "reserve-inventory" "payment-requested" "order-confirmed")
 ```
 

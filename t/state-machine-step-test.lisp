@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest state-machine-transition
   (with-idle-start-transition-machine (machine)
@@ -93,7 +93,7 @@
   (with-captured-condition (captured invalid-input-error)
       (make-state-machine :transitions '())
     (is (equal (invalid-input-expected captured)
-               '(or cl-dataflow::state cl-dataflow::initial-state)))
+               '(or cl-dataflow-kit::state cl-dataflow-kit::initial-state)))
     (is (null (invalid-input-value captured)))
     (is (equal (invalid-input-detail captured)
                "State machine requires STATE or INITIAL-STATE."))))

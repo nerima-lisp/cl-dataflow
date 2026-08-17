@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-articulation-points-finds-cut-vertices
   ;; In the path a -> b -> c, b is the cut vertex; the endpoints are not.

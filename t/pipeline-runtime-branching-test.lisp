@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest branching-pipeline-collects-sink-results
   (with-branching-test-pipeline (graph pipeline source left right)

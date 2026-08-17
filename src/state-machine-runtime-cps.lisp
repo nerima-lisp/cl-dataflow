@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; STEP-STATE-MACHINE's continuation-passing execution chain: resolve the
 ;;;; matching transition, run its action, then commit the resulting state and

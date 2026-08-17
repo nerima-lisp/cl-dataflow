@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Topological ordering and boundary queries: TOPOLOGICAL-SORT (Kahn's
 ;;;; algorithm, iterative) and GRAPH-SOURCE-NODES/GRAPH-SINK-NODES, all

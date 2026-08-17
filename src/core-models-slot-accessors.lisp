@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Per-slot public accessors for the model classes (event/effect/node/edge/
 ;;;; transition/state-machine payload, metadata, and normalized-setter slots),

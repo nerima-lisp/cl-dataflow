@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The public state-machine stepping API: STEP-STATE-MACHINE and
 ;;;; RUN-STATE-MACHINE (thin direct-style wrappers over the CPS machinery in

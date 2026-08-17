@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;; Single-source operators whose whole contract is "given these inputs, emit
 ;;; these outputs" are specified declaratively: each line is
@@ -105,7 +105,7 @@
 
 (deftest define-subject-operator-body-parser-splits-clauses
   (flet ((parse (body)
-           (multiple-value-list (cl-dataflow::%parse-subject-operator-body body))))
+           (multiple-value-list (cl-dataflow-kit::%parse-subject-operator-body body))))
     ;; docstring + :before + :state, in that order
     (is (equal (parse '("doc" (:before (guard n)) (:state (acc 0) (seen nil))
                         (emit value)))
@@ -122,7 +122,7 @@
 
 (deftest define-subject-operator-expands-to-a-defun
   (let ((expansion (macroexpand-1
-                    '(cl-dataflow::define-subject-operator demo (source factor)
+                    '(cl-dataflow-kit::define-subject-operator demo (source factor)
                       "Scale each value." (:state (total 0)) (emit (* value factor))))))
     (is (eq (first expansion) 'defun))
     (is (eq (second expansion) 'demo))

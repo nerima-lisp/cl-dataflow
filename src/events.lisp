@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Event construction and EMIT-EVENT, plus %PUSH-CONTEXT-TRACE-ENTRY: the
 ;;;; single append point for a context's trace list that EMIT-EVENT,

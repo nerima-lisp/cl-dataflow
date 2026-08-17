@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest stream-find-index-locates-the-first-match
   (is (= (stream-find-index #'evenp (stream-of 1 3 4 6)) 2))

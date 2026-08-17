@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Condition types for every error this library signals (input validation,
 ;;;; graph structure, missing effect handlers, invalid transitions, guard
@@ -38,7 +38,7 @@
                            effect-trace-index))
       '(progn))
 
-(define-condition cl-dataflow-error (error) ())
+(define-condition cl-dataflow-kit-error (error) ())
 
 (defun %write-condition-detail-report (condition stream detail-reader)
   (format stream "~A: ~A"
@@ -69,7 +69,7 @@
        (lambda (condition stream)
          (%write-condition-detail-report condition stream #',detail-reader)))))
 
-(%define-condition-with-detail-report invalid-input-error (cl-dataflow-error)
+(%define-condition-with-detail-report invalid-input-error (cl-dataflow-kit-error)
   ((expected :initarg :expected :reader invalid-input-expected)
    (value :initarg :value :reader invalid-input-value)
    (detail :initarg :detail :reader invalid-input-detail))
@@ -81,7 +81,7 @@
          :value value
          :detail detail))
 
-(%define-condition-with-detail-report graph-error (cl-dataflow-error)
+(%define-condition-with-detail-report graph-error (cl-dataflow-kit-error)
   ((graph :initarg :graph :reader graph-error-graph)
    (detail :initarg :detail :reader graph-error-detail))
   graph-error-detail)
@@ -94,19 +94,19 @@
   (lambda (condition stream)
     (%write-graph-cycle-report condition stream)))
 
-(%define-condition-with-detail-report effect-handler-missing-error (cl-dataflow-error)
+(%define-condition-with-detail-report effect-handler-missing-error (cl-dataflow-kit-error)
   ((effect-type :initarg :effect-type :reader missing-effect-type)
    (effect :initarg :effect :reader effect-handler-missing-effect)
    (detail :initarg :detail :reader effect-handler-missing-detail))
   effect-handler-missing-detail)
 
-(%define-condition-with-detail-report invalid-transition-error (cl-dataflow-error)
+(%define-condition-with-detail-report invalid-transition-error (cl-dataflow-kit-error)
   ((state :initarg :state :reader invalid-transition-state)
    (event-type :initarg :event-type :reader invalid-transition-event-type)
    (detail :initarg :detail :reader invalid-transition-detail))
   invalid-transition-detail)
 
-(%define-condition-with-detail-report guard-failed-error (cl-dataflow-error)
+(%define-condition-with-detail-report guard-failed-error (cl-dataflow-kit-error)
   ((state :initarg :state :reader guard-failed-state)
    (event-type :initarg :event-type :reader guard-failed-event-type)
    (transition :initarg :transition :reader guard-failed-transition)

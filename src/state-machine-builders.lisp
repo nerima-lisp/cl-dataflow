@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; State-machine serialisation, completeness checking, transition lookup, and
 ;;;; mutation/relabelling. Serialisation round-trips structure through plists;

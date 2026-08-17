@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Public constructors (MAKE-NODE, MAKE-EDGE, MAKE-GRAPH, MAKE-CONTEXT) that
 ;;;; normalize and copy their arguments so a constructed object never aliases

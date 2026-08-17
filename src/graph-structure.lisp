@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Structural primitives: order/size/emptiness, adjacency and neighbour
 ;;;; accessors, degree, transpose, acyclicity, topological generations, and

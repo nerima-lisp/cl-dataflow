@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; State-machine construction (MAKE-TRANSITION, MAKE-STATE-MACHINE,
 ;;;; COPY-STATE-MACHINE) and the transition-selection internals

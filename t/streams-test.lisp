@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;; --- Constructors --------------------------------------------------------
 (deftest
@@ -230,7 +230,7 @@
   stream-distinct-retains-mutable-equal-semantics
   (let* ((value (copy-seq "a"))
           (distinct (stream-distinct (stream-of value "a" "b") :test 'equal))
-          (first-step (cl-dataflow::%stream-step distinct)))
+          (first-step (cl-dataflow-kit::%stream-step distinct)))
     (is (eq (car first-step) value))
     (setf (char value 0) #\b)
     (is (equal (stream-collect (cdr first-step)) (list "a")))))

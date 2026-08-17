@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Whole-graph metrics: edge density, degree distribution, bipartiteness,
 ;;;; clustering, reciprocity, and weak (undirected) reachability. GRAPH-EQUAL-P

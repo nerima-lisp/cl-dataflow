@@ -1,10 +1,10 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-nodes-reject-malformed-graphs-at-runtime
   (let* ((graph (make-graph))
          (node (make-node "source")))
-    (setf (slot-value node 'cl-dataflow::inputs) '("in" "in")
-          (slot-value graph 'cl-dataflow::nodes)
+    (setf (slot-value node 'cl-dataflow-kit::inputs) '("in" "in")
+          (slot-value graph 'cl-dataflow-kit::nodes)
           (make-test-table "source" node))
     (signals graph-error
       (graph-nodes graph))))
@@ -12,7 +12,7 @@
 (deftest graph-edges-reject-orphan-edges-at-runtime
   (let* ((graph (make-graph))
          (edge (make-edge "source" "sink")))
-    (setf (slot-value graph 'cl-dataflow::edges) (list edge))
+    (setf (slot-value graph 'cl-dataflow-kit::edges) (list edge))
     (signals node-not-found-error
       (graph-edges graph))))
 

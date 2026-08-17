@@ -6,13 +6,13 @@
 # through cl-process-kit's `run` from inside the running cl-weave test
 # process, which is exactly the "implementation-specific run-program
 # deadlock" that file's own docstring warns about and stays opt-in
-# (CL_DATAFLOW_RUN_EXAMPLE_SMOKE) to avoid -- confirmed by reproducing the
+# (CL_DATAFLOW_KIT_RUN_EXAMPLE_SMOKE) to avoid -- confirmed by reproducing the
 # hang directly. Running each script as its own top-level `sbcl` process from
 # a plain shell loop has no such parent-process entanglement, so it is the
 # safe way to actually exercise every example on a schedule (CI/local),
 # rather than leaving them permanently unverified.
 #
-# CL_SOURCE_REGISTRY must already resolve cl-dataflow, cl-prolog, and
+# CL_SOURCE_REGISTRY must already resolve cl-dataflow-kit, cl-prolog-kit, and
 # cl-concurrent-kit; the devShell and flake checks set it.
 
 set -eu

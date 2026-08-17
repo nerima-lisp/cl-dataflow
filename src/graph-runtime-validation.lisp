@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Graph mutation and structural validation: ADD-NODE/ADD-EDGE/FIND-NODE and
 ;;;; the port/duplicate/missing-node checks VALIDATE-GRAPH and every mutator

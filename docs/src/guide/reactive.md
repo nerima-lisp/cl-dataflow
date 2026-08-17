@@ -24,9 +24,9 @@ exported symbol list (`Reactive subject APIs` and `Reactive operator APIs`).
 whether a value is one:
 
 ```lisp
-(defparameter *orders* (cl-dataflow:make-subject))
+(defparameter *orders* (cl-dataflow-kit:make-subject))
 
-(cl-dataflow:subject-p *orders*)
+(cl-dataflow-kit:subject-p *orders*)
 ;; => T
 ```
 
@@ -48,11 +48,11 @@ which doubles as an unsubscribe token:
 (defparameter *seen* '())
 
 (defparameter *handler*
-  (cl-dataflow:subject-subscribe
+  (cl-dataflow-kit:subject-subscribe
     *orders*
     (lambda (value) (push value *seen*))))
 
-(cl-dataflow:subject-subscriber-count *orders*)
+(cl-dataflow-kit:subject-subscriber-count *orders*)
 ;; => 1
 ```
 
@@ -61,8 +61,8 @@ occurrence of it, if it was registered more than once) and returns the
 subject:
 
 ```lisp
-(cl-dataflow:subject-unsubscribe *orders* *handler*)
-(cl-dataflow:subject-subscriber-count *orders*)
+(cl-dataflow-kit:subject-unsubscribe *orders* *handler*)
+(cl-dataflow-kit:subject-subscriber-count *orders*)
 ;; => 0
 ```
 
@@ -77,8 +77,8 @@ starts, synchronously and in the order they subscribed, then returns the
 subject:
 
 ```lisp
-(cl-dataflow:subject-subscribe *orders* (lambda (value) (push value *seen*)))
-(cl-dataflow:subject-emit *orders* 42)
+(cl-dataflow-kit:subject-subscribe *orders* (lambda (value) (push value *seen*)))
+(cl-dataflow-kit:subject-emit *orders* 42)
 *seen*
 ;; => (42)
 ```
@@ -102,17 +102,17 @@ source subject and re-emits a transformed view of it — the push duals of
 `stream-map` and `stream-filter`:
 
 ```lisp
-(defparameter *priced* (cl-dataflow:make-subject))
+(defparameter *priced* (cl-dataflow-kit:make-subject))
 
-(defparameter *doubled* (cl-dataflow:subject-map *priced* (lambda (v) (* v 2))))
-(defparameter *big* (cl-dataflow:subject-filter *priced* (lambda (v) (> v 50))))
+(defparameter *doubled* (cl-dataflow-kit:subject-map *priced* (lambda (v) (* v 2))))
+(defparameter *big* (cl-dataflow-kit:subject-filter *priced* (lambda (v) (> v 50))))
 
-(cl-dataflow:subject-subscribe *doubled* (lambda (v) (format t "~&doubled: ~D~%" v)))
-(cl-dataflow:subject-subscribe *big* (lambda (v) (format t "~&big: ~D~%" v)))
+(cl-dataflow-kit:subject-subscribe *doubled* (lambda (v) (format t "~&doubled: ~D~%" v)))
+(cl-dataflow-kit:subject-subscribe *big* (lambda (v) (format t "~&big: ~D~%" v)))
 
-(cl-dataflow:subject-emit *priced* 30)
+(cl-dataflow-kit:subject-emit *priced* 30)
 ;; prints: doubled: 60
-(cl-dataflow:subject-emit *priced* 70)
+(cl-dataflow-kit:subject-emit *priced* 70)
 ;; prints: doubled: 140
 ;;         big: 70
 ```
@@ -123,9 +123,9 @@ subject that emits whenever *any* of them emits — the push dual of
 whichever source subject emits first drives the next value through:
 
 ```lisp
-(defparameter *web-orders* (cl-dataflow:make-subject))
-(defparameter *phone-orders* (cl-dataflow:make-subject))
-(defparameter *all-orders* (cl-dataflow:subject-merge *web-orders* *phone-orders*))
+(defparameter *web-orders* (cl-dataflow-kit:make-subject))
+(defparameter *phone-orders* (cl-dataflow-kit:make-subject))
+(defparameter *all-orders* (cl-dataflow-kit:subject-merge *web-orders* *phone-orders*))
 ```
 
 Because derived subjects are themselves ordinary subjects, they compose:
@@ -139,10 +139,10 @@ of no arguments that yields every value the subject has emitted since, in
 emission order:
 
 ```lisp
-(defparameter *alerts* (cl-dataflow:subject-collect *big*))
+(defparameter *alerts* (cl-dataflow-kit:subject-collect *big*))
 
-(cl-dataflow:subject-emit *priced* 10)
-(cl-dataflow:subject-emit *priced* 99)
+(cl-dataflow-kit:subject-emit *priced* 10)
+(cl-dataflow-kit:subject-emit *priced* 99)
 (funcall *alerts*)
 ;; => (99)
 ```
@@ -230,11 +230,11 @@ This is the reactive half of the order-processing scenario in
 high-value ones, and collected for later inspection.
 
 ```lisp
-(let* ((orders (cl-dataflow:make-subject))
-       (alerts (cl-dataflow:subject-collect
-                 (cl-dataflow:subject-filter orders (lambda (v) (> v 50))))))
+(let* ((orders (cl-dataflow-kit:make-subject))
+       (alerts (cl-dataflow-kit:subject-collect
+                 (cl-dataflow-kit:subject-filter orders (lambda (v) (> v 50))))))
   (dolist (value '(30 70 12 120))
-    (cl-dataflow:subject-emit orders value))
+    (cl-dataflow-kit:subject-emit orders value))
   (funcall alerts))
 ;; => (70 120)
 ```
@@ -242,11 +242,11 @@ high-value ones, and collected for later inspection.
 ### A running total with `subject-scan`
 
 ```lisp
-(let* ((deposits (cl-dataflow:make-subject))
-       (running-total (cl-dataflow:subject-scan deposits #'+ 0))
-       (balances (cl-dataflow:subject-collect running-total)))
+(let* ((deposits (cl-dataflow-kit:make-subject))
+       (running-total (cl-dataflow-kit:subject-scan deposits #'+ 0))
+       (balances (cl-dataflow-kit:subject-collect running-total)))
   (dolist (amount '(10 5 20))
-    (cl-dataflow:subject-emit deposits amount))
+    (cl-dataflow-kit:subject-emit deposits amount))
   (funcall balances))
 ;; => (10 15 35)
 ```
@@ -254,13 +254,13 @@ high-value ones, and collected for later inspection.
 ### Combining two sources with `subject-combine-latest`
 
 ```lisp
-(let* ((price (cl-dataflow:make-subject))
-       (quantity (cl-dataflow:make-subject))
-       (totals (cl-dataflow:subject-combine-latest price quantity))
-       (seen (cl-dataflow:subject-collect totals)))
-  (cl-dataflow:subject-emit price 10)      ; quantity has no value yet: no emission
-  (cl-dataflow:subject-emit quantity 3)    ; both have a value now: emits (10 . 3)
-  (cl-dataflow:subject-emit price 12)      ; re-emits with the latest quantity: (12 . 3)
+(let* ((price (cl-dataflow-kit:make-subject))
+       (quantity (cl-dataflow-kit:make-subject))
+       (totals (cl-dataflow-kit:subject-combine-latest price quantity))
+       (seen (cl-dataflow-kit:subject-collect totals)))
+  (cl-dataflow-kit:subject-emit price 10)      ; quantity has no value yet: no emission
+  (cl-dataflow-kit:subject-emit quantity 3)    ; both have a value now: emits (10 . 3)
+  (cl-dataflow-kit:subject-emit price 12)      ; re-emits with the latest quantity: (12 . 3)
   (funcall seen))
 ;; => ((10 . 3) (12 . 3))
 ```

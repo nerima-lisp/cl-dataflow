@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defmacro with-lifecycle-machine ((machine) &body body)
   "draft -> review -> approved, with review -> rejected as an alternate branch."

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest pipeline-introspection-reports-structure
   (with-graph-fixture (graph

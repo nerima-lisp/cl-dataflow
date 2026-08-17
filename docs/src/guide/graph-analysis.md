@@ -13,12 +13,12 @@ The examples below reuse the dependency graph built in
 [Graph Algorithms](graph-algorithms.md):
 
 ```lisp
-(defparameter *graph* (cl-dataflow:make-graph))
+(defparameter *graph* (cl-dataflow-kit:make-graph))
 (dolist (name '("fetch" "compile" "test" "package"))
-  (cl-dataflow:add-node *graph* (cl-dataflow:make-node name)))
+  (cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node name)))
 (dolist (edge '(("fetch" "compile") ("compile" "test") ("compile" "package")
                 ("test" "package")))
-  (cl-dataflow:add-edge *graph* (first edge) (second edge)))
+  (cl-dataflow-kit:add-edge *graph* (first edge) (second edge)))
 ```
 
 See the [Public API Reference](../reference/api.md) for the complete,
@@ -60,13 +60,13 @@ one cycle witness, and Eulerian trails.
 
 ```lisp
 ;; The critical path is the longest dependency chain.
-(cl-dataflow:graph-longest-path *graph*) ; => ("fetch" "compile" "test" "package")
+(cl-dataflow-kit:graph-longest-path *graph*) ; => ("fetch" "compile" "test" "package")
 
 ;; compile -> package is redundant once compile -> test -> package exists.
-(cl-dataflow:graph-size (cl-dataflow:graph-transitive-reduction *graph*)) ; => 3
+(cl-dataflow-kit:graph-size (cl-dataflow-kit:graph-transitive-reduction *graph*)) ; => 3
 
 ;; Every simple path from fetch to package.
-(cl-dataflow:graph-all-paths *graph* "fetch" "package")
+(cl-dataflow-kit:graph-all-paths *graph* "fetch" "package")
 ;; => (("fetch" "compile" "package") ("fetch" "compile" "test" "package"))
 ```
 
@@ -103,27 +103,27 @@ if that value isn't a non-negative real.
   graph — reusing the same search, not a second pass.
 
 ```lisp
-(defparameter *wg* (cl-dataflow:make-graph))
+(defparameter *wg* (cl-dataflow-kit:make-graph))
 (dolist (name '("a" "b" "c"))
-  (cl-dataflow:add-node *wg* (cl-dataflow:make-node name)))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *wg* "a" "b")) '(:weight 5))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *wg* "a" "c")) '(:weight 9))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *wg* "b" "c")) '(:weight 2))
+  (cl-dataflow-kit:add-node *wg* (cl-dataflow-kit:make-node name)))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *wg* "a" "b")) '(:weight 5))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *wg* "a" "c")) '(:weight 9))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *wg* "b" "c")) '(:weight 2))
 
 ;; The direct a -> c edge costs 9; routing through b costs only 5 + 2 = 7.
-(cl-dataflow:graph-weighted-distance *wg* "a" "c") ; => 7
-(cl-dataflow:graph-weighted-path *wg* "a" "c")      ; => ("a" "b" "c")
+(cl-dataflow-kit:graph-weighted-distance *wg* "a" "c") ; => 7
+(cl-dataflow-kit:graph-weighted-path *wg* "a" "c")      ; => ("a" "b" "c")
 
-(defparameter *net* (cl-dataflow:make-graph))
+(defparameter *net* (cl-dataflow-kit:make-graph))
 (dolist (name '("s" "a" "b" "t"))
-  (cl-dataflow:add-node *net* (cl-dataflow:make-node name)))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *net* "s" "a")) '(:capacity 3))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *net* "s" "b")) '(:capacity 2))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *net* "a" "t")) '(:capacity 2))
-(setf (cl-dataflow:edge-metadata (cl-dataflow:add-edge *net* "b" "t")) '(:capacity 3))
+  (cl-dataflow-kit:add-node *net* (cl-dataflow-kit:make-node name)))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *net* "s" "a")) '(:capacity 3))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *net* "s" "b")) '(:capacity 2))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *net* "a" "t")) '(:capacity 2))
+(setf (cl-dataflow-kit:edge-metadata (cl-dataflow-kit:add-edge *net* "b" "t")) '(:capacity 3))
 
-(cl-dataflow:graph-max-flow *net* "s" "t")  ; => 4
-(cl-dataflow:graph-min-cut *net* "s" "t")   ; => (("a" "t") ("s" "b"))
+(cl-dataflow-kit:graph-max-flow *net* "s" "t")  ; => 4
+(cl-dataflow-kit:graph-min-cut *net* "s" "t")   ; => (("a" "t") ("s" "b"))
 ```
 
 ## Metrics
@@ -160,13 +160,13 @@ weak reachability.
   undirected-reachable from itself.
 
 ```lisp
-(cl-dataflow:graph-density *graph*)               ; => 1/3
-(cl-dataflow:graph-degree-histogram *graph*)       ; => ((1 . 1) (2 . 2) (3 . 1))
+(cl-dataflow-kit:graph-density *graph*)               ; => 1/3
+(cl-dataflow-kit:graph-degree-histogram *graph*)       ; => ((1 . 1) (2 . 2) (3 . 1))
 
 ;; The undirected view has a triangle (compile-test, test-package,
 ;; compile-package), an odd cycle, so it isn't 2-colorable.
-(cl-dataflow:graph-bipartite-p *graph*)            ; => NIL
-(cl-dataflow:graph-greedy-coloring *graph*)
+(cl-dataflow-kit:graph-bipartite-p *graph*)            ; => NIL
+(cl-dataflow-kit:graph-greedy-coloring *graph*)
 ;; => (("compile" . 0) ("fetch" . 1) ("package" . 1) ("test" . 2))
 ```
 
@@ -197,9 +197,9 @@ fresh graph and never mutate their inputs; edges are compared by identity
   duplicate.
 
 ```lisp
-(cl-dataflow:graph-diff *graph* (cl-dataflow:graph-filter-nodes
+(cl-dataflow-kit:graph-diff *graph* (cl-dataflow-kit:graph-filter-nodes
                                  *graph*
-                                 (lambda (node) (not (equal (cl-dataflow:node-name node) "lint")))))
+                                 (lambda (node) (not (equal (cl-dataflow-kit:node-name node) "lint")))))
 ;; => (:added-nodes () :removed-nodes () :added-edges () :removed-edges ())
 ```
 
@@ -235,9 +235,9 @@ never grows the control stack and correctly handles multigraphs.
 ```lisp
 ;; "compile" is the sole cut vertex: sever it and "fetch" is stranded from
 ;; the triangle "compile"-"test"-"package" left behind.
-(cl-dataflow:graph-articulation-points *graph*) ; => ("compile")
-(cl-dataflow:graph-bridges *graph*)              ; => (("compile" "fetch"))
-(cl-dataflow:graph-dominators *graph* "fetch")
+(cl-dataflow-kit:graph-articulation-points *graph*) ; => ("compile")
+(cl-dataflow-kit:graph-bridges *graph*)              ; => (("compile" "fetch"))
+(cl-dataflow-kit:graph-dominators *graph* "fetch")
 ;; => (("compile" . "fetch") ("package" . "compile") ("test" . "compile"))
 ```
 

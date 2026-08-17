@@ -3,11 +3,11 @@
 Each of the eleven examples under `examples/` is a plain script you run
 directly with SBCL. Every one of them starts by `load`ing the twelfth file,
 `examples/bootstrap.lisp`, which pushes the repository root onto
-`asdf:*central-registry*` and calls `asdf:load-system "cl-dataflow"` — so ASDF
-resolves the load order and the `cl-prolog` dependency, and no script has to
+`asdf:*central-registry*` and calls `asdf:load-system "cl-dataflow-kit"` — so ASDF
+resolves the load order and the `cl-prolog-kit` dependency, and no script has to
 restate the source-file list.
 
-`cl-prolog` itself must already be somewhere ASDF can find it; `nix develop`
+`cl-prolog-kit` itself must already be somewhere ASDF can find it; `nix develop`
 puts it on `CL_SOURCE_REGISTRY` for you (see
 [Getting Started](../getting-started.md)).
 
@@ -45,20 +45,20 @@ This example models a small ingestion pipeline as a dependency graph and asks
 two structural questions with [`graph-descendants`/`graph-ancestors`](graph-algorithms.md):
 
 ```lisp
-(defparameter *graph* (cl-dataflow:make-graph))
+(defparameter *graph* (cl-dataflow-kit:make-graph))
 
 (dolist (name '("ingest" "parse" "validate" "metrics" "transform" "audit" "load"))
-  (cl-dataflow:add-node *graph* (cl-dataflow:make-node name)))
+  (cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node name)))
 
 (dolist (edge '(("ingest" "parse") ("parse" "validate") ("parse" "metrics")
                 ("validate" "transform") ("validate" "audit") ("transform" "load")))
-  (cl-dataflow:add-edge *graph* (first edge) (second edge)))
+  (cl-dataflow-kit:add-edge *graph* (first edge) (second edge)))
 
 ;; Impact analysis: everything downstream of "parse".
-(cl-dataflow:graph-descendants *graph* "parse")
+(cl-dataflow-kit:graph-descendants *graph* "parse")
 
 ;; Dependency analysis: everything "load" depends on.
-(cl-dataflow:graph-ancestors *graph* "load")
+(cl-dataflow-kit:graph-ancestors *graph* "load")
 ```
 
 `graph-descendants`/`graph-ancestors` answer "what breaks if I change this
@@ -75,7 +75,7 @@ clean exit, which is what actually keeps this page honest.
 
 `t/core-runtime-example-test.lisp` also defines one smoke test per example
 script, asserting exact substrings of its output — but do **not** enable it
-by setting `CL_DATAFLOW_RUN_EXAMPLE_SMOKE=1`: spawning the example processes
+by setting `CL_DATAFLOW_KIT_RUN_EXAMPLE_SMOKE=1`: spawning the example processes
 from inside the running test suite deadlocks it, confirmed by direct
 reproduction. It stays opt-in, and unused, for exactly that reason. Use
 `scripts/run-examples.sh` or run the scripts by hand instead — see

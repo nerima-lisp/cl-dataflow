@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-max-flow-computes-edmonds-karp
   ;; The classic CLRS max-flow network: the maximum s->t flow is 23. Capacities

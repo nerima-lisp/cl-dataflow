@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; A few more stream operators plus statistical aggregate consumers. The
 ;;;; statistics force the stream once and fold it in pure Lisp; each returns NIL

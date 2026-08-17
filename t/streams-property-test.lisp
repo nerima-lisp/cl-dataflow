@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Property-based tests treating the equivalent list operation as the
 ;;;; reference model for each stream operator/consumer: for any generated

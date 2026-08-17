@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Ergonomics for the effect boundary. The context's effect-handler table is
 ;;;; only reachable publicly through copying accessors (CONTEXT-EFFECT-HANDLERS
