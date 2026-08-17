@@ -19,7 +19,7 @@ nix build .#docs # render this site, offline, with mkdocs --strict
 
 | Check | What it gates |
 | --- | --- |
-| `checks.default` | the `cl-dataflow/test` suite under `cl-weave` |
+| `checks.default` | the `cl-dataflow-kit/test` suite under `cl-weave` |
 | `checks.coverage` | the coverage thresholds below, plus the report artifact |
 | `checks.examples` | every `examples/*.lisp` script runs to a clean exit, each under a hard timeout (see [Examples](../guide/examples.md#example-scripts-as-regression-tests)) |
 | `checks.paredit-lint` | every Lisp file parses under `paredit` |
@@ -32,11 +32,11 @@ build cache between them.
 
 ## Running the suite
 
-The test ASDF system is `cl-dataflow/test`. `asdf:test-system :cl-dataflow`
+The test ASDF system is `cl-dataflow-kit/test`. `asdf:test-system :cl-dataflow-kit`
 dispatches to it:
 
 ```lisp
-(asdf:test-system :cl-dataflow)
+(asdf:test-system :cl-dataflow-kit)
 ```
 
 Without Nix, the repository-root entry point runs the same suite:
@@ -95,8 +95,8 @@ runtime-context seeding via `run-pipeline-with-test-context`).
 
 ## Coverage gate
 
-Coverage is measured only for source files owned by the `cl-dataflow` ASDF
-system (not `cl-weave`, `cl-prolog`, or the test system itself). The gate
+Coverage is measured only for source files owned by the `cl-dataflow-kit` ASDF
+system (not `cl-weave`, `cl-prolog-kit`, or the test system itself). The gate
 requires:
 
 - **≥ 84%** expression coverage
@@ -129,7 +129,7 @@ touches `docs/**`, `flake.nix`, or `flake.lock`.
 `flake-update.yml` opens a weekly pull request bumping every flake input.
 
 Pushing a `vX.Y.Z` tag triggers `release.yml`, which verifies the tag matches
-`cl-dataflow.asd`'s `:version`, runs `nix flake check`, and opens a **draft**
+`cl-dataflow-kit.asd`'s `:version`, runs `nix flake check`, and opens a **draft**
 GitHub release with an empty body. The tag must equal the `.asd` version or the
 release job fails by design. The release description is written by hand and is
 this project's only changelog:

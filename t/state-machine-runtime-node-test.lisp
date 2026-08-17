@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest state-machine-print-object
   (let ((machine (make-state-machine :state "idle")))

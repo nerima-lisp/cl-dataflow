@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Small runtime helpers shared by the pipeline and testing layers: the
 ;;;; context value store, runtime-context construction, the context mutation

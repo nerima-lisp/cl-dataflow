@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; FLOW-NAME, FLOW-METADATA, and FLOW-KIND: one cross-type introspection
 ;;;; protocol over every public flow object (node, edge, graph, context,

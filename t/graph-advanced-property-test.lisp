@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Advanced cl-weave usage: custom matchers, richer generators, differential
 ;;;; property testing, and performance guards for the Prolog-backed graph layer.
@@ -129,7 +129,7 @@ Usage: (expect graph :to-reach from to)."
 ;;; Cross-checking against cl-weave's logic-programming engine
 ;;;
 ;;; The BFS reference above and GRAPH-DESCENDANTS/-ANCESTORS themselves (which
-;;; materialize into a CL-PROLOG rulebase; see GRAPH-RUNTIME-PROLOG.LISP) both
+;;; materialize into a CL-PROLOG-KIT rulebase; see GRAPH-RUNTIME-PROLOG.LISP) both
 ;;; compute a transitive closure, but neither is independent of the other's
 ;;; general shape. cl-weave ships its own small unification/backtracking logic
 ;;; engine (LOGIC-QUERY); querying a recursive REACHABLE rule over it is a

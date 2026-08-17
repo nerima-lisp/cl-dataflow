@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Pipeline execution-plan construction is split from pipeline execution so
 ;;;; the cached plan's data derivation can evolve independently of the runtime

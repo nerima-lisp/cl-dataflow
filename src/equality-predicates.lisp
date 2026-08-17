@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 (defmacro define-plist-equal-p (&body specs)
   "For each (NAME ARG-A ARG-B TO-PLIST DOCSTRING) in SPECS, define a two-argument

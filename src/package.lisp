@@ -2,10 +2,10 @@
 ;;;; graphs and nodes, pipelines, events, effects, state machines, streams,
 ;;;; reactive subjects, and their shared condition types.
 
-(defpackage #:cl-dataflow
+(defpackage #:cl-dataflow-kit
   (:use #:cl)
   (:export
-    #:cl-dataflow-error
+    #:cl-dataflow-kit-error
     #:invalid-input-error
     #:invalid-input-expected
     #:invalid-input-value

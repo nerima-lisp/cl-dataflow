@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Eulerian trail discovery over the directed multigraph via Hierholzer's
 ;;;; algorithm, after checking in/out-degree balance.

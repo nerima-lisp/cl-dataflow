@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Synchronous push-based reactive subjects -- the producer-driven dual of the
 ;;;; consumer-driven FLOW-STREAM. A SUBJECT holds an ordered list of subscriber

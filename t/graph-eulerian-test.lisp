@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-eulerian-path-traces-every-edge-once
   ;; A directed triangle is an Eulerian circuit: starting at the name-least node

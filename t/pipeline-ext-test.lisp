@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %double-pipeline ()
   (let ((graph (make-graph)))
@@ -88,7 +88,7 @@
              (make-pipeline :graph graph))))
     (is (equal (map-pipeline pipeline inputs :parallel t) inputs))
     (is (> peak-active-count 1))
-    (is (<= peak-active-count cl-dataflow::+parallel-worker-limit+))))
+    (is (<= peak-active-count cl-dataflow-kit::+parallel-worker-limit+))))
 
 (deftest map-pipeline-rejects-parallel-with-a-shared-context
   (let ((pipeline (%double-pipeline)))

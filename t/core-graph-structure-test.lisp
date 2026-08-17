@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest node-construction-and-graph-sort
   (with-graph-fixture (graph ((source "source")
@@ -135,7 +135,7 @@
     (is (equal (invalid-input-value captured) "missing-node"))
     (is (equal (invalid-input-detail captured)
                 "Expected NODE, got \"missing-node\""))
-    (is (typep captured 'cl-dataflow-error))))
+    (is (typep captured 'cl-dataflow-kit-error))))
 
 (deftest add-node-rejects-duplicate-node-names
   (with-graph-fixture (graph ((source "source")))
@@ -225,7 +225,7 @@
                               :name "source"
                               :inputs '("ok")
                               :outputs '("dup" "dup"))))
-    (setf (gethash (node-name node) (slot-value graph 'cl-dataflow::nodes)) node)
+    (setf (gethash (node-name node) (slot-value graph 'cl-dataflow-kit::nodes)) node)
     (signals graph-error
       (validate-graph graph))))
 
@@ -263,7 +263,7 @@
                                 :to-port "value")))
     (signals node-not-found-error (topological-sort graph))))
 
-(deftest graph-errors-inherit-from-cl-dataflow-error
+(deftest graph-errors-inherit-from-cl-dataflow-kit-error
   (with-graph-fixture (graph ((source "source" :outputs '("left"))
                               (sink "sink" :inputs '("right"))))
     (setf (graph-edges graph)
@@ -274,7 +274,7 @@
         (graph-error (condition)
           (setf captured condition)))
       (is captured)
-      (is (typep captured 'cl-dataflow-error)))))
+      (is (typep captured 'cl-dataflow-kit-error)))))
 
 (deftest invalid-input-errors-copy-mutable-designators
   (let* ((designator (list :missing "node"))

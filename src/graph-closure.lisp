@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Reachability-derived graph algorithms: transitive closure/reduction,
 ;;;; topological rank, and longest (critical) path. Structural traversals

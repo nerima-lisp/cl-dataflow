@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Structural deep-copying: %COPY-STRUCTURED-VALUE walks an arbitrary
 ;;;; cons/hash-table/vector/string value (memoizing shared and circular

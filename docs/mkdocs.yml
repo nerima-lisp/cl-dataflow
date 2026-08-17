@@ -1,4 +1,4 @@
-# cl-dataflow documentation — MkDocs + Material configuration.
+# cl-dataflow-kit documentation — MkDocs + Material configuration.
 #
 # Build:   mkdocs build --strict -f docs/mkdocs.yml
 # Serve:   mkdocs serve  -f docs/mkdocs.yml
@@ -7,15 +7,15 @@
 # Use `mkdocs serve --no-strict` while editing if warnings-as-errors get in the
 # way.
 
-site_name: cl-dataflow
+site_name: cl-dataflow-kit
 site_description: >-
   Composable computation graphs, pipelines, event-driven workflows, state
   machines, and effect boundaries for Common Lisp.
-site_author: cl-dataflow contributors
-site_url: https://nerima-lisp.github.io/cl-dataflow/
+site_author: cl-dataflow-kit contributors
+site_url: https://nerima-lisp.github.io/cl-dataflow-kit/
 
-repo_name: nerima-lisp/cl-dataflow
-repo_url: https://github.com/nerima-lisp/cl-dataflow
+repo_name: nerima-lisp/cl-dataflow-kit
+repo_url: https://github.com/nerima-lisp/cl-dataflow-kit
 edit_uri: edit/main/docs/src/
 
 # Content lives in docs/src, matching the sibling cl-weave project layout.
@@ -27,7 +27,7 @@ use_directory_urls: true
 # invocation path (including `mkdocs serve`) applies the same gate.
 strict: true
 
-copyright: Copyright &copy; cl-dataflow contributors — MIT License
+copyright: Copyright &copy; cl-dataflow-kit contributors — MIT License
 
 theme:
   name: material
@@ -83,8 +83,8 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/nerima-lisp/cl-dataflow
-      name: cl-dataflow on GitHub
+      link: https://github.com/nerima-lisp/cl-dataflow-kit
+      name: cl-dataflow-kit on GitHub
   generator: false
 
 plugins:

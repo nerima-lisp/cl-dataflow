@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The DEFINE-PIPELINE and DEFINE-WORKFLOW DSL macros: clause parsing,
 ;;;; validation, and code generation for building a graph-backed PIPELINE (and,

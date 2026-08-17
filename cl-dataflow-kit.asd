@@ -2,9 +2,9 @@
 
 ;;; System names are written as STRINGS rather than #:symbols or :keywords, so
 ;;; that reading this file never depends on the reader's current package state.
-(defsystem "cl-dataflow"
+(defsystem "cl-dataflow-kit"
   :description "Composable computation graphs, pipelines, events, state machines, and effect boundaries."
-  :long-description "cl-dataflow is a small, dependency-light Common Lisp library for
+  :long-description "cl-dataflow-kit is a small, dependency-light Common Lisp library for
 building composable pipelines, event-driven workflows, and stateful computation
 graphs. It provides graphs and nodes, sequential and branching pipelines,
 event and effect boundaries, guarded state machines, and deterministic testing
@@ -14,17 +14,17 @@ helpers, all behind a single public package."
   :license "MIT"
   ;; Single source of truth for the version: flake.nix reads this form and
   ;; release.yml refuses to publish a tag that disagrees with it.
-  :version "1.1.2"
-  :homepage "https://github.com/nerima-lisp/cl-dataflow"
-  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
-  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
-  ;; cl-prolog backs the graph edge relation (src/graph-runtime-prolog.lisp).
+  :version "1.2.0"
+  :homepage "https://github.com/nerima-lisp/cl-dataflow-kit"
+  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow-kit/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow-kit.git")
+  ;; cl-prolog-kit backs the graph edge relation (src/graph-runtime-prolog.lisp).
   ;; cl-concurrent-kit backs RUN-PIPELINE's :PARALLEL mode
   ;; (src/pipeline-parallel.lisp). Both are L1/L2 per DEPENDENCY_POLICY.md;
-  ;; cl-dataflow (L3, domain) depending on either is within policy (deps only
+  ;; cl-dataflow-kit (L3, domain) depending on either is within policy (deps only
   ;; go to the same layer or below), and depth stays at 1 for both -- neither
   ;; pulls in a further org-internal dependency of its own.
-  :depends-on ("cl-prolog" "cl-concurrent-kit")
+  :depends-on ("cl-prolog-kit" "cl-concurrent-kit")
   :pathname "src/"
   :serial t
   :components ((:file "package")
@@ -88,26 +88,26 @@ helpers, all behind a single public package."
                 (:file "reactive")
                 (:file "reactive-ops")
                 (:file "testing"))
-  :in-order-to ((test-op (test-op "cl-dataflow/test"))))
+  :in-order-to ((test-op (test-op "cl-dataflow-kit/test"))))
 
-;;; The test system is `cl-dataflow/test` (singular, slash-separated) with
-;;; :pathname "t". It is NOT `cl-dataflow-test` and NOT `cl-dataflow/tests`.
-(defsystem "cl-dataflow/test"
-  :description "Test system for cl-dataflow."
+;;; The test system is `cl-dataflow-kit/test` (singular, slash-separated) with
+;;; :pathname "t". It is NOT `cl-dataflow-kit-test` and NOT `cl-dataflow-kit/tests`.
+(defsystem "cl-dataflow-kit/test"
+  :description "Test system for cl-dataflow-kit."
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.1.2"
-  :homepage "https://github.com/nerima-lisp/cl-dataflow"
-  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow/issues"
-  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow.git")
-  :depends-on ("cl-dataflow"
+  :version "1.2.0"
+  :homepage "https://github.com/nerima-lisp/cl-dataflow-kit"
+  :bug-tracker "https://github.com/nerima-lisp/cl-dataflow-kit/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-dataflow-kit.git")
+  :depends-on ("cl-dataflow-kit"
                 ;; cl-weave is the org's test framework everywhere.
                 "cl-weave"
                 ;; Test-only: t/core-runtime-example-test.lisp runs each
                 ;; examples/*.lisp script as a subprocess under a timeout and
                 ;; asserts on its exit code and captured output, which needs
-                ;; real process control. The shipped cl-dataflow system keeps
+                ;; real process control. The shipped cl-dataflow-kit system keeps
                 ;; only its two runtime dependencies.
                 "cl-process-kit")
   :pathname "t/"
@@ -181,4 +181,4 @@ helpers, all behind a single public package."
                 (:file "reactive-ops-test")
                 (:file "mutation-test"))
   :perform (test-op (o c)
-    (uiop:symbol-call '#:cl-dataflow.test '#:run-tests)))
+    (uiop:symbol-call '#:cl-dataflow-kit.test '#:run-tests)))

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Introspection and observability that ties the other layers together:
 ;;;; render a pipeline's graph, enumerate its structural roles, and turn a

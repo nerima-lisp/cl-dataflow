@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Test-support helpers for asserting on a completed pipeline/state-machine
 ;;;; run: RUN-PIPELINE-WITH-TEST-CONTEXT builds a fresh runtime context, and

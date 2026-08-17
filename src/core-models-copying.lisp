@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; DEFINE-COPY-INSTANCE(-WITH-CHECK) generate the %COPY-* deep-copy
 ;;;; constructors for every model class (event, effect, node, edge, ...) from

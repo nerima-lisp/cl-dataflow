@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest state-machine-reset-restores-initial-state
   (let ((machine (make-state-machine
@@ -149,9 +149,9 @@
     (multiple-value-bind (updated-machine returned-record)
         (step-state-machine machine "start" :context context)
       (let* ((history-record
-               (first (cl-dataflow::%state-machine-history-list updated-machine)))
+               (first (cl-dataflow-kit::%state-machine-history-list updated-machine)))
              (trace-record
-               (first (cl-dataflow::%context-trace-list context)))
+               (first (cl-dataflow-kit::%context-trace-list context)))
              (returned-result (getf returned-record :action-result))
              (history-result (getf history-record :action-result))
              (trace-result (getf trace-record :action-result)))

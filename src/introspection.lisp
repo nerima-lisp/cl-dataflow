@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Cross-cutting introspection: merging contexts, filtering a trace by entry
 ;;;; kind, and a structural describe/children protocol over every flow object.

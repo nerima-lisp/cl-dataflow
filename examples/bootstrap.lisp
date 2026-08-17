@@ -16,14 +16,14 @@
 
 ;; find-symbol defers every ASDF reference to after (require :asdf) runs, so
 ;; this file never takes a read-time dependency on the ASDF package existing.
-;; Loading the "cl-dataflow" system -- rather than hand-listing its source
-;; files, which previously drifted out of sync with cl-dataflow.asd whenever
+;; Loading the "cl-dataflow-kit" system -- rather than hand-listing its source
+;; files, which previously drifted out of sync with cl-dataflow-kit.asd whenever
 ;; a file was renamed or split -- lets ASDF resolve load order and the
-;; cl-prolog :depends-on itself.
-(defun load-cl-dataflow ()
+;; cl-prolog-kit :depends-on itself.
+(defun load-cl-dataflow-kit ()
   (use-interpreted-loading-when-available)
   (require :asdf)
   (push (repository-directory) (symbol-value (find-symbol "*CENTRAL-REGISTRY*" "ASDF")))
-  (funcall (find-symbol "LOAD-SYSTEM" "ASDF") "cl-dataflow"))
+  (funcall (find-symbol "LOAD-SYSTEM" "ASDF") "cl-dataflow-kit"))
 
-(load-cl-dataflow)
+(load-cl-dataflow-kit)

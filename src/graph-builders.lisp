@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Graph mutation and composition. The base graph API is append-only (ADD-NODE /
 ;;;; ADD-EDGE); these fill in removal, induced subgraphs, disjoint merge, and node

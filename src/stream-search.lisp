@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Search, predicate, and combinatorial helpers over streams: first-match index,
 ;;;; a "no element matches" predicate, the most frequent element, and the Cartesian

@@ -13,19 +13,19 @@ or both:
 
 ```lisp
 ;; From an explicit graph.
-(defparameter *graph* (cl-dataflow:make-graph))
-(cl-dataflow:add-node *graph* (cl-dataflow:make-node "start"))
-(cl-dataflow:add-node *graph* (cl-dataflow:make-node "finish"))
-(cl-dataflow:add-edge *graph* "start" "finish")
-(defparameter *from-graph* (cl-dataflow:make-pipeline :graph *graph*))
+(defparameter *graph* (cl-dataflow-kit:make-graph))
+(cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node "start"))
+(cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node "finish"))
+(cl-dataflow-kit:add-edge *graph* "start" "finish")
+(defparameter *from-graph* (cl-dataflow-kit:make-pipeline :graph *graph*))
 
 ;; From a bare stage list: make-pipeline chains the stages into a linear
 ;; graph for you, connecting each stage's first output port to the next
 ;; stage's first input port.
 (defparameter *from-stages*
-  (cl-dataflow:make-pipeline
-    :stages (list (cl-dataflow:make-node "parse")
-                  (cl-dataflow:make-node "validate"))))
+  (cl-dataflow-kit:make-pipeline
+    :stages (list (cl-dataflow-kit:make-node "parse")
+                  (cl-dataflow-kit:make-node "validate"))))
 ```
 
 What `:stages` may contain depends on whether `:graph` is also given:
@@ -49,7 +49,7 @@ clauses and returns a `pipeline`:
 
 ```lisp
 (defparameter *pipeline*
-  (cl-dataflow:define-pipeline ()
+  (cl-dataflow-kit:define-pipeline ()
     (:node "start"
      :handler (lambda (input context)
                 (declare (ignore context))
@@ -60,7 +60,7 @@ clauses and returns a `pipeline`:
                 (* input 2)))
     (:edge "start" "finish")))
 
-(cl-dataflow:run-pipeline *pipeline* :input 10)
+(cl-dataflow-kit:run-pipeline *pipeline* :input 10)
 ;; => 22
 ```
 
@@ -80,7 +80,7 @@ in the graph's topological order, not just a single straight-line path.
 
 ```lisp
 (defparameter *branching*
-  (cl-dataflow:define-pipeline ()
+  (cl-dataflow-kit:define-pipeline ()
     (:node "ingest" :handler (lambda (input context)
                                 (declare (ignore context))
                                 input))
@@ -93,7 +93,7 @@ in the graph's topological order, not just a single straight-line path.
     (:edge "ingest" "double")
     (:edge "ingest" "increment")))
 
-(cl-dataflow:run-pipeline *branching* :input 10)
+(cl-dataflow-kit:run-pipeline *branching* :input 10)
 ;; => (("double" ("value" . 20)) ("increment" ("value" . 11)))
 ```
 
@@ -124,14 +124,14 @@ order — as shown here, where `"double"` and `"increment"` are both sinks.
   `(values input context)`.
 
 ```lisp
-(defparameter *double* (cl-dataflow:define-pipeline ()
-                          (:node "double" :handler (cl-dataflow:mapping-handler
+(defparameter *double* (cl-dataflow-kit:define-pipeline ()
+                          (:node "double" :handler (cl-dataflow-kit:mapping-handler
                                                       (lambda (x) (* x 2))))))
-(defparameter *increment* (cl-dataflow:define-pipeline ()
-                             (:node "increment" :handler (cl-dataflow:mapping-handler
+(defparameter *increment* (cl-dataflow-kit:define-pipeline ()
+                             (:node "increment" :handler (cl-dataflow-kit:mapping-handler
                                                             (lambda (x) (1+ x))))))
 
-(cl-dataflow:run-pipeline-sequence (list *double* *increment*) :input 20)
+(cl-dataflow-kit:run-pipeline-sequence (list *double* *increment*) :input 20)
 ;; => (VALUES 41 #<CONTEXT ...>)
 ```
 
@@ -149,7 +149,7 @@ part of the cached execution plan — run their handlers concurrently, via
 structured concurrency:
 
 ```lisp
-(cl-dataflow:run-pipeline *branching* :input 10 :parallel t)
+(cl-dataflow-kit:run-pipeline *branching* :input 10 :parallel t)
 ;; => (("double" ("value" . 20)) ("increment" ("value" . 11))) -- same
 ;; result as the sequential run above; "double" and "increment" share a
 ;; level (both depend only on "ingest"), so their handlers ran concurrently.
@@ -207,13 +207,13 @@ returns the actual graph object the pipeline runs against, so mutating it
 run. Use `copy-pipeline` when you need an isolated clone instead:
 
 ```lisp
-(defparameter *copy* (cl-dataflow:copy-pipeline *pipeline*))
+(defparameter *copy* (cl-dataflow-kit:copy-pipeline *pipeline*))
 
 ;; Mutating *pipeline*'s live graph does not affect *copy*.
-(cl-dataflow:add-node (cl-dataflow:pipeline-graph *pipeline*)
-                      (cl-dataflow:make-node "extra"))
-(cl-dataflow:graph-order (cl-dataflow:pipeline-graph *pipeline*)) ;; => 3
-(cl-dataflow:graph-order (cl-dataflow:pipeline-graph *copy*))     ;; => 2
+(cl-dataflow-kit:add-node (cl-dataflow-kit:pipeline-graph *pipeline*)
+                      (cl-dataflow-kit:make-node "extra"))
+(cl-dataflow-kit:graph-order (cl-dataflow-kit:pipeline-graph *pipeline*)) ;; => 3
+(cl-dataflow-kit:graph-order (cl-dataflow-kit:pipeline-graph *copy*))     ;; => 2
 ```
 
 `copy-pipeline` preserves the pipeline's graph, stage order, and metadata,
@@ -244,7 +244,7 @@ returns `(values pipeline machine)`:
 
 ```lisp
 (multiple-value-bind (pipeline machine)
-    (cl-dataflow:define-workflow (:state "idle")
+    (cl-dataflow-kit:define-workflow (:state "idle")
       (:transition "idle" "create" "created")
       (:transition "created" "ship" "shipped")
       (:node "receive" :handler (lambda (input context)
@@ -260,9 +260,9 @@ returns `(values pipeline machine)`:
                                  "ship"))
       (:edge "receive" "create-step")
       (:edge "create-step" "ship-step"))
-  (let ((context (cl-dataflow:make-context)))
-    (values (cl-dataflow:run-pipeline pipeline :input "A-1" :context context)
-            (cl-dataflow:context-state context))))
+  (let ((context (cl-dataflow-kit:make-context)))
+    (values (cl-dataflow-kit:run-pipeline pipeline :input "A-1" :context context)
+            (cl-dataflow-kit:context-state context))))
 ;; => (VALUES "shipped" "shipped")
 ```
 
@@ -301,22 +301,22 @@ events, effects, and trace accumulate across the whole run.
 
 ```lisp
 (defparameter *halve*
-  (cl-dataflow:define-pipeline ()
+  (cl-dataflow-kit:define-pipeline ()
     (:node "halve" :handler (lambda (input context)
                                (declare (ignore context))
                                (floor input 2)))))
 
 ;; Run exactly N times.
-(cl-dataflow:run-pipeline-times *halve* 3 :input 40)
+(cl-dataflow-kit:run-pipeline-times *halve* 3 :input 40)
 ;; => (VALUES 5 #<CONTEXT ...>)
 
 ;; Run until a result equals the value fed into it (a fixpoint), or an
 ;; iteration cap (MAX-ITERATIONS, default 1000) is reached.
-(cl-dataflow:run-pipeline-until-fixpoint *halve* :input 40)
+(cl-dataflow-kit:run-pipeline-until-fixpoint *halve* :input 40)
 ;; => (VALUES 0 7 T)   ; result, iterations, fixpoint-p
 
 ;; Run while a predicate holds on the current value, checked before each run.
-(cl-dataflow:run-pipeline-while *halve* (lambda (value) (> value 1)) :input 40)
+(cl-dataflow-kit:run-pipeline-while *halve* (lambda (value) (> value 1)) :input 40)
 ;; => (VALUES 1 5)     ; final-value, iterations
 ```
 
@@ -364,17 +364,17 @@ on top of the core pipeline runtime:
   a single stage of a larger graph.
 
 ```lisp
-(defparameter *plist* (cl-dataflow:pipeline-to-plist *pipeline*))
-(defparameter *rebuilt* (cl-dataflow:plist-to-pipeline *plist*))
-(cl-dataflow:pipeline-validate *rebuilt*)     ;; => T
-(cl-dataflow:pipeline-stage-count *rebuilt*)  ;; => 2
+(defparameter *plist* (cl-dataflow-kit:pipeline-to-plist *pipeline*))
+(defparameter *rebuilt* (cl-dataflow-kit:plist-to-pipeline *plist*))
+(cl-dataflow-kit:pipeline-validate *rebuilt*)     ;; => T
+(cl-dataflow-kit:pipeline-stage-count *rebuilt*)  ;; => 2
 
-(cl-dataflow:map-pipeline *pipeline* '(1 2 3))
+(cl-dataflow-kit:map-pipeline *pipeline* '(1 2 3))
 ;; => (result-for-1 result-for-2 result-for-3), independent contexts
 
-(defparameter *outer-graph* (cl-dataflow:make-graph))
-(cl-dataflow:add-node *outer-graph* (cl-dataflow:pipeline->node *pipeline* "embedded"))
-(defparameter *outer* (cl-dataflow:make-pipeline :graph *outer-graph*))
+(defparameter *outer-graph* (cl-dataflow-kit:make-graph))
+(cl-dataflow-kit:add-node *outer-graph* (cl-dataflow-kit:pipeline->node *pipeline* "embedded"))
+(defparameter *outer* (cl-dataflow-kit:make-pipeline :graph *outer-graph*))
 ```
 
 ## Structural equality

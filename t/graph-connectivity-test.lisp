@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-connected-p-checks-weak-connectivity
   (with-graph-fixture (graph ((a "a") (b "b") (c "c")) :edges ((a b) (b c)))
@@ -123,7 +123,7 @@
   ;; BFS phase per node) rather than just its output, guarding the phase split
   ;; into %BETWEENNESS-BFS/%BETWEENNESS-ACCUMULATE against an accidental
   ;; double run or a skipped source.
-  (let ((spy (spy-on 'cl-dataflow::%betweenness-bfs)))
+  (let ((spy (spy-on 'cl-dataflow-kit::%betweenness-bfs)))
     (unwind-protect
         (with-graph-fixture (graph
                              ((a "a") (b "b") (c "c") (d "d"))

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Mutation testing (cl-weave:run-mutations) applied to small, pure
 ;;;; arithmetic/conditional formulas lifted verbatim from the runtime, as a

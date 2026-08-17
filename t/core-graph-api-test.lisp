@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest graph-print-object-renders-raw-graph-summary
   (let* ((graph (make-graph))
@@ -10,7 +10,7 @@
     (is (search "2 nodes 1 edges"
                 (with-output-to-string (stream)
                   (prin1 graph stream))))
-    (remhash "sink" (slot-value graph 'cl-dataflow::nodes))
+    (remhash "sink" (slot-value graph 'cl-dataflow-kit::nodes))
     (is (search "1 nodes 1 edges"
                 (with-output-to-string (stream)
                   (prin1 graph stream))))))

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; A small lazy stream / transducer layer. A FLOW-STREAM is a delayed sequence:
 ;;;; a STEP thunk that yields either :END or (element . next-stream). Operators

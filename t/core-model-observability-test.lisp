@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest context-observability-helpers-expose-chronological-data
   (let* ((boot-event (make-event "boot"))

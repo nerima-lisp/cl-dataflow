@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest pipeline-node-levels-groups-a-diamond-graph-by-dependency-depth
   ;; A -> B, A -> C, B -> D, C -> D: B and C share no dependency path, so they
@@ -7,13 +7,13 @@
   (with-graph-fixture (graph ((a "a") (b "b") (c "c") (d "d"))
                         :edges ((a b) (a c) (b d) (c d)))
     (let* ((stages (topological-sort graph))
-           (incoming-index (cl-dataflow::%incoming-edges-index graph))
-           (levels (cl-dataflow::%pipeline-node-levels stages incoming-index)))
+           (incoming-index (cl-dataflow-kit::%incoming-edges-index graph))
+           (levels (cl-dataflow-kit::%pipeline-node-levels stages incoming-index)))
       (is (equal (mapcar (lambda (level) (mapcar #'node-name level)) levels)
                  '(("a") ("b" "c") ("d")))))))
 
 (deftest pipeline-node-levels-of-an-empty-stage-list-is-empty
-  (is (null (cl-dataflow::%pipeline-node-levels '() (cl-dataflow::%make-result-table)))))
+  (is (null (cl-dataflow-kit::%pipeline-node-levels '() (cl-dataflow-kit::%make-result-table)))))
 
 (deftest pipeline-parallel-matches-sequential-result-for-a-fan-out-level
   ;; LEFT and RIGHT are both sinks (neither has an outgoing edge), so
@@ -118,10 +118,10 @@
   (with-branching-test-pipeline (graph pipeline source left right)
     (let ((context (make-context)))
       (run-pipeline pipeline :input 1 :context context :parallel t)
-      (let ((installed-lock (slot-value context 'cl-dataflow::lock)))
+      (let ((installed-lock (slot-value context 'cl-dataflow-kit::lock)))
         (is (not (null installed-lock)))
         (run-pipeline pipeline :input 2 :context context :parallel t)
-        (is (eq installed-lock (slot-value context 'cl-dataflow::lock)))))))
+        (is (eq installed-lock (slot-value context 'cl-dataflow-kit::lock)))))))
 
 (deftest pipeline-parallel-propagates-a-handler-error-like-sequential-does
   (with-branching-test-pipeline
@@ -175,4 +175,4 @@
       (add-edge graph source branch))
     (run-pipeline (make-pipeline :graph graph) :input 1 :parallel t)
     (is (> peak-active-count 1))
-    (is (<= peak-active-count cl-dataflow::+parallel-worker-limit+))))
+    (is (<= peak-active-count cl-dataflow-kit::+parallel-worker-limit+))))

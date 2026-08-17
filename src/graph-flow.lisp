@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Maximum-flow / minimum-cut over edge-metadata capacities, computed by
 ;;;; Edmonds-Karp (breadth-first-augmenting Ford-Fulkerson).

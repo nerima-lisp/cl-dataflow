@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The lowest-level slot-access primitives (%READ-SLOT and friends) plus
 ;;;; DEFINE-SLOT-APIS/DEFINE-TYPE-PREDICATES, the two code-generating macros

@@ -35,7 +35,7 @@ jobs:
       # empty version against every tag.
       - name: Verify tag matches .asd version
         env:
-          PACKAGE: cl-dataflow
+          PACKAGE: cl-dataflow-kit
         run: |
           set -euo pipefail
           asd_version="$(sed -n 's/^[[:space:]]*:version "\([^"]*\)".*/\1/p' "$PACKAGE.asd" | head -n1)"

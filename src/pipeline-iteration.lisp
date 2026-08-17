@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Iterative (feedback) pipeline execution: repeatedly feed a pipeline's result
 ;;;; back in as its next input. This adds the recurrent/settling computation model

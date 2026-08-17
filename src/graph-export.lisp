@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Rendering and serialisation for graphs. Every renderer walks a deterministic
 ;;;; snapshot -- nodes name-sorted, edges sorted by their endpoints and ports -- so

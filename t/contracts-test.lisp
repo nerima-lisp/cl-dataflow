@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %identity-node (name)
   (make-node name :handler (lambda (input context)

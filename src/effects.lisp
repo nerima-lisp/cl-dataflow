@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The effect boundary's core: constructing an EFFECT and PERFORM-EFFECT,
 ;;;; which looks up the type's registered handler, runs it, and records the

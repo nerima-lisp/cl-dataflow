@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Building and remapping the graph backing a pipeline: mapping stage nodes
 ;;;; back onto a (possibly copied) graph's own node instances, the

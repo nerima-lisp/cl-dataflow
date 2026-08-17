@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defmacro is (form &optional message)
   "Assert FORM is truthy. Without MESSAGE, delegates entirely to CL-WEAVE:EXPECT's
@@ -118,11 +118,11 @@ own sub-expression values."
 
 (defmacro assert-trace-kinds (entries expected-kinds)
   `(is
-    (equal (mapcar #'cl-dataflow::%trace-entry-kind ,entries) ,expected-kinds)))
+    (equal (mapcar #'cl-dataflow-kit::%trace-entry-kind ,entries) ,expected-kinds)))
 
 (defmacro assert-context-trace-count (context expected-count)
-  `(let ((trace-count (cl-dataflow::%context-trace-count ,context))
-         (trace-list (cl-dataflow::%context-trace-list ,context)))
+  `(let ((trace-count (cl-dataflow-kit::%context-trace-count ,context))
+         (trace-list (cl-dataflow-kit::%context-trace-list ,context)))
      (with-soft-assertions
       (is (= trace-count ,expected-count))
       (is (= (length trace-list) ,expected-count)))))

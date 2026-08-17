@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Simple-path enumeration and cycle discovery: every FROM->TO path with no
 ;;;; repeated node, and one ordered cycle witness via the strongly connected

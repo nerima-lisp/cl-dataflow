@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Execution-oriented state-machine helpers layered on the core runtime
 ;;;; (STEP-STATE-MACHINE) and the analysis layer. STATE-MACHINE-RUN-STATES and

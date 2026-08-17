@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (define-snapshot-isolation-test copy-state-machine-produces-independent-machine
   ((transition (make-transition "idle" "start" "running"
@@ -30,7 +30,7 @@
                '("running")))
     (is (equalp (state-machine-history copy) history))
     (let ((copy-action-result
-            (getf (first (slot-value copy 'cl-dataflow::history)) :action-result)))
+            (getf (first (slot-value copy 'cl-dataflow-kit::history)) :action-result)))
       (setf (second (aref copy-action-result 0)) "mutated-copy"))
     (setf (state-machine-state copy) "stopped"
           (state-machine-transitions copy) (list replacement-transition)
@@ -41,7 +41,7 @@
                       :state-before "running"
                       :guard-passed t
                        :action-result '(:ok t))))
-    (setf (cadar (slot-value copy 'cl-dataflow::metadata)) :mutated-copy))
+    (setf (cadar (slot-value copy 'cl-dataflow-kit::metadata)) :mutated-copy))
   (is (equal (state-machine-state machine) "running"))
   (is (equal (state-machine-metadata machine) '((:kind :machine))))
   (is (equal (mapcar #'transition-event-type (state-machine-transitions machine))

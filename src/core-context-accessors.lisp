@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Public copying accessors over GRAPH and CONTEXT: readers that never leak
 ;;;; a live reference to internal state (GRAPH-NODES/GRAPH-EDGES,

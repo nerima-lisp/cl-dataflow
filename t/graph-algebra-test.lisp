@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %simple-graph (node-names edges &key metadata)
   (let ((graph (make-graph :metadata metadata)))

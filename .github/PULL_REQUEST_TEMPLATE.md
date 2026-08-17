@@ -1,4 +1,4 @@
-<!-- Thanks for contributing to cl-dataflow! Keep changes small and test-driven. -->
+<!-- Thanks for contributing to cl-dataflow-kit! Keep changes small and test-driven. -->
 
 ## Summary
 

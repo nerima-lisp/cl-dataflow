@@ -10,7 +10,7 @@ if command -v nix >/dev/null 2>&1; then
 fi
 
 if command -v cl-weave >/dev/null 2>&1; then
-  exec cl-weave run cl-dataflow/test "$@"
+  exec cl-weave run cl-dataflow-kit/test "$@"
 fi
 
 printf '%s\n' "cl-weave or nix is required but neither was found on PATH." >&2

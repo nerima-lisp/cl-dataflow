@@ -1,6 +1,6 @@
 # Architecture
 
-`cl-dataflow` keeps the implementation deliberately small and organized by
+`cl-dataflow-kit` keeps the implementation deliberately small and organized by
 concern, one file per topic:
 
 - `src/package.lisp` defines the public package and its exported API surface.
@@ -9,7 +9,7 @@ concern, one file per topic:
   accessors, conditions, and the model layer split across
   `core-models-classes` / `-copying` / `-slot-accessors` / `-constructors` —
   each listed directly in the system definition.
-- The `cl-prolog`-backed graph runtime lives in `src/graph-runtime-*.lisp`:
+- The `cl-prolog-kit`-backed graph runtime lives in `src/graph-runtime-*.lisp`:
   structural validation, the Prolog rulebase and bulk edge query, topology
   (topological sort, boundaries), port bindings, and pipeline-graph builders.
 - The graph analysis layer above it is split one file per algorithm family:
@@ -40,17 +40,17 @@ concern, one file per topic:
   package.
 - `src/testing.lisp` contains deterministic test helpers, including
   state-machine assertions.
-- `cl-dataflow.asd` loads the library system and routes
-  `asdf:test-system :cl-dataflow` to `cl-dataflow/test`.
+- `cl-dataflow-kit.asd` loads the library system and routes
+  `asdf:test-system :cl-dataflow-kit` to `cl-dataflow-kit/test`.
 - `examples/` contains eleven runnable scripts plus the shared
   `bootstrap.lisp` that loads the ASDF system for them (see
   [Examples](../guide/examples.md)).
 
 ## The graph runtime
 
-The graph runtime models edges as a [`cl-prolog`](https://github.com/nerima-lisp/cl-prolog)
+The graph runtime models edges as a [`cl-prolog-kit`](https://github.com/nerima-lisp/cl-prolog-kit)
 fact base. `topological-sort` and `graph-reachable-p` read the edge relation
-with a single bulk `cl-prolog:query-prolog`, then run linear, stack-safe
+with a single bulk `cl-prolog-kit:query-prolog`, then run linear, stack-safe
 traversals — Kahn's algorithm and a work-list search — over the materialized
 adjacency snapshot. This uses Prolog as the relational store while
 deliberately keeping the bounded graph algorithms in Lisp, so cyclic or
@@ -176,15 +176,15 @@ what failed:
 | Protocols | Done | `flow-name`, `flow-metadata`, and `flow-kind` provide consistent introspection across flow objects. |
 | Testing helpers | Done | Dedicated helpers assert emitted events, effects, final state, state-machine state, and pipeline results. |
 | Runnable examples | Done | Eleven scripts cover a simple pipeline, event workflow, state machine, basic and advanced graph analysis, the graph toolkit, state-machine visualization, resilient pipelines, streams, stream analytics, and an end-to-end integration scenario. |
-| Public API | Stable | `cl-dataflow` is the single exported package. |
+| Public API | Stable | `cl-dataflow-kit` is the single exported package. |
 
 ## Repository layout
 
 ```text
-cl-dataflow/
+cl-dataflow-kit/
   README.md
   LICENSE
-  cl-dataflow.asd
+  cl-dataflow-kit.asd
   run-tests.lisp
   src/
   t/

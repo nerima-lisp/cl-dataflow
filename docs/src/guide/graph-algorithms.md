@@ -1,6 +1,6 @@
 # Graph Algorithms
 
-`cl-dataflow` ships a full analysis layer on top of the basic `graph`
+`cl-dataflow-kit` ships a full analysis layer on top of the basic `graph`
 structure — construction, mutation, and export are covered in [Graphs](graphs.md).
 This page covers the structural layer built directly on top of a graph:
 reachability metrics, component structure, and traversal order.
@@ -19,7 +19,7 @@ implementation would overflow the control stack or blow up exponentially.
 All of the examples below assume:
 
 ```lisp
-(defparameter *graph* (cl-dataflow:make-graph))
+(defparameter *graph* (cl-dataflow-kit:make-graph))
 ```
 
 and build up nodes/edges as shown per section. See the [Public API
@@ -55,19 +55,19 @@ adjacency-snapshot pass.
 
 ```lisp
 (dolist (name '("fetch" "compile" "test" "package"))
-  (cl-dataflow:add-node *graph* (cl-dataflow:make-node name)))
+  (cl-dataflow-kit:add-node *graph* (cl-dataflow-kit:make-node name)))
 (dolist (edge '(("fetch" "compile") ("compile" "test") ("compile" "package")
                 ("test" "package")))
-  (cl-dataflow:add-edge *graph* (first edge) (second edge)))
+  (cl-dataflow-kit:add-edge *graph* (first edge) (second edge)))
 
-(cl-dataflow:graph-order *graph*)            ; => 4
-(cl-dataflow:graph-size *graph*)              ; => 4
-(cl-dataflow:graph-out-degree *graph* "compile") ; => 2
-(cl-dataflow:graph-acyclic-p *graph*)          ; => T
+(cl-dataflow-kit:graph-order *graph*)            ; => 4
+(cl-dataflow-kit:graph-size *graph*)              ; => 4
+(cl-dataflow-kit:graph-out-degree *graph* "compile") ; => 2
+(cl-dataflow-kit:graph-acyclic-p *graph*)          ; => T
 
 ;; "What feeds into package, reversed?" -- transpose flips the whole graph.
-(mapcar #'cl-dataflow:node-name
-        (cl-dataflow:graph-successors (cl-dataflow:graph-transpose *graph*) "package"))
+(mapcar #'cl-dataflow-kit:node-name
+        (cl-dataflow-kit:graph-successors (cl-dataflow-kit:graph-transpose *graph*) "package"))
 ;; => ("compile" "test")
 ```
 
@@ -102,18 +102,18 @@ direction), the parallelizable layering of a DAG, and the SCC condensation.
   acyclic — a cycle in it would contradict the components being maximal.
 
 ```lisp
-(defparameter *cycle* (cl-dataflow:make-graph))
+(defparameter *cycle* (cl-dataflow-kit:make-graph))
 (dolist (name '("x" "y" "z" "w"))
-  (cl-dataflow:add-node *cycle* (cl-dataflow:make-node name)))
+  (cl-dataflow-kit:add-node *cycle* (cl-dataflow-kit:make-node name)))
 (dolist (edge '(("x" "y") ("y" "z") ("z" "x") ("z" "w")))
-  (cl-dataflow:add-edge *cycle* (first edge) (second edge)))
+  (cl-dataflow-kit:add-edge *cycle* (first edge) (second edge)))
 
-(cl-dataflow:graph-strongly-connected-components *cycle*)
+(cl-dataflow-kit:graph-strongly-connected-components *cycle*)
 ;; => (("w") ("x" "y" "z"))
 
 ;; The condensation collapses the cycle into one node, "x", with :members
 ;; ("x" "y" "z"), keeping the outgoing edge to "w".
-(cl-dataflow:graph-node-names (cl-dataflow:graph-condensation *cycle*))
+(cl-dataflow-kit:graph-node-names (cl-dataflow-kit:graph-condensation *cycle*))
 ;; => ("w" "x")
 ```
 
@@ -132,8 +132,8 @@ reachable."
 Both are iterative (explicit queue/stack), so deep graphs are safe.
 
 ```lisp
-(cl-dataflow:graph-bfs-order *graph* "fetch") ; => ("fetch" "compile" "package" "test")
-(cl-dataflow:graph-dfs-order *graph* "fetch") ; => ("fetch" "compile" "package" "test")
+(cl-dataflow-kit:graph-bfs-order *graph* "fetch") ; => ("fetch" "compile" "package" "test")
+(cl-dataflow-kit:graph-dfs-order *graph* "fetch") ; => ("fetch" "compile" "package" "test")
 ```
 
 ## Distance and centrality
@@ -170,13 +170,13 @@ share the directed convention that a node reaching nothing has eccentricity 0
   pass), identifying the "broker" nodes a dataflow graph routes through.
 
 ```lisp
-(cl-dataflow:graph-distance *graph* "fetch" "package")    ; => 2
-(cl-dataflow:graph-eccentricity *graph* "fetch")           ; => 2
-(cl-dataflow:graph-diameter *graph*)                       ; => 2
-(cl-dataflow:graph-closeness-centrality *graph* "fetch")   ; => 3/5
+(cl-dataflow-kit:graph-distance *graph* "fetch" "package")    ; => 2
+(cl-dataflow-kit:graph-eccentricity *graph* "fetch")           ; => 2
+(cl-dataflow-kit:graph-diameter *graph*)                       ; => 2
+(cl-dataflow-kit:graph-closeness-centrality *graph* "fetch")   ; => 3/5
 
 ;; Betweenness picks out "compile" as the broker between fetch and the rest.
-(cl-dataflow:graph-betweenness-centrality *graph*)
+(cl-dataflow-kit:graph-betweenness-centrality *graph*)
 ;; => (("compile" . 2) ("fetch" . 0) ("package" . 0) ("test" . 0))
 ```
 

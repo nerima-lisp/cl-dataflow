@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %node-name-list (nodes)
   (mapcar #'node-name nodes))

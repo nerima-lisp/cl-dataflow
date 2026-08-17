@@ -1,18 +1,18 @@
-# cl-dataflow
+# cl-dataflow-kit
 
-`cl-dataflow` is a Common Lisp library for composable computation graphs:
+`cl-dataflow-kit` is a Common Lisp library for composable computation graphs:
 pipelines, event-driven workflows, guarded state machines, effect boundaries,
 lazy streams, and their push-based reactive dual. It targets SBCL, keeps its
 entire public surface behind a single package, and takes exactly one runtime
-dependency — [`cl-prolog`](https://nerima-lisp.github.io/cl-prolog/), which
+dependency — [`cl-prolog-kit`](https://nerima-lisp.github.io/cl-prolog-kit/), which
 backs the graph edge relation. Where a general-purpose graph library gives you
-data structures, `cl-dataflow` gives you a runtime: graphs that execute, carry
+data structures, `cl-dataflow-kit` gives you a runtime: graphs that execute, carry
 a context, record a trace, and hand control to a state machine.
 
 ```lisp
-(asdf:load-system "cl-dataflow")
+(asdf:load-system "cl-dataflow-kit")
 
-(cl-dataflow:run-pipeline *pipeline* :input 10)
+(cl-dataflow-kit:run-pipeline *pipeline* :input 10)
 ;; => 22
 ```
 
@@ -48,7 +48,7 @@ split and carries the feature-by-feature status table.
 
 ## Design non-goals
 
-`cl-dataflow` is intentionally not:
+`cl-dataflow-kit` is intentionally not:
 
 - a CLI framework
 - parser combinators
@@ -68,4 +68,4 @@ org-wide and live in
 [nerima-lisp/.github](https://github.com/nerima-lisp/.github).
 
 MIT licensed — see
-[LICENSE](https://github.com/nerima-lisp/cl-dataflow/blob/main/LICENSE).
+[LICENSE](https://github.com/nerima-lisp/cl-dataflow-kit/blob/main/LICENSE).

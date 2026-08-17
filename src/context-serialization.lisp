@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Plist serialisation for events, effects, and whole contexts -- completing the
 ;;;; round-trip story that graphs, pipelines, and state machines already have.

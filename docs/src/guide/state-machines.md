@@ -13,7 +13,7 @@ pipeline embedding) is built on top of that one operation.
 `:guard`, `:action`, and `:metadata`:
 
 ```lisp
-(cl-dataflow:make-transition "idle" "start" "running"
+(cl-dataflow-kit:make-transition "idle" "start" "running"
   :action (lambda (machine event context)
             (declare (ignore machine event context))
             (values "running" '(:note "entered running"))))
@@ -33,16 +33,16 @@ used as the initial state, and vice versa:
 
 ```lisp
 (defparameter *machine*
-  (cl-dataflow:make-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "idle"
     :transitions
     (list
-      (cl-dataflow:make-transition
+      (cl-dataflow-kit:make-transition
         "idle" "start" "running"
         :action (lambda (machine event context)
                   (declare (ignore machine event context))
                   (values "running" '(:note "entered running"))))
-      (cl-dataflow:make-transition "running" "complete" "completed"))))
+      (cl-dataflow-kit:make-transition "running" "complete" "completed"))))
 ```
 
 (Adapted from `examples/state-machine.lisp`.)
@@ -53,7 +53,7 @@ and wraps the whole thing in `make-state-machine`:
 
 ```lisp
 (defparameter *review-machine*
-  (cl-dataflow:define-state-machine (:state "draft")
+  (cl-dataflow-kit:define-state-machine (:state "draft")
     ("draft" "submit" "review")
     ("review" "approve" "shipped")
     ("review" "reject" "cancelled")))
@@ -94,10 +94,10 @@ matching transition, runs its action, updates the machine's state in place,
 and returns `(values machine transition-record)`:
 
 ```lisp
-(cl-dataflow:step-state-machine
-  (cl-dataflow:make-state-machine
+(cl-dataflow-kit:step-state-machine
+  (cl-dataflow-kit:make-state-machine
     :state "idle"
-    :transitions (list (cl-dataflow:make-transition "idle" "start" "running")))
+    :transitions (list (cl-dataflow-kit:make-transition "idle" "start" "running")))
   "start")
 ;; => #<STATE-MACHINE ...>, (:FROM "idle" :EVENT-TYPE "start" :TO "running"
 ;;                            :STATE-BEFORE "idle" :GUARD-PASSED T
@@ -117,13 +117,13 @@ state:
 
 ```lisp
 (defparameter *context*
-  (cl-dataflow:make-context :state (cl-dataflow:state-machine-state *machine*)))
+  (cl-dataflow-kit:make-context :state (cl-dataflow-kit:state-machine-state *machine*)))
 
 (multiple-value-bind (updated-machine transition-records updated-context)
-    (cl-dataflow:run-state-machine-with-context
+    (cl-dataflow-kit:run-state-machine-with-context
       *machine* '("start" "complete") :context *context*)
   (declare (ignore updated-machine))
-  (cl-dataflow:context-state updated-context))
+  (cl-dataflow-kit:context-state updated-context))
 ;; => "completed"
 ```
 
@@ -140,10 +140,10 @@ no-opping.
 — the current state by default, or any state via `:state`:
 
 ```lisp
-(cl-dataflow:state-machine-available-transitions *review-machine*)
+(cl-dataflow-kit:state-machine-available-transitions *review-machine*)
 ;; => (#<STATE-TRANSITION draft --submit--> review>)
 
-(cl-dataflow:state-machine-available-transitions *review-machine* :state "review")
+(cl-dataflow-kit:state-machine-available-transitions *review-machine* :state "review")
 ;; => (#<STATE-TRANSITION review --approve--> shipped>
 ;;     #<STATE-TRANSITION review --reject--> cancelled>)
 ```
@@ -153,9 +153,9 @@ anything, and accepts `:context` so guards that inspect context data see the
 same runtime state they would see during a real step:
 
 ```lisp
-(cl-dataflow:state-machine-can-step-p *review-machine* "submit")
+(cl-dataflow-kit:state-machine-can-step-p *review-machine* "submit")
 ;; => T
-(cl-dataflow:state-machine-can-step-p *review-machine* "bogus")
+(cl-dataflow-kit:state-machine-can-step-p *review-machine* "bogus")
 ;; => NIL
 ```
 
@@ -166,10 +166,10 @@ state, in place — it only touches `state-machine-state`, so accumulated
 `state-machine-history` survives a reset untouched:
 
 ```lisp
-(cl-dataflow:reset-state-machine *machine*)
-(cl-dataflow:state-machine-state *machine*)
+(cl-dataflow-kit:reset-state-machine *machine*)
+(cl-dataflow-kit:state-machine-state *machine*)
 ;; => "idle"
-(length (cl-dataflow:state-machine-history *machine*))
+(length (cl-dataflow-kit:state-machine-history *machine*))
 ;; => 2  ; the "start" and "complete" records from run-state-machine-with-context
 ```
 
@@ -179,11 +179,11 @@ independent value, so you can fork a machine and let each copy evolve on its
 own without touching the original:
 
 ```lisp
-(defparameter *scratch* (cl-dataflow:copy-state-machine *machine*))
-(cl-dataflow:step-state-machine *scratch* "start")
-(cl-dataflow:state-machine-state *scratch*)
+(defparameter *scratch* (cl-dataflow-kit:copy-state-machine *machine*))
+(cl-dataflow-kit:step-state-machine *scratch* "start")
+(cl-dataflow-kit:state-machine-state *scratch*)
 ;; => "running"
-(cl-dataflow:state-machine-state *machine*)
+(cl-dataflow-kit:state-machine-state *machine*)
 ;; => "idle"  ; unaffected
 ```
 
@@ -195,7 +195,7 @@ non-negative integer, or `make-state-machine` signals `invalid-input-error`).
 record, or `nil` if the machine has never stepped:
 
 ```lisp
-(cl-dataflow:state-machine-last-transition *machine*)
+(cl-dataflow-kit:state-machine-last-transition *machine*)
 ;; => (:FROM "running" :EVENT-TYPE "complete" :TO "completed"
 ;;     :STATE-BEFORE "running" :GUARD-PASSED T :ACTION-RESULT NIL)
 ```
@@ -216,7 +216,7 @@ only when it really is a `context`, so guards and actions see the same context
 the surrounding pipeline is threading:
 
 ```lisp
-(cl-dataflow:make-state-machine-node
+(cl-dataflow-kit:make-state-machine-node
   *machine*
   :name "order-transition"
   :event-fn (lambda (input context)
@@ -224,7 +224,7 @@ the surrounding pipeline is threading:
               (getf input :event))
   :result-fn (lambda (updated-machine event input context)
                (declare (ignore event input context))
-               (cl-dataflow:state-machine-state updated-machine)))
+               (cl-dataflow-kit:state-machine-state updated-machine)))
 ```
 
 `examples/event-workflow.lisp` shows the complementary hand-rolled pattern —

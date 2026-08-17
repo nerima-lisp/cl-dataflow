@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 ;;;; Guards select among transitions that share the same FROM state and event.
 ;;;; A rejecting guard must fall through to the next matching transition instead
@@ -76,7 +76,7 @@ pass, or are absent."
               (let ((event-index
                       (gethash (string state)
                               (slot-value machine
-                                          'cl-dataflow::transition-index))))
+                                          'cl-dataflow-kit::transition-index))))
                 (and event-index
                     (gethash (string event-type) event-index)))))
     (let* ((first (make-transition 'idle 'go "first"))
@@ -86,16 +86,16 @@ pass, or are absent."
                       :state "idle"
                       :transitions (list first second other)))
             (internal
-              (cl-dataflow::%state-machine-transitions-list machine))
+              (cl-dataflow-kit::%state-machine-transitions-list machine))
             (copy (copy-state-machine machine)))
       (is (equal (bucket machine "IDLE" 'go)
                   (subseq internal 0 2)))
       (is (not (eq first (first internal))))
       (is (equal (bucket copy 'idle 'go)
-                  (subseq (cl-dataflow::%state-machine-transitions-list copy)
+                  (subseq (cl-dataflow-kit::%state-machine-transitions-list copy)
                           0 2)))
       (is (not (eq (first internal)
-                    (first (cl-dataflow::%state-machine-transitions-list copy)))))
+                    (first (cl-dataflow-kit::%state-machine-transitions-list copy)))))
       (is (state-machine-can-step-p machine 'go))
       (setf (state-machine-transitions machine)
             (list (make-transition "idle" 'resume "running")))
@@ -104,7 +104,7 @@ pass, or are absent."
   (let ((empty (make-state-machine :state "idle")))
     (is (= 0 (hash-table-count
               (slot-value empty
-                          'cl-dataflow::transition-index))))))
+                          'cl-dataflow-kit::transition-index))))))
 
 (deftest state-machine-direct-instance-initializes-transition-index
   (let* ((first (make-transition "idle" "go" "first"))
@@ -124,7 +124,7 @@ pass, or are absent."
               '("first" "second")
               (mapcar
                   #'transition-to
-                  (cl-dataflow::%indexed-matching-transitions machine "go"))))))
+                  (cl-dataflow-kit::%indexed-matching-transitions machine "go"))))))
 
 (deftest state-machine-transition-index-owns-mutable-names
   (let* ((from (copy-seq "idle"))

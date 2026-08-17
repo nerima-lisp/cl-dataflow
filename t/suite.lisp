@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defmacro deftest (name &body body)
   `(cl-weave:it ,(string-downcase (substitute #\Space #\- (symbol-name name)))
@@ -17,5 +17,5 @@
                          (subseq plan start effective-end))))
       (unless (cl-weave:run-all :reporter :spec
                                 :test-path-filter paths)
-        (error "cl-dataflow test suite failed."))
+        (error "cl-dataflow-kit test suite failed."))
       t)))

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (defun %cyclic-reference-step (state event)
   (if (string= event "fwd")

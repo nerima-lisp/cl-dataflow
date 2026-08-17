@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Single-source unweighted-hop-distance family: BFS/DFS visit order,
 ;;;; eccentricity, diameter/radius/center/periphery (schema-driven from

@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; The DEFINE-STATE-MACHINE DSL macro: transition-clause parsing and
 ;;;; validation, expanding into a MAKE-STATE-MACHINE call.

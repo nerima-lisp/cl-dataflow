@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Set algebra and functional transforms over graphs: union, intersection, and
 ;;;; difference (by node name and edge identity), plus predicate filtering and a

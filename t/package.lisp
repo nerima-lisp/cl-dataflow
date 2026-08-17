@@ -1,5 +1,5 @@
-(defpackage #:cl-dataflow.test
-  (:use #:cl #:cl-dataflow)
+(defpackage #:cl-dataflow-kit.test
+  (:use #:cl #:cl-dataflow-kit)
   (:import-from #:cl-weave
                 #:benchmark
                 #:benchmark-result-samples

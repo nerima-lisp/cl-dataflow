@@ -32,7 +32,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: cl-dataflow version or commit
+      label: cl-dataflow-kit version or commit
       placeholder: 0.1.0 / git SHA
     validations:
       required: true

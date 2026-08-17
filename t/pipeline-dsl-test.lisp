@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow.test)
+(in-package #:cl-dataflow-kit.test)
 
 (deftest define-pipeline-builds-a-graph-backed-pipeline
   (let* ((pipeline (define-pipeline (:metadata '((:kind :pipeline))
@@ -30,7 +30,7 @@
   ;; UNLESS in the same pass: :METADATA is handled separately via
   ;; SETF EDGE-METADATA, while every other key/value pair is threaded through
   ;; to ADD-EDGE.
-  (let ((form (cl-dataflow::%parse-pipeline-edge-clause
+  (let ((form (cl-dataflow-kit::%parse-pipeline-edge-clause
                '(:edge "a" "b" :from-port "x" :metadata (:k :v))
                'graph-var)))
     (is (search "FROM-PORT" (write-to-string form)))
@@ -38,7 +38,7 @@
 
 (deftest internal-workflow-clause-forms-partitions-by-kind
   (multiple-value-bind (transitions nodes edges)
-      (cl-dataflow::%workflow-clause-forms
+      (cl-dataflow-kit::%workflow-clause-forms
        '((:transition t1) (:pipeline-node n1) (:pipeline-edge e1) (:pipeline-node n2)))
     (is (equal transitions '(t1)))
     (is (equal nodes '(n1 n2)))
@@ -47,12 +47,12 @@
   internal-dsl-expansion-contracts-preserve-data-and-logic-boundaries
   (let* ((stage-expansion
            (macroexpand-1
-            '(cl-dataflow::%resolve-pipeline-stage-designators
+            '(cl-dataflow-kit::%resolve-pipeline-stage-designators
               graph
               stages)))
          (io-expansion
            (macroexpand-1
-            '(cl-dataflow::%with-pipeline-stage-io-plans
+            '(cl-dataflow-kit::%with-pipeline-stage-io-plans
               (incoming-index
                stage-signatures
                edge-signatures
@@ -68,7 +68,7 @@
                     output-key-plans))))
          (derived-expansion
            (macroexpand-1
-            '(cl-dataflow::%with-pipeline-derived-plans
+            '(cl-dataflow-kit::%with-pipeline-derived-plans
               (sinks sink-result-plans levels stage-plan-table)
               (graph
                stages
@@ -79,7 +79,7 @@
               (list sinks sink-result-plans levels stage-plan-table))))
          (pipeline-with-options
            (macroexpand-1
-            '(cl-dataflow:define-pipeline
+            '(cl-dataflow-kit:define-pipeline
               (:metadata '((:kind :pipeline))
                :stages '("source"))
               (:node "source"
@@ -87,11 +87,11 @@
                :handler #'identity))))
          (pipeline-without-options
            (macroexpand-1
-            '(cl-dataflow:define-pipeline ()
+            '(cl-dataflow-kit:define-pipeline ()
               (:node "source"))))
          (workflow-expansion
            (macroexpand-1
-            '(cl-dataflow:define-workflow
+            '(cl-dataflow-kit:define-workflow
               (:initial-state "idle"
                :machine-metadata '((:kind :machine))
                :pipeline-metadata '((:kind :pipeline))
@@ -112,13 +112,13 @@
             output-key-plans)))
     (is (equal
           (third io-expansion)
-          '(cl-dataflow::%pipeline-stage-io-plans graph stages)))
+          '(cl-dataflow-kit::%pipeline-stage-io-plans graph stages)))
     (is (equal
           (second derived-expansion)
           '(sinks sink-result-plans levels stage-plan-table)))
     (is (equal
           (third derived-expansion)
-          '(cl-dataflow::%pipeline-derived-plans
+          '(cl-dataflow-kit::%pipeline-derived-plans
             graph
             stages
             incoming-index

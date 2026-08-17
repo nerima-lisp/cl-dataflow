@@ -36,14 +36,14 @@
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
-    # cl-prolog backs the graph edge relation. Only its source tree is used
+    # cl-prolog-kit backs the graph edge relation. Only its source tree is used
     # (given its own `lispDerivation` build below, since it ships no fasls of
     # its own -- see that build's comment for why a bare `fromDerivation`
     # wrap doesn't work here): it is architecture-independent Lisp with its
     # .asd at the repository root, and upstream ships Linux-only per-system
     # packages, so there is nothing to gain from evaluating its flake.
-    cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.4.3";
+    cl-prolog-kit = {
+      url = "github:nerima-lisp/cl-prolog-kit/v1.5.0";
       flake = false;
     };
 
@@ -81,10 +81,10 @@
     # cl-log-kit, and cl-codec-kit. cl-log-kit's base system in turn depends
     # on cl-date-kit, cl-concurrent-kit, and cl-host-kit. They are
     # never loaded or called directly by
-    # cl-dataflow (no API usage, no adapter) -- only their source trees need to
+    # cl-dataflow-kit (no API usage, no adapter) -- only their source trees need to
     # be on CL_SOURCE_REGISTRY so ASDF can resolve cl-process-kit's :depends-on.
     # cl-tty-kit is NOT a dependency here: it's only required by the optional
-    # cl-process-kit/pty subsystem, which cl-dataflow never loads.
+    # cl-process-kit/pty subsystem, which cl-dataflow-kit never loads.
     cl-boundary-kit = {
       url = "github:nerima-lisp/cl-boundary-kit/v2.3.0";
       flake = false;
@@ -129,7 +129,7 @@
       nixpkgs,
       treefmt-nix,
       cl-nix-forge,
-      cl-prolog,
+      cl-prolog-kit,
       cl-weave,
       paredit-cli,
       cl-process-kit,
@@ -157,13 +157,13 @@
         function: nixpkgs.lib.genAttrs systems (system: function (import nixpkgs { inherit system; }));
 
       # Single source of truth for the package version: the `:version` form in
-      # cl-dataflow.asd. A release edits that one line and every Nix package
+      # cl-dataflow-kit.asd. A release edits that one line and every Nix package
       # (default + docs) follows. Nix regexes are whole-string anchored and `.`
       # never spans newlines, so the version is extracted line-by-line rather
       # than with one multi-line match.
       version =
         let
-          lines = nixpkgs.lib.splitString "\n" (builtins.readFile ./cl-dataflow.asd);
+          lines = nixpkgs.lib.splitString "\n" (builtins.readFile ./cl-dataflow-kit.asd);
           versionLine = builtins.head (
             builtins.filter (line: builtins.match "[[:space:]]*:version \"[^\"]*\"" line != null) lines
           );
@@ -201,7 +201,7 @@
           # CL_SOURCE_REGISTRY, so downstream loads fail with
           # "Component \"cl-boundary-kit\" not found". Build it through
           # `lispDerivation` instead so the dependency graph is expressed in
-          # the same registry model cl-dataflow itself uses.
+          # the same registry model cl-dataflow-kit itself uses.
           concurrentKitDep = cl.lispDerivation {
             lispSystem = "cl-concurrent-kit";
             version = cl.fromAsdSystem "${cl-concurrent-kit}/cl-concurrent-kit.asd";
@@ -213,13 +213,13 @@
           };
 
           prologBuild = cl.lispDerivation {
-            lispSystem = "cl-prolog";
-            version = cl.fromAsdSystem "${cl-prolog}/cl-prolog.asd";
-            src = cl-prolog;
+            lispSystem = "cl-prolog-kit";
+            version = cl.fromAsdSystem "${cl-prolog-kit}/cl-prolog-kit.asd";
+            src = cl-prolog-kit;
           };
           # `packages.cl-weave` publishes cl-weave's own ASDF system directly
           # (cl-weave.asd at its outPath root) -- the sanctioned way a sibling
-          # gets cl-weave's source, the same output cl-prolog/cl-json-kit
+          # gets cl-weave's source, the same output cl-prolog-kit/cl-json-kit
           # consume. `weave` (packages.default) is the delivered CLI binary,
           # used directly by the checks below, not wrapped as a dependency.
           # It ships fasls for 72 of its 143 .lisp files (confirmed directly),
@@ -233,7 +233,7 @@
           };
           # cl-process-kit's base system depends on cl-boundary-kit,
           # cl-log-kit, and cl-codec-kit, so all three need their own
-          # lispDerivation build too -- cl-dataflow itself never loads or
+          # lispDerivation build too -- cl-dataflow-kit itself never loads or
           # calls either directly. cl-boundary-kit's pinned .asd depends only
           # on cl-host-kit, while cl-log-kit's pinned .asd depends on
           # cl-date-kit, cl-concurrent-kit, and cl-host-kit; with
@@ -283,8 +283,8 @@
             ];
           };
 
-          cl-dataflow-drv = cl.lispDerivation {
-            lispSystem = "cl-dataflow";
+          cl-dataflow-kit-drv = cl.lispDerivation {
+            lispSystem = "cl-dataflow-kit";
             inherit version;
             # An allowlist (.asd/.lisp anywhere under root), not the old
             # cleanSourceFilter-based denylist: t/ is kept by the same rule
@@ -308,7 +308,7 @@
             ];
             # Only pulled onto CL_SOURCE_REGISTRY when doCheck is true (i.e.
             # via .enableCheck, which every check helper below applies) --
-            # cl-dataflow/test's own :depends-on ("cl-dataflow" "cl-weave"
+            # cl-dataflow-kit/test's own :depends-on ("cl-dataflow-kit" "cl-weave"
             # "cl-process-kit"), plus cl-process-kit's transitive two (already
             # folded into processKitBuild's own ancestry, so listing it alone
             # is enough for boundary-kit/log-kit to reach the registry too).
@@ -323,7 +323,7 @@
             system
             cl
             weave
-            cl-dataflow-drv
+            cl-dataflow-kit-drv
             ;
         }
       );
@@ -338,10 +338,10 @@
       packages = forAllSystems (
         pkgs:
         let
-          inherit (forSystem.${pkgs.stdenv.hostPlatform.system}) cl cl-dataflow-drv;
+          inherit (forSystem.${pkgs.stdenv.hostPlatform.system}) cl cl-dataflow-kit-drv;
         in
         {
-          default = cl-dataflow-drv;
+          default = cl-dataflow-kit-drv;
 
           # Rooted at the repository, not at ./docs, so `mkdocsYmlName` below
           # keeps its repository-relative spelling. The fileset used to carry
@@ -356,11 +356,11 @@
               ./docs/src
             ];
             mkdocsYmlName = "docs/mkdocs.yml";
-            pname = "cl-dataflow-docs";
+            pname = "cl-dataflow-kit-docs";
             inherit version;
             meta = {
-              description = "Rendered MkDocs (Material) documentation for cl-dataflow";
-              homepage = "https://github.com/nerima-lisp/cl-dataflow";
+              description = "Rendered MkDocs (Material) documentation for cl-dataflow-kit";
+              homepage = "https://github.com/nerima-lisp/cl-dataflow-kit";
               license = pkgs.lib.licenses.mit;
             };
           };
@@ -371,16 +371,16 @@
         pkgs:
         let
           system = pkgs.stdenv.hostPlatform.system;
-          inherit (forSystem.${system}) cl weave cl-dataflow-drv;
-          # Same allowlist cl-dataflow-drv builds from: paredit-lint only
+          inherit (forSystem.${system}) cl weave cl-dataflow-kit-drv;
+          # Same allowlist cl-dataflow-kit-drv builds from: paredit-lint only
           # ever reads .lisp/.asd files, so it needs nothing more, and
           # nothing stray from the working tree can inflate its input hash.
           src = cl.mkLispSource { root = ./.; };
         in
         {
           default = cl.mkCommandCheck {
-            drv = cl-dataflow-drv;
-            name = "cl-dataflow-tests";
+            drv = cl-dataflow-kit-drv;
+            name = "cl-dataflow-kit-tests";
             nativeBuildInputs = [ weave ];
             timeoutSeconds = 900;
             # --reporter github costs nothing extra: this check already runs
@@ -403,15 +403,15 @@
               "CL_WEAVE_PROPERTY_TESTS=5000"
               "cl-weave"
               "run"
-              "cl-dataflow/test"
+              "cl-dataflow-kit/test"
               "--reporter"
               "github"
             ];
           };
 
           coverage = cl.mkCommandCheck {
-            drv = cl-dataflow-drv;
-            name = "cl-dataflow-coverage";
+            drv = cl-dataflow-kit-drv;
+            name = "cl-dataflow-kit-coverage";
             nativeBuildInputs = [ weave ];
             timeoutSeconds = 900;
             command = [
@@ -419,30 +419,30 @@
               "CL_WEAVE_PROPERTY_TESTS=5000"
               "cl-weave"
               "run"
-              "cl-dataflow/test"
+              "cl-dataflow-kit/test"
               "--reporter"
               "github"
               "--coverage"
               "--coverage-system"
-              "cl-dataflow"
+              "cl-dataflow-kit"
               "--coverage-min-expression"
               "84"
               "--coverage-min-branch"
               "100"
               "--coverage-output"
-              "cl-dataflow.coverage"
+              "cl-dataflow-kit.coverage"
               "--coverage-report-directory"
               "coverage/"
             ];
             artifacts = [
-              "cl-dataflow.coverage"
+              "cl-dataflow-kit.coverage"
               "coverage/"
             ];
           };
 
           paredit-lint = paredit-cli.lib.${system}.mkLintCheck {
             inherit src;
-            name = "cl-dataflow-paredit-lint";
+            name = "cl-dataflow-kit-paredit-lint";
           };
 
           # t/core-runtime-example-test.lisp's own smoke tests spawn examples
@@ -450,13 +450,13 @@
           # test process -- confirmed to deadlock (not just run slowly), which
           # is exactly the "implementation-specific run-program deadlock" its
           # docstring warns about and why they stay opt-in
-          # (CL_DATAFLOW_RUN_EXAMPLE_SMOKE). scripts/run-examples.sh runs each
+          # (CL_DATAFLOW_KIT_RUN_EXAMPLE_SMOKE). scripts/run-examples.sh runs each
           # example as its own top-level `sbcl` process from a plain shell
           # loop instead, with no such parent-process entanglement, so this
           # check is what actually exercises every example on a schedule.
           examples = cl.mkCommandCheck {
-            drv = cl-dataflow-drv;
-            name = "cl-dataflow-examples";
+            drv = cl-dataflow-kit-drv;
+            name = "cl-dataflow-kit-examples";
             nativeBuildInputs = [ pkgs.sbcl ];
             timeoutSeconds = 900;
             command = [
@@ -483,19 +483,19 @@
         pkgs:
         let
           system = pkgs.stdenv.hostPlatform.system;
-          inherit (forSystem.${system}) weave cl-dataflow-drv;
+          inherit (forSystem.${system}) weave cl-dataflow-kit-drv;
           # `.enableCheck` resolves `lispCheckDependencies` (cl-weave,
           # cl-process-kit and its own transitive two) onto `registryPath` --
           # every app below runs the suite, so all of them need those on the
           # registry, not just the runtime two `packages.default` alone
           # would carry.
-          registryPath = cl-dataflow-drv.enableCheck.registryPath;
+          registryPath = cl-dataflow-kit-drv.enableCheck.registryPath;
           test = pkgs.writeShellApplication {
-            name = "cl-dataflow-test";
+            name = "cl-dataflow-kit-test";
             runtimeInputs = [ weave ];
             text = ''
               export CL_SOURCE_REGISTRY="${registryPath}:''${CL_SOURCE_REGISTRY:-}"
-              exec cl-weave run cl-dataflow/test "$@"
+              exec cl-weave run cl-dataflow-kit/test "$@"
             '';
           };
           # `cl-weave watch` re-runs the suite on every source change --
@@ -504,29 +504,29 @@
           # here is the interactive default, matching how a developer
           # actually uses it at a terminal.
           watch = pkgs.writeShellApplication {
-            name = "cl-dataflow-watch";
+            name = "cl-dataflow-kit-watch";
             runtimeInputs = [ weave ];
             text = ''
               export CL_SOURCE_REGISTRY="${registryPath}:''${CL_SOURCE_REGISTRY:-}"
-              exec cl-weave watch cl-dataflow/test "$@"
+              exec cl-weave watch cl-dataflow-kit/test "$@"
             '';
           };
         in
         {
           default = {
             type = "app";
-            program = "${test}/bin/cl-dataflow-test";
+            program = "${test}/bin/cl-dataflow-kit-test";
           };
           # `nix run .#test` is the name the org standard uses; `nix run .`
           # keeps working for existing muscle memory. Both drive the same
           # suite that run-tests.lisp and checks.default run.
           test = {
             type = "app";
-            program = "${test}/bin/cl-dataflow-test";
+            program = "${test}/bin/cl-dataflow-kit-test";
           };
           watch = {
             type = "app";
-            program = "${watch}/bin/cl-dataflow-watch";
+            program = "${watch}/bin/cl-dataflow-kit-watch";
           };
         }
       );
@@ -535,14 +535,14 @@
         pkgs:
         let
           system = pkgs.stdenv.hostPlatform.system;
-          inherit (forSystem.${system}) cl weave cl-dataflow-drv;
+          inherit (forSystem.${system}) cl weave cl-dataflow-kit-drv;
         in
         {
           # `.enableCheck` so the exported CL_SOURCE_REGISTRY includes
           # cl-weave and friends -- the shell is meant to run the suite
           # interactively, not just load the bare runtime.
           default = cl.mkDevShell {
-            drv = cl-dataflow-drv.enableCheck;
+            drv = cl-dataflow-kit-drv.enableCheck;
             extraPackages = [
               treefmtEval.${system}.config.build.wrapper
               weave

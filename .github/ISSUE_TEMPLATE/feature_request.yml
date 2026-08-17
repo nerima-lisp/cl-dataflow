@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        cl-dataflow stays deliberately small. Please check the "Design Non-Goals"
+        cl-dataflow-kit stays deliberately small. Please check the "Design Non-Goals"
         section of the README before proposing new scope.
   - type: textarea
     id: problem

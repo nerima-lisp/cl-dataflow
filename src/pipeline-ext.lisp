@@ -1,4 +1,4 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
 ;;;; Pipeline serialisation, validation, and composition helpers. Structure is
 ;;;; serialised through the graph plist round trip (so handlers, being runtime

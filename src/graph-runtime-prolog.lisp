@@ -1,6 +1,6 @@
-(in-package #:cl-dataflow)
+(in-package #:cl-dataflow-kit)
 
-;;;; cl-prolog-backed graph traversal: the node/edge relation is materialized
+;;;; cl-prolog-kit-backed graph traversal: the node/edge relation is materialized
 ;;;; into a rulebase and read with one bulk QUERY-PROLOG call per traversal
 ;;;; (not one query per node), then walked in pure Lisp -- GRAPH-REACHABLE-P,
 ;;;; GRAPH-PATH, GRAPH-ANCESTORS, and GRAPH-DESCENDANTS all stay linear and
@@ -23,9 +23,9 @@ the query entirely when GRAPH has no edges."
        (when (%graph-edges-list ,graph-value)
          (let ((,seen-pairs (make-hash-table :test #'equal)))
            (dolist (,solution
-                     (cl-prolog:query-prolog ,rulebase (list +graph-edge-predicate+ '?from '?to)))
-             (let* ((,from (cl-prolog:solution-binding '?from ,solution))
-                     (,to (cl-prolog:solution-binding '?to ,solution))
+                     (cl-prolog-kit:query-prolog ,rulebase (list +graph-edge-predicate+ '?from '?to)))
+             (let* ((,from (cl-prolog-kit:solution-binding '?from ,solution))
+                     (,to (cl-prolog-kit:solution-binding '?to ,solution))
                      (,pair (cons ,from ,to)))
                (unless (gethash ,pair ,seen-pairs)
                  (setf (gethash ,pair ,seen-pairs) t)
@@ -35,7 +35,7 @@ the query entirely when GRAPH has no edges."
   (let ((clauses '()))
     (maphash (lambda (name node)
                 (declare (ignore node))
-                (push (cl-prolog:make-clause
+                (push (cl-prolog-kit:make-clause
                       (list +graph-node-predicate+ name)
                       '())
                       clauses))
@@ -49,13 +49,13 @@ the query entirely when GRAPH has no edges."
           (format nil "Edge references missing node: ~A -> ~A"
                   (%escaped-display-string (edge-from edge))
                   (%escaped-display-string (edge-to edge)))))
-      (push (cl-prolog:make-clause
+      (push (cl-prolog-kit:make-clause
               (list +graph-edge-predicate+
                     (edge-from edge)
                     (edge-to edge))
               '())
             clauses))
-    (cl-prolog:make-rulebase :clauses (nreverse clauses))))
+    (cl-prolog-kit:make-rulebase :clauses (nreverse clauses))))
 
 (defun %graph-adjacency (graph rulebase)
   "Return (VALUES successor-table indegree-table) for GRAPH.
