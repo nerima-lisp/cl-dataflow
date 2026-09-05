@@ -3,14 +3,14 @@
 A node handler is an ordinary `(input context)` function, so behaviours like
 retry, fallback, and memoisation are expressed the same way any Lisp function
 transformation is expressed: as **handler → handler** wrappers. `cl-dataflow-kit`
-builds two layers on this idea:
+provides two layers:
 
 - **Handler combinators** operate on a bare handler function. Use them when
   assembling a handler by hand, before it is ever attached to a node.
 - **Node wrappers** operate on a whole `node`, re-wrapping whatever handler it
   already has (via `wrap-node`). Use them once you already have a `node` —
-  from `make-node` or a `define-pipeline` `:node` form — and just want to
-  layer resilience onto it without rewriting its logic.
+  from `make-node` or a `define-pipeline` `:node` form — and want to layer
+  resilience onto it without rewriting its logic.
 
 On top of both, **node contracts** turn a bad input or output value into an
 explicit, inspectable failure at the node boundary instead of letting it
@@ -150,7 +150,7 @@ logic.
 Node wrappers take a whole `node` and return a fresh `node` with the same
 name, inputs, outputs, and metadata, but a re-wrapped handler. They are what
 you reach for once you already have a node — built with `make-node` or
-declared inside a `define-pipeline` `:node` form — and just want to layer
+declared inside a `define-pipeline` `:node` form — and want to layer
 resilience onto its existing behaviour.
 
 ### `wrap-node`
@@ -191,8 +191,8 @@ handler combinator:
                                   (format t "~D -> ~D~%" input output)))
 ```
 
-Each returns a fresh node — the original is left untouched — so you can add
-either the wrapped node or the original to different graphs.
+Each function returns a fresh node and leaves the original untouched. The
+wrapped node and the original can therefore be added to different graphs.
 
 ## Node contracts
 
@@ -214,8 +214,8 @@ bad value flow silently into the rest of the pipeline.
 (funcall *guarded* -4 nil)   ;; signals INVALID-INPUT-ERROR
 ```
 
-A `nil` predicate is skipped, so you can supply only `:before`, only `:after`,
-or both. When `before` fails, `invalid-input-error` carries
+A `nil` predicate is skipped, allowing only `:before`, only `:after`, or both.
+When `before` fails, `invalid-input-error` carries
 `invalid-input-expected` bound to `valid-node-input`; when `after` fails, it
 carries `valid-node-output`. In both cases `invalid-input-value` holds the
 offending value (the raw input or the raw output) and `invalid-input-detail`

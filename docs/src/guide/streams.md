@@ -13,8 +13,7 @@ streams when you are the one driving consumption (batch/analytical
 pipelines, generators, search); use subjects when producers drive the pace
 (events, live feeds).
 
-Two properties fall out of the pull design and are worth keeping in mind
-throughout this page:
+The pull design has two consequences:
 
 - **Purity.** Pulling never mutates the source stream, so the same stream
   value can be consumed more than once, and operators compose freely without
@@ -199,8 +198,8 @@ Eager, `:limit`-aware terminal operations for common summaries:
 | `stream-last` | The last element, or `default` if empty. |
 | `stream-nth` | The 0-based `n`th element, or `default` if the stream is shorter. |
 
-The empty-stream `default` is passed two different ways, so it is worth
-checking which family a function belongs to before calling it:
+The empty-stream `default` has two calling conventions. Check the function
+family before calling it:
 
 - **Positional** (`stream-first`, `stream-nth`, `stream-find`,
   `stream-last`) — the default is an ordinary optional argument, and

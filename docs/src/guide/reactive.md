@@ -11,11 +11,10 @@ This is the push-side counterpart to the pull-based `flow-stream` covered in
 [Streams (Pull)](streams.md). A stream is consumer-driven — nothing happens
 until something asks for the next element — while a subject is
 producer-driven: emission is the only thing that moves values through the
-graph. Most subject operators have a stream operator with matching semantics,
-just flipped from "pull the next value" to "react to the next emission"; this
-page frames each one as the push-side dual of its stream counterpart where one
-exists. See [Core Concepts](core-concepts.md) for the library's other
-primitives, and the [Public API Reference](../reference/api.md) for the full
+graph. Most subject operators correspond to stream operators with the same semantics,
+but receive values on emission rather than pull. The tables below name the
+corresponding stream operator where one exists. See [Core Concepts](core-concepts.md)
+for the library's other primitives, and the [Public API Reference](../reference/api.md) for the full
 exported symbol list (`Reactive subject APIs` and `Reactive operator APIs`).
 
 ## What a subject is
@@ -31,9 +30,9 @@ whether a value is one:
 ```
 
 A subject is opaque — there is no reader for its internal subscriber list.
-Everything else in this page (`subject-subscribe`, `subject-emit`, and the
-derived/stateful operators) is the public surface for building and driving
-one. Subjects are also outside the `flow-name`/`flow-metadata`/`flow-kind`
+The public subject API consists of `subject-subscribe`, `subject-emit`, and the
+derived/stateful operators. Subjects are also outside the
+`flow-name`/`flow-metadata`/`flow-kind`
 introspection protocol in [Observability](observability.md), which signals a
 `type-error` for them just as it does for streams; `subject-subscriber-count`
 is the only built-in introspection a subject offers.
@@ -225,9 +224,9 @@ A few operators are worth calling out in more detail:
 
 ### Filtering and collecting high-value alerts
 
-This is the reactive half of the order-processing scenario in
-`examples/integration.lisp`: a subject of priced orders, filtered down to
-high-value ones, and collected for later inspection.
+The following example uses the order-processing scenario in
+`examples/integration.lisp`: a subject of priced orders is filtered down to
+high-value ones and collected for later inspection.
 
 ```lisp
 (let* ((orders (cl-dataflow-kit:make-subject))

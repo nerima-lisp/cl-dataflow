@@ -9,10 +9,8 @@ pipelines, event-driven workflows, guarded state machines, effect boundaries,
 lazy streams, and their push-based reactive dual. It targets SBCL, exports a
 single package, and takes two runtime dependencies: `cl-prolog-kit`, which backs
 the graph edge relation, and `cl-concurrent-kit`, which backs
-`run-pipeline`'s optional `:parallel` mode. Where a general-purpose graph
-library gives you data structures, `cl-dataflow-kit` gives you a runtime: graphs
-that execute, carry a context, record a trace, and hand control to a state
-machine.
+`run-pipeline`'s optional `:parallel` mode. Pipelines execute graph-ordered
+stages, carry a context, record a trace, and can advance a state machine.
 
 Full documentation is published at <https://nerima-lisp.github.io/cl-dataflow-kit/>.
 The source for that site lives in [docs/src/](docs/src/).
@@ -59,17 +57,17 @@ somewhere ASDF can see them — `~/quicklisp/local-projects/`,
 repository's test suite without Nix, add `cl-weave`, `cl-process-kit`,
 `cl-boundary-kit`, `cl-log-kit`, `cl-codec-kit`, `cl-date-kit`, and
 `cl-host-kit` to the same source registry. Full instructions are in
-[Installation](https://nerima-lisp.github.io/cl-dataflow-kit/installation/).
+[Getting Started](https://nerima-lisp.github.io/cl-dataflow-kit/getting-started/).
 
 ## Documentation
 
-- [Quick Start](https://nerima-lisp.github.io/cl-dataflow-kit/quick-start/) — one
+- [Getting Started](https://nerima-lisp.github.io/cl-dataflow-kit/getting-started/) — one
   pipeline, start to finish
-- [Core Concepts](https://nerima-lisp.github.io/cl-dataflow-kit/core-concepts/) —
+- [Core Concepts](https://nerima-lisp.github.io/cl-dataflow-kit/guide/core-concepts/) —
   nodes, edges, graphs, contexts, events, effects, state machines
-- [API Reference](https://nerima-lisp.github.io/cl-dataflow-kit/api-reference/) —
+- [API Reference](https://nerima-lisp.github.io/cl-dataflow-kit/reference/api/) —
   every exported symbol
-- [Architecture](https://nerima-lisp.github.io/cl-dataflow-kit/architecture/) —
+- [Architecture](https://nerima-lisp.github.io/cl-dataflow-kit/reference/architecture/) —
   how the runtime is split, and the feature-by-feature status table
 
 ## Development
@@ -91,7 +89,7 @@ Tests live in `t/` and run under
 [cl-weave](https://github.com/nerima-lisp/cl-weave), the org's test framework.
 `nix flake check` additionally enforces the coverage gate (84% expression, 100%
 branch), the `paredit` lint pass, and a `mkdocs --strict` docs build.
-See [Development](https://nerima-lisp.github.io/cl-dataflow-kit/development/).
+See [Development](https://nerima-lisp.github.io/cl-dataflow-kit/project/development/).
 
 ## Contributing
 

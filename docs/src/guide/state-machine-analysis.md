@@ -10,8 +10,8 @@ it into the general graph toolkit.
 
 A state machine is a labelled directed graph over states, and the analysis
 layer treats it exactly that way — every result below is name-sorted and
-computed purely from transition structure, ignoring guards. This section
-uses an order-lifecycle machine with a dead-end `"cancelled"` state and an
+computed purely from transition structure, ignoring guards. The examples
+use an order-lifecycle machine with a dead-end `"cancelled"` state and an
 unreachable `"archived"` state that nothing transitions into (adapted from
 `examples/state-machine-visualization.lisp`):
 

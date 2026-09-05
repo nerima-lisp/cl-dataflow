@@ -1,7 +1,7 @@
 (in-package #:cl-dataflow-kit)
 
-;;;; Plist serialisation for events, effects, and whole contexts -- completing the
-;;;; round-trip story that graphs, pipelines, and state machines already have.
+;;;; Plist serialisation for events, effects, and whole contexts. Graphs,
+;;;; pipelines, and state machines use the same round-trip representation.
 ;;;; A context's observable record (stored node values, events, effects, trace,
 ;;;; metadata, state, result) serialises; effect handlers are runtime closures and
 ;;;; are deliberately excluded, so a rebuilt context has an empty handler table.

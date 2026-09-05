@@ -1,10 +1,9 @@
 # Graph Algorithms
 
-`cl-dataflow-kit` ships a full analysis layer on top of the basic `graph`
-structure — construction, mutation, and export are covered in [Graphs](graphs.md).
-This page covers the structural layer built directly on top of a graph:
+The basic `graph` structure — construction, mutation, and export — is covered
+in [Graphs](graphs.md). This page documents the structural analysis layer:
 reachability metrics, component structure, and traversal order.
-[Graph Analysis](graph-analysis.md) continues from here with weighted paths
+[Graph Analysis](graph-analysis.md) covers weighted paths
 and flow, whole-graph metrics, set algebra, and criticality analysis.
 
 Every algorithm here shares one discipline: build the adjacency snapshot once
@@ -14,7 +13,7 @@ unbounded recursion. [Architecture](../reference/architecture.md#the-graph-runti
 explains why: it keeps every traversal here linear (or low-degree polynomial)
 and stack-safe on deep chains and cyclic graphs, where a naive recursive
 implementation would overflow the control stack or blow up exponentially.
-[Graph Analysis](graph-analysis.md) shares this same discipline.
+[Graph Analysis](graph-analysis.md) uses the same discipline.
 
 All of the examples below assume:
 

@@ -175,8 +175,7 @@ state, in place — it only touches `state-machine-state`, so accumulated
 
 `copy-state-machine` clones everything a machine carries — current state,
 initial state, transitions, history, history limit, and metadata — into an
-independent value, so you can fork a machine and let each copy evolve on its
-own without touching the original:
+independent value. Each copy can evolve without touching the original:
 
 ```lisp
 (defparameter *scratch* (cl-dataflow-kit:copy-state-machine *machine*))

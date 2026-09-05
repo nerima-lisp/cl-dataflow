@@ -1,7 +1,7 @@
 # Observability and Serialization
 
-Once a pipeline or workflow has run, `cl-dataflow-kit` gives you three
-complementary ways to look back at it: **render** its structure as a
+Once a pipeline or workflow has run, `cl-dataflow-kit` provides three ways to
+inspect it: **render** its structure as a
 diagram, **read** its recorded trace as text or roll-up counts, and
 **serialize** its context to a plain plist for storage, comparison, or
 transmission. All of it is built on one shared introspection protocol —
@@ -9,7 +9,7 @@ transmission. All of it is built on one shared introspection protocol —
 functions work uniformly across nodes, edges, graphs, contexts, events,
 effects, transitions, state machines, and pipelines.
 
-This page covers the pipeline- and context-level observability layer
+The pipeline- and context-level observability layer is implemented in
 (`src/observability.lisp`, `src/introspection.lisp`), the cross-type
 protocol (`src/protocols.lisp`), context/event/effect serialization
 (`src/context-serialization.lisp`), and the structural equality predicates
@@ -19,8 +19,8 @@ protocol (`src/protocols.lisp`), context/event/effect serialization
 pipeline (`pipeline-to-plist`/`plist-to-pipeline`) and state-machine
 (`state-machine-to-plist`/`plist-to-state-machine`) plist round trips are
 documented on [Pipelines and Workflows](pipelines.md) and
-[State Machine Analysis](state-machine-analysis.md) respectively — this page
-completes that story for contexts, events, and effects.
+[State Machine Analysis](state-machine-analysis.md) respectively. This page
+covers contexts, events, and effects.
 
 ## Rendering a pipeline
 
@@ -46,7 +46,7 @@ sort order and rendering details) applied to `pipeline-graph`:
 ;;    "
 ```
 
-Note that nodes are emitted in **name** order (`finish` before `start`), not
+Nodes are emitted in **name** order (`finish` before `start`), not
 execution order, and every edge carries a `from-port -> to-port` label — the
 default `value` ports here — so parallel edges across different ports stay
 distinguishable.
@@ -90,8 +90,8 @@ happen to sort the same way it runs.
 Every pipeline run and state-machine step appends to `context-trace`: node
 runs, emitted events, performed effects, and state transitions all land in
 one unified, chronologically ordered log. `format-trace`, `trace-summary`,
-and `context-summary` turn that raw plist trace into something you can read
-or report on.
+and `context-summary` convert that raw plist trace to formatted text and
+summary data for inspection or reporting.
 
 `format-trace` renders the whole trace as numbered, human-readable lines:
 
@@ -124,7 +124,7 @@ rather than just the trace:
 ;; => (:events 1 :effects 0 :values 2 :trace 4 :state "order-created")
 ```
 
-Here is a runnable example, adapted from the workflow in
+The following runnable example is adapted from the workflow in
 [Getting Started](../getting-started.md#adding-events-and-a-state-machine), that drives
 a small workflow and then inspects it with both functions:
 
@@ -262,8 +262,8 @@ passing something unsupported gets a clear failure rather than silent
 
 ## Serialization: contexts, events, and effects
 
-`src/context-serialization.lisp` completes the plist round-trip story that
-graphs (`graph-to-plist`/`plist-to-graph`, see [Graphs](graphs.md)),
+`src/context-serialization.lisp` implements plist round trips for contexts,
+alongside graphs (`graph-to-plist`/`plist-to-graph`, see [Graphs](graphs.md)),
 pipelines, and state machines (see [Pipelines and Workflows](pipelines.md)
 and [State Machine Analysis](state-machine-analysis.md)) already have.
 
@@ -281,8 +281,8 @@ round-trip a single event or effect:
 `context-to-plist` serializes a context's entire **observable** state —
 stored node values, events, effects, trace, metadata, state, and result —
 with events/effects/trace normalized into chronological order.
-`plist-to-context` rebuilds a context from that plist. Here is a full round
-trip over the `*context*` from the workflow example above, showing what
+`plist-to-context` rebuilds a context from that plist. The following code shows
+a round trip over the `*context*` from the workflow example above, showing what
 survives:
 
 ```lisp
@@ -355,7 +355,7 @@ reachable), comparing state names case-insensitively:
 
 - [Graphs](graphs.md) covers `graph->dot`/`graph->mermaid` and
   `graph-to-plist`/`plist-to-graph`, the lower-level renderers and
-  serializer this page's pipeline functions build on.
+  serializer that this page's pipeline functions use.
 - [Pipelines and Workflows](pipelines.md) covers `pipeline-to-plist`/
   `plist-to-pipeline` and the rest of the pipeline construction API.
 - [State Machine Analysis](state-machine-analysis.md) covers

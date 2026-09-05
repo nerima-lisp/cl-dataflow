@@ -3,11 +3,12 @@
 `cl-dataflow-kit` is a Common Lisp library for composable computation graphs:
 pipelines, event-driven workflows, guarded state machines, effect boundaries,
 lazy streams, and their push-based reactive dual. It targets SBCL, keeps its
-entire public surface behind a single package, and takes exactly one runtime
-dependency — [`cl-prolog-kit`](https://nerima-lisp.github.io/cl-prolog-kit/), which
-backs the graph edge relation. Where a general-purpose graph library gives you
-data structures, `cl-dataflow-kit` gives you a runtime: graphs that execute, carry
-a context, record a trace, and hand control to a state machine.
+entire public surface behind a single package, and takes two runtime
+dependencies — [`cl-prolog-kit`](https://nerima-lisp.github.io/cl-prolog-kit/), which
+backs the graph edge relation, and
+[`cl-concurrent-kit`](https://github.com/nerima-lisp/cl-concurrent-kit), which backs
+parallel pipeline execution. Pipelines execute graph-ordered stages, carry a
+context, record a trace, and can advance a state machine.
 
 ```lisp
 (asdf:load-system "cl-dataflow-kit")

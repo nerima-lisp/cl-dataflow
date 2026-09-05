@@ -1,7 +1,7 @@
 # Core Concepts
 
-`cl-dataflow-kit` is built from a small number of composable primitives. Every
-other page in this guide builds on these definitions.
+`cl-dataflow-kit` is built from a small number of composable primitives. These
+definitions apply throughout the guide.
 
 | Concept | Definition |
 | --- | --- |

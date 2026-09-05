@@ -1,12 +1,10 @@
 # Graph Analysis
 
-[Graph Algorithms](graph-algorithms.md) covers the structural layer built
-directly on a `graph` — basic queries, connected components, traversal
-order, and distance/centrality. This page continues with the remaining
-analysis families: weighted paths and flow, whole-graph metrics, set
-algebra, and criticality analysis. All of it shares that page's discipline
-of building the adjacency snapshot once and walking it with an explicit
-queue, stack, or work list — see
+[Graph Algorithms](graph-algorithms.md) covers basic queries, connected
+components, traversal order, and distance/centrality. This page covers
+weighted paths and flow, whole-graph metrics, set algebra, and criticality
+analysis. Both pages build the adjacency snapshot once and walk it with an
+explicit queue, stack, or work list — see
 [Architecture](../reference/architecture.md#the-graph-runtime) for why.
 
 The examples below reuse the dependency graph built in

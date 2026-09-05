@@ -71,7 +71,7 @@ the rest of the reachability and analysis surface.
 
 `scripts/run-examples.sh` (also wired as the `examples` flake check) runs
 every example script as its own process under a hard timeout and asserts a
-clean exit, which is what actually keeps this page honest.
+clean exit, so the commands documented on this page remain executable.
 
 `t/core-runtime-example-test.lisp` also defines one smoke test per example
 script, asserting exact substrings of its output — but do **not** enable it

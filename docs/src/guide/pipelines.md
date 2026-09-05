@@ -352,7 +352,7 @@ on top of the core pipeline runtime:
   runs; with a shared `:context`, every run's events, effects, and trace
   accumulate into that one context. `:parallel` runs the independent
   (no-`:context`) case concurrently, the same way as `run-pipeline`'s own
-  `:parallel` but simpler: since every run already has its own fresh
+  `:parallel`; since every run already has its own fresh
   context, there is no shared state to guard at all. The runs share a bounded
   CCK executor capped at four workers, and results remain in input order.
   Combining `:parallel` with a shared `:context` signals `invalid-input-error` — concurrent runs
